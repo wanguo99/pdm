@@ -5,10 +5,28 @@
 #include <linux/i2c.h>
 #include "pdm.h"
 
+
+struct cpld_ops {
+    int (*read)(int addr, int *value);
+    int (*write)(int addr, int value);
+};
+
+
+struct pdm_cpld_master {
+    struct pdm_master master;
+
+    // Add any CPLD-specific data here
+    union {
+        struct spi_device *spi_device;
+        struct i2c_client *i2c_client;
+    } client;
+
+    struct cpld_ops *ops;
+};
+
 struct pdm_cpld_device {
     struct pdm_device *pdm_dev;
-    struct i2c_client *i2c_client;
-    // Add any CPLD-specific data here
+
 };
 
 // Device allocation and free functions

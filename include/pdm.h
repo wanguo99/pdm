@@ -27,7 +27,7 @@ struct pdm_device {
 
 struct pdm_master {
 
-    const char *name;
+    char   name[32];
     struct device dev;
     struct list_head node;
     struct list_head clients;
@@ -79,8 +79,6 @@ struct device *pdmdev_to_dev(struct pdm_device *pdmdev);
 const struct pdm_device_id *pdm_match_id(const struct pdm_device_id *id, struct pdm_device *pdmdev);
 
 // master
-int pdm_master_alloc(struct pdm_master **master, const char *name);
-void pdm_master_free(struct pdm_master *master);
 int pdm_master_register(struct pdm_master *master);
 void pdm_master_unregister(struct pdm_master *master);
 

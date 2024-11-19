@@ -178,61 +178,9 @@ static const struct device_type pdm_master_device_type = {
 
 static void pdm_master_device_release(struct device *dev)
 {
-    struct pdm_master *master = dev_to_pdm_master(dev);
-    WARN_ON(!list_empty(&master->clients));
-}
-
-int pdm_master_register(struct pdm_master *master)
-{
-	int ret;
-
-    // 检查设备名称是否已设置
-    if (!dev_name(&master->dev))
-    {
-        printk(KERN_ERR "Master name not set\n");
-        return -EINVAL;
-    }
-
-	master->dev.bus = &pdm_bus_type;
-	master->dev.type = &pdm_master_device_type;
-	master->dev.release = pdm_master_device_release;
-	device_initialize(&master->dev);
-	dev_set_name(&master->dev, "pdm-%s", master->name);
-
-	ret = device_add(&master->dev); // device_del(&master->dev)
-	if (ret)
-	{
-    	put_device(&master->dev);
-    	return ret;
-	}
-
-	mutex_lock(&pdm_mutex_lock);
-    list_add_tail(&master->node, &pdm_master_list);
-	mutex_unlock(&pdm_mutex_lock);
-
-	master->init_done = true;
-
-    // TODO: support notify
-    // i3c_bus_notify(i3cbus, I3C_NOTIFY_BUS_ADD);
-
-    printk(KERN_INFO "PDM Master registered: %s\n", dev_name(&master->dev));
-
-	return 0;
-}
-
-
-void pdm_master_unregister(struct pdm_master *master) {
-
-    if (NULL == master)
-    {
-        return;
-    }
-
-    // TODO: support notify
-    //i3c_bus_notify(&master->bus, I3C_NOTIFY_BUS_REMOVE);
-
-    list_del(&master->node);
-    device_unregister(&master->dev);
+    //struct pdm_master *master = dev_to_pdm_master(dev);
+    //WARN_ON(!list_empty(&master->clients));
+    return;
 }
 
 
@@ -249,6 +197,78 @@ static struct class pdm_master_class = {
 	.dev_release	= pdm_master_release,
 };
 
+int pdm_master_register(struct pdm_master *master)
+{
+    int ret;
+    struct pdm_master *existing_master;
+
+    // 检查设备名称是否已设置
+    if (!strlen(master->name)) {
+        printk(KERN_ERR "Master name not set\n");
+        return -EINVAL;
+    }
+
+    // 检查设备名称是否已存在
+    mutex_lock(&pdm_mutex_lock);
+    list_for_each_entry(existing_master, &pdm_master_list, node) {
+        if (strcmp(existing_master->name, master->name) == 0) {
+            mutex_unlock(&pdm_mutex_lock);
+            printk(KERN_ERR "Master name already exists: %s\n", master->name);
+            return -EEXIST;
+        }
+    }
+    mutex_unlock(&pdm_mutex_lock);
+
+
+    device_initialize(&master->dev);
+    master->dev.bus = &pdm_bus_type;
+    master->dev.type = &pdm_master_device_type;
+    //master->dev.class = &pdm_master_class;
+    master->dev.release = pdm_master_device_release;
+    dev_set_name(&master->dev, "pdm_master_%s", master->name);
+
+    printk(KERN_INFO "Trying to add device: %s\n", dev_name(&master->dev));
+
+    ret = device_add(&master->dev);
+    if (ret) {
+        put_device(&master->dev);
+        printk(KERN_ERR "Failed to add device: %s, error: %d\n", dev_name(&master->dev), ret);
+        return ret;
+    }
+
+    mutex_lock(&pdm_mutex_lock);
+    list_add_tail(&master->node, &pdm_master_list);
+    mutex_unlock(&pdm_mutex_lock);
+
+    master->init_done = true;
+
+    printk(KERN_INFO "PDM Master registered: %s\n", dev_name(&master->dev));
+
+    return 0;
+}
+
+
+void pdm_master_unregister(struct pdm_master *master)
+{
+    if (NULL == master)
+    {
+        printk(KERN_ERR "pdm_master_unregister: master is NULL\n");
+        return;
+    }
+
+    mutex_lock(&pdm_mutex_lock);
+    list_del(&master->node);
+    mutex_unlock(&pdm_mutex_lock);
+
+    device_unregister(&master->dev);
+    //kfree(master);
+
+    // TODO: 支持通知机制
+    // i3c_bus_notify(&master->bus, I3C_NOTIFY_BUS_REMOVE);
+
+    printk(KERN_INFO "PDM Master unregistered: %s\n", dev_name(&master->dev));
+}
+
 
 static struct dentry *pdm_debugfs_root;
 
@@ -263,7 +283,7 @@ static int __init pdm_init(void)
     iRet = bus_register(&pdm_bus_type);
     if (iRet < 0) {
         pr_err("PDM: Failed to register bus\n");
-        goto err_out;
+        goto err_debugfs_destroy;
     }
 
     iRet = class_register(&pdm_master_class);
@@ -285,7 +305,8 @@ err_class_unregister:
     class_unregister(&pdm_master_class);
 err_bus_unregister:
     bus_unregister(&pdm_bus_type);
-err_out:
+err_debugfs_destroy:
+	debugfs_remove_recursive(pdm_debugfs_root);
     return iRet;
 }
 
