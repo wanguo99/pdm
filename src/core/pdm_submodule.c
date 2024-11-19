@@ -17,16 +17,16 @@ struct list_head pdm_submodule_driver_list;           // 保存已经注册的�
 static struct pdm_subdriver sub_drivers[] = {
 #if DEBUG_SUB_DRIVER_SWITCH
 	/* CPLD master and device driver */
-    { .init = pdm_cpld_master_init, .exit = pdm_cpld_master_exit },
-    { .init = pdm_cpld_i2c_driver_init, .exit = pdm_cpld_i2c_driver_exit },
+    { .name = "cpld-master", .init = pdm_cpld_master_init, .exit = pdm_cpld_master_exit },
+    { .name = "cpld-spi-device", .init = pdm_cpld_spi_driver_init, .exit = pdm_cpld_spi_driver_exit },
 
     /* LCD master and device driver */
-    { .init = pdm_lcd_master_init, .exit = pdm_lcd_master_exit },
-    { .init = pdm_lcd_i2c_driver_init, .exit = pdm_lcd_i2c_driver_exit },
+    { .name = "lcd-master", .init = pdm_lcd_master_init, .exit = pdm_lcd_master_exit },
+    { .name = "lcd-i2c-device", .init = pdm_lcd_i2c_driver_init, .exit = pdm_lcd_i2c_driver_exit },
 
     /* LED master and device driver */
-    { .init = pdm_led_master_init, .exit = pdm_led_master_exit },
-    { .init = pdm_led_gpio_driver_init, .exit = pdm_led_gpio_driver_exit },
+    { .name = "led-master", .init = pdm_led_master_init, .exit = pdm_led_master_exit },
+    { .name = "led-i2c-device", .init = pdm_led_gpio_driver_init, .exit = pdm_led_gpio_driver_exit },
 #endif
     {}
 };
@@ -38,11 +38,14 @@ static int pdm_submodule_register_driver(struct pdm_subdriver *driver) {
     if (driver->init) {
         ret = driver->init();
         if (ret) {
+            printk(KERN_INFO "%s: Driver register failed. ret = %d.",
+                        driver->name ? driver->name : "Unknown", ret);
             return ret;
         }
     }
 
     list_add_tail(&driver->list, &pdm_submodule_driver_list);
+    printk(KERN_INFO "%s: Driver registered.", driver->name ? driver->name : "Unknown");
     return 0;
 }
 
@@ -54,9 +57,9 @@ static int pdm_submodule_unregister_driver(struct pdm_subdriver *driver) {
     }
 
     list_del(&driver->list);
+    printk(KERN_INFO "%s: Driver unregistered.", driver->name ? driver->name : "Unknown");
     return 0;
 }
-
 
 
 // 初始化所有子模块驱动
