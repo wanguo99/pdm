@@ -64,7 +64,7 @@ static void pdm_device_release(struct device *dev)
     kfree(dev);
 }
 
-struct pdm_device *pdm_device_alloc(struct pdm_master *master)
+struct pdm_device *pdm_device_alloc(void)
 {
     struct pdm_device   *pdmdev;
 

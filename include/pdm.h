@@ -77,7 +77,7 @@ const struct pdm_device_id *pdm_match_id(const struct pdm_device_id *id, struct 
     pdm_device
 */
 #define dev_to_pdmdev(__dev)    container_of(__dev, struct pdm_device, dev)
-struct pdm_device *pdm_device_alloc(struct pdm_master *master);
+struct pdm_device *pdm_device_alloc(void);
 void pdm_device_free(struct pdm_device *pdmdev);
 void pdm_device_unregister(struct pdm_device *pdmdev);
 
