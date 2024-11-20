@@ -16,7 +16,7 @@ static long pdc_cpld_ioctl(struct file *filp, unsigned int cmd, unsigned long ar
 
     pr_info("-------------------------\n");
     pr_info("pdc_cpld_ioctl.\n");
-    pr_info("-------------------------\n");
+    pr_info("-------------------------\n\n\n");
 
     if (NULL == g_pstCpldMaster)
     {
@@ -46,7 +46,7 @@ static long pdc_cpld_ioctl(struct file *filp, unsigned int cmd, unsigned long ar
 
     mutex_unlock(&g_pstCpldMaster->master->client_list_mutex_lock);
 
-    printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
+    printk(KERN_ERR "\n\n");
     return 0;
 
     switch (cmd)

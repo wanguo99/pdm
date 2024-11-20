@@ -309,7 +309,9 @@ int pdm_master_add_device(struct pdm_master *master, struct pdm_device *pdmdev)
     pdmdev->master = master;
     printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
     mutex_lock(&master->client_list_mutex_lock);
+    printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
     list_add_tail(&pdmdev->node, &master->clients);
+    printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
     mutex_unlock(&master->client_list_mutex_lock);
 
     return 0;

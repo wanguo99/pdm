@@ -96,9 +96,9 @@ static int pdm_device_check(struct device *dev, void *data)
     struct pdm_device *new_dev = dev_to_pdmdev(dev);
     struct pdm_device *on_bus_dev = data;
 
-    if (new_dev->master == on_bus_dev->master
-        && new_dev->id == on_bus_dev->id
-        && (!memcmp(new_dev->compatible, on_bus_dev->compatible, PDM_DEVICE_NAME_SIZE)))
+    if ((new_dev->master == on_bus_dev->master)
+        && (new_dev->id == on_bus_dev->id)
+        && (new_dev->compatible != on_bus_dev->compatible))
     {
         // 根据device master、device id、device compatible唯一确定一个pdm_device
         return -EBUSY;
@@ -139,6 +139,8 @@ int pdm_device_register(struct pdm_device *pdmdev)
     }
 
     pdmdev->dev.parent = &master->dev;
+    dev_set_name(&pdmdev->dev, "pdm_device_%s:%d", master->name, pdmdev->id);
+
     status = device_add(&pdmdev->dev);
     if (status < 0)
     {
