@@ -20,12 +20,13 @@
 static int pdm_device_uevent(const struct device *dev, struct kobj_uevent_env *env)
 {
     const struct pdm_device *pdmdev = dev_to_pdmdev(dev);
-    const char *name = pdmdev->name;
+    const char *compatible = pdmdev->compatible;
     int id = pdmdev->id;
     const char *master_name = pdmdev->master ? pdmdev->master->name : "unknown";
 
     // 生成 MODALIAS 字符串
-    return add_uevent_var(env, "MODALIAS=pdm:master%s-id%04X-name%s", master_name, id, name);
+    // pdm:pdm_master_cpld:cpld_i2c:0001
+    return add_uevent_var(env, "MODALIAS=pdm:pdm_master_%s:%s-%04X", master_name, compatible, id);
 }
 
 static ssize_t id_show(struct device *dev, struct device_attribute *da, char *buf)
@@ -35,12 +36,12 @@ static ssize_t id_show(struct device *dev, struct device_attribute *da, char *bu
 }
 static DEVICE_ATTR_RO(id);
 
-static ssize_t name_show(struct device *dev, struct device_attribute *da, char *buf)
+static ssize_t compatible_show(struct device *dev, struct device_attribute *da, char *buf)
 {
     const struct pdm_device *pdmdev = dev_to_pdmdev(dev);
-    return sprintf(buf, "%s\n", pdmdev->name);
+    return sprintf(buf, "%s\n", pdmdev->compatible);
 }
-static DEVICE_ATTR_RO(name);
+static DEVICE_ATTR_RO(compatible);
 
 static ssize_t parent_name_show(struct device *dev, struct device_attribute *da, char *buf)
 {
@@ -53,7 +54,7 @@ static DEVICE_ATTR_RO(parent_name);
 // 属性组定义
 static struct attribute *pdm_device_attrs[] = {
     &dev_attr_id.attr,
-    &dev_attr_name.attr,
+    &dev_attr_compatible.attr,
     &dev_attr_parent_name.attr,
     NULL,
 };
@@ -76,8 +77,8 @@ const struct pdm_device_id *pdm_match_id(const struct pdm_device_id *id, struct 
 	if (!(id && pdmdev))
 		return NULL;
 
-	while (id->name[0]) {
-		if (strcmp(pdmdev->name, id->name) == 0)
+	while (id->compatible[0]) {
+		if (strcmp(pdmdev->compatible, id->compatible) == 0)
 			return id;
 		id++;
 	}
@@ -105,7 +106,7 @@ static int pdm_device_match(struct device *dev, struct device_driver *drv) {
     pdmdrv = drv_to_pdmdrv(drv);
 #endif
 
-	if (pdm_match_id(pdmdrv->id_table, pdmdev))
+	if (pdm_match_id(&pdmdrv->id_table, pdmdev))
 		return 1;
 
 	return 0;
@@ -137,20 +138,79 @@ const struct bus_type pdm_bus_type = {
     .remove = pdm_device_remove,      // i3c_device_remove i2c_device_remove
 };
 
+/*                                                                              */
+/*                        pdm_master->file_operations                            */
+/*                                                                              */
+static struct pdm_master *inode_to_pdm_master(struct inode *inode)
+{
+    struct pdm_master *master;
+    struct device *dev;
+    struct cdev *cdev;
 
+    cdev = inode->i_cdev;
+    if (!cdev) {
+        printk(KERN_ERR "Failed to get cdev from inode\n");
+        return NULL;
+    }
+
+    dev = container_of(&cdev->kobj, struct device, kobj);
+    if (!dev) {
+        printk(KERN_ERR "Failed to get device from cdev\n");
+        return NULL;
+    }
+
+    master = dev_to_pdm_master(dev);
+    if (!master) {
+        printk(KERN_ERR "Failed to convert device to pdm_master\n");
+        return NULL;
+    }
+    return master;
+}
+
+static int pdm_master_fops_open_default(struct inode *inode, struct file *filp)
+{
+    struct pdm_master *master = inode_to_pdm_master(inode);
+    filp->private_data = master;
+    pr_info("Master %s opened\n", master->name);
+    return 0;
+}
+
+static int pdm_master_fops_release_default(struct inode *inode, struct file *filp)
+{
+    struct pdm_master *master = filp->private_data;
+    pr_info("Master %s closed\n", master->name);
+    return 0;
+}
+
+static ssize_t pdm_master_fops_read_default(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
+{
+    struct pdm_master *master = filp->private_data;
+    pr_info("Master %s read\n", master->name);
+    return 0;
+}
+
+static ssize_t pdm_master_fops_write_default(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
+{
+    struct pdm_master *master = filp->private_data;
+    pr_info("Master %s write\n", master->name);
+    return 0;
+}
+
+static long pdm_master_fops_unlocked_ioctl_default(struct file *filp, unsigned int cmd, unsigned long arg)
+{
+    struct pdm_master *master = filp->private_data;
+    pr_info("Master %s do not support ioctl operations.\n", master->name);
+    return -ENOTSUPP;
+}
 
 /*                                                                              */
 /*                            pdm_master_type                                   */
 /*                                                                              */
 
 
+
 static struct list_head pdm_master_list;
 static struct mutex     pdm_mutex_lock;
-
-static struct pdm_master *dev_to_pdm_master(struct device *dev)
-{
-	return container_of(dev, struct pdm_master, dev);
-}
 
 static ssize_t master_name_show(struct device *dev, struct device_attribute *da, char *buf)
 {
@@ -178,7 +238,8 @@ static const struct device_type pdm_master_device_type = {
 
 static void pdm_master_device_release(struct device *dev)
 {
-    //struct pdm_master *master = dev_to_pdm_master(dev);
+    struct pdm_master *master = dev_to_pdm_master(dev);
+   printk(KERN_INFO "Master %s released.\n", dev_name(&master->dev));
     //WARN_ON(!list_empty(&master->clients));
     return;
 }
@@ -197,6 +258,50 @@ static struct class pdm_master_class = {
 	.dev_release	= pdm_master_release,
 };
 
+// 添加字符设备
+static int pdm_master_add_cdev(struct pdm_master *master)
+{
+    int ret;
+
+    // 分配设备号
+    ret = alloc_chrdev_region(&master->devno, 0, 1, dev_name(&master->dev));
+    if (ret < 0) {
+        printk(KERN_ERR "Failed to allocate char device region for %s, error: %d\n", dev_name(&master->dev), ret);
+        return ret;
+    }
+
+    // 初始化默认文件操作句柄，在master注册后，可以动态修改为实际的操作句柄
+    master->fops.open = pdm_master_fops_open_default;
+    master->fops.release = pdm_master_fops_release_default;
+    master->fops.read = pdm_master_fops_read_default;
+    master->fops.write = pdm_master_fops_write_default;
+    master->fops.unlocked_ioctl = pdm_master_fops_unlocked_ioctl_default;
+
+    // 初始化字符设备
+    cdev_init(&master->cdev, &master->fops);
+    master->cdev.owner = THIS_MODULE;
+
+    ret = cdev_add(&master->cdev, master->devno, 1);
+    if (ret < 0) {
+        unregister_chrdev_region(master->devno, 1);
+        printk(KERN_ERR "Failed to add char device for %s, error: %d\n", dev_name(&master->dev), ret);
+        return ret;
+    }
+
+    // 注册到pdm_master_class
+    device_create(&pdm_master_class, NULL, master->devno, NULL, "pdm_master_%s", master->name);
+
+    return 0;
+}
+
+// 卸载字符设备
+static void pdm_master_delete_cdev(struct pdm_master *master)
+{
+    device_destroy(&pdm_master_class, master->devno);
+    cdev_del(&master->cdev);
+    unregister_chrdev_region(master->devno, 1);
+}
+
 int pdm_master_register(struct pdm_master *master)
 {
     int ret;
@@ -212,13 +317,12 @@ int pdm_master_register(struct pdm_master *master)
     mutex_lock(&pdm_mutex_lock);
     list_for_each_entry(existing_master, &pdm_master_list, node) {
         if (strcmp(existing_master->name, master->name) == 0) {
-            mutex_unlock(&pdm_mutex_lock);
             printk(KERN_ERR "Master name already exists: %s\n", master->name);
-            return -EEXIST;
+            ret = -EEXIST;
+            goto err_unlock;
         }
     }
     mutex_unlock(&pdm_mutex_lock);
-
 
     device_initialize(&master->dev);
     master->dev.bus = &pdm_bus_type;
@@ -231,20 +335,36 @@ int pdm_master_register(struct pdm_master *master)
 
     ret = device_add(&master->dev);
     if (ret) {
-        put_device(&master->dev);
         printk(KERN_ERR "Failed to add device: %s, error: %d\n", dev_name(&master->dev), ret);
-        return ret;
+        goto err_put_device;
     }
 
     mutex_lock(&pdm_mutex_lock);
     list_add_tail(&master->node, &pdm_master_list);
     mutex_unlock(&pdm_mutex_lock);
 
-    master->init_done = true;
+    // 创建字符设备文件
+    ret = pdm_master_add_cdev(master);
+    if (ret) {
+        printk(KERN_ERR "Failed to pdm_master_add_cdev, error: %d\n", ret);
+        goto err_del_device;
+    }
 
+    master->init_done = true;
     printk(KERN_INFO "PDM Master registered: %s\n", dev_name(&master->dev));
 
     return 0;
+
+err_del_device:
+    device_del(&master->dev);
+
+err_put_device:
+    put_device(&master->dev);
+
+err_unlock:
+    mutex_unlock(&pdm_mutex_lock);
+    return ret;
+
 }
 
 
@@ -256,12 +376,13 @@ void pdm_master_unregister(struct pdm_master *master)
         return;
     }
 
+    pdm_master_delete_cdev(master);
+
     mutex_lock(&pdm_mutex_lock);
     list_del(&master->node);
     mutex_unlock(&pdm_mutex_lock);
 
     device_unregister(&master->dev);
-    //kfree(master);
 
     // TODO: 支持通知机制
     // i3c_bus_notify(&master->bus, I3C_NOTIFY_BUS_REMOVE);

@@ -10,6 +10,21 @@
 
 static struct pdm_cpld_master *g_pstCpldMaster;
 
+
+// CPLD Master的ioctl实现
+static long pdc_cpld_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+{
+    pr_info("pdc_cpld_ioctl.\n");
+
+    switch (cmd)
+    {
+        default:
+            return -ENOTTY;
+    }
+
+    return 0;
+}
+
 int pdm_cpld_master_init(void)
 {
     int ret;
@@ -31,6 +46,9 @@ int pdm_cpld_master_init(void)
         kfree(g_pstCpldMaster);
         return ret;
     }
+
+    // 重新指定ioctl指针
+    g_pstCpldMaster->master.fops.unlocked_ioctl = pdc_cpld_ioctl;
 
     printk(KERN_INFO "CPLD Master initialized OK.\n");
 
@@ -58,3 +76,4 @@ void pdm_cpld_master_exit(void)
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("wanguo");
 MODULE_DESCRIPTION("PDM CPLD Master Module.");
+
