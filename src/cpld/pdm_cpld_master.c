@@ -12,12 +12,18 @@ static struct pdm_cpld_master *g_pstCpldMaster;
 
 static long pdc_cpld_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
+    pr_info("-------------------------\n");
     pr_info("pdc_cpld_ioctl.\n");
+    pr_info("-------------------------\n");
+
+    return 0;
 
     switch (cmd)
     {
         default:
+        {
             return -ENOTTY;
+        }
     }
 
     return 0;

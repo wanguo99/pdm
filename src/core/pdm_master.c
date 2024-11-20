@@ -210,7 +210,7 @@ int pdm_master_register(struct pdm_master *master)
     // master->dev.bus = &pdm_bus_type;
     master->dev.type = &pdm_master_device_type;
     master->dev.class = &pdm_master_class;
-    master->dev.parent = &pdm_bus_root;
+    //master->dev.parent = &pdm_bus_root;
     master->dev.release = pdm_master_dev_release;
     dev_set_name(&master->dev, "pdm_master_%s", master->name);
 
