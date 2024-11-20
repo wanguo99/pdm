@@ -19,15 +19,15 @@ static struct dentry       *pdm_debugfs_root;
 /*                                                                              */
 const struct pdm_device_id *pdm_match_id(const struct pdm_device_id *id, struct pdm_device *pdmdev)
 {
-	if (!(id && pdmdev))
-		return NULL;
+    if (!(id && pdmdev))
+        return NULL;
 
-	while (id->compatible[0]) {
-		if (strcmp(pdmdev->compatible, id->compatible) == 0)
-			return id;
-		id++;
-	}
-	return NULL;
+    while (id->compatible[0]) {
+        if (strcmp(pdmdev->compatible, id->compatible) == 0)
+            return id;
+        id++;
+    }
+    return NULL;
 }
 EXPORT_SYMBOL_GPL(pdm_match_id);
 
@@ -37,13 +37,13 @@ static int pdm_device_match(struct device *dev, const struct device_driver *drv)
 #else
 static int pdm_device_match(struct device *dev, struct device_driver *drv) {
 #endif
-	struct pdm_device *pdmdev;
-	struct pdm_driver *pdmdrv;
+    struct pdm_device *pdmdev;
+    struct pdm_driver *pdmdrv;
 
-	if (dev->type != &pdm_device_type)
-		return 0;
+    if (dev->type != &pdm_device_type)
+        return 0;
 
-	pdmdev = dev_to_pdmdev(dev);
+    pdmdev = dev_to_pdmdev(dev);
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 0)
     pdmdrv = drv_to_pdmdrv(drv);
@@ -51,27 +51,27 @@ static int pdm_device_match(struct device *dev, struct device_driver *drv) {
     pdmdrv = drv_to_pdmdrv(drv);
 #endif
 
-	if (pdm_match_id(&pdmdrv->id_table, pdmdev))
-		return 1;
+    if (pdm_match_id(&pdmdrv->id_table, pdmdev))
+        return 1;
 
-	return 0;
+    return 0;
 }
 
 static int pdm_device_probe(struct device *dev)
 {
-	struct pdm_device *pdmdev = dev_to_pdmdev(dev);
-	struct pdm_driver *driver = drv_to_pdmdrv(dev->driver);
+    struct pdm_device *pdmdev = dev_to_pdmdev(dev);
+    struct pdm_driver *driver = drv_to_pdmdrv(dev->driver);
 
-	return driver->probe(pdmdev);
+    return driver->probe(pdmdev);
 }
 
 static void pdm_device_remove(struct device *dev)
 {
-	struct pdm_device *pdmdev = dev_to_pdmdev(dev);
-	struct pdm_driver *driver = drv_to_pdmdrv(dev->driver);
+    struct pdm_device *pdmdev = dev_to_pdmdev(dev);
+    struct pdm_driver *driver = drv_to_pdmdrv(dev->driver);
 
-	if (driver->remove)
-		driver->remove(pdmdev);
+    if (driver->remove)
+        driver->remove(pdmdev);
 }
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
@@ -112,7 +112,7 @@ static int __init pdm_init(void)
         goto err_master_exit;
     }
 
-	pdm_debugfs_root = debugfs_create_dir("pdm", NULL);
+    pdm_debugfs_root = debugfs_create_dir("pdm", NULL);
     if (IS_ERR(pdm_debugfs_root))
     {
         pr_err("PDM: Failed to create debugfs\n");

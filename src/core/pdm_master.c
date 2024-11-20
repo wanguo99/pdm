@@ -81,26 +81,26 @@ static long pdm_master_fops_unlocked_ioctl_default(struct file *filp, unsigned i
 */
 static ssize_t name_show(struct device *dev, struct device_attribute *da, char *buf)
 {
-	struct pdm_master *master = dev_to_pdm_master(dev);
-	ssize_t ret;
+    struct pdm_master *master = dev_to_pdm_master(dev);
+    ssize_t ret;
 
-	down_read(&master->rwlock);
-	ret = sysfs_emit(buf, "%s\n", master->name);
-	up_read(&master->rwlock);
+    down_read(&master->rwlock);
+    ret = sysfs_emit(buf, "%s\n", master->name);
+    up_read(&master->rwlock);
 
-	return ret;
+    return ret;
 }
 
 static DEVICE_ATTR_RO(name);
 
 static struct attribute *pdm_master_device_attrs[] = {
-	&dev_attr_name.attr,
-	NULL,
+    &dev_attr_name.attr,
+    NULL,
 };
 ATTRIBUTE_GROUPS(pdm_master_device);
 
 static const struct device_type pdm_master_device_type = {
-	.groups = pdm_master_device_groups,
+    .groups = pdm_master_device_groups,
 };
 
 static void pdm_master_dev_release(struct device *dev)
@@ -114,15 +114,16 @@ static void pdm_master_dev_release(struct device *dev)
 
 static void pdm_master_class_dev_release(struct device *dev)
 {
-	struct pdm_master *master;
+    struct pdm_master *master;
     master = dev_to_pdm_master(dev);
-	kfree(master);
+    kfree(master);
 }
 
 struct class pdm_master_class = {
-	.name		= "pdm_master",
-	.dev_release	= pdm_master_class_dev_release,
+    .name       = "pdm_master",
+    .dev_release    = pdm_master_class_dev_release,
 };
+
 
 static int pdm_master_add_cdev(struct pdm_master *master)
 {
@@ -169,39 +170,6 @@ static void pdm_master_delete_cdev(struct pdm_master *master)
     unregister_chrdev_region(master->devno, 1);
 }
 
-
-// 申请一段连续内存，保存master的公共数据和私有数据
-struct pdm_master *pdm_master_alloc(unsigned int size)
-{
-	struct pdm_master	*master;
-	size_t master_size = sizeof(struct pdm_master);
-
-	master = kzalloc(size + master_size, GFP_KERNEL);
-	if (!master)
-		return NULL;
-
-	device_initialize(&master->dev);
-	master->dev.class = &pdm_master_class;
-	master->dev.parent = pdm_bus_type.dev_root;
-	pdm_master_set_devdata(master, (void *)master + master_size);
-
-	return master;
-}
-
-struct pdm_master *pdm_master_get(struct pdm_master *master)
-{
-	if (!master || !get_device(&master->dev))
-		return NULL;
-	return master;
-}
-
-void pdm_master_put(struct pdm_master *master)
-{
-	if (master)
-		put_device(&master->dev);
-}
-
-
 int pdm_master_register(struct pdm_master *master)
 {
     int ret;
@@ -224,7 +192,6 @@ int pdm_master_register(struct pdm_master *master)
     }
     mutex_unlock(&pdm_master_list_mutex_lock);
 
-    device_initialize(&master->dev);
     master->dev.bus = &pdm_bus_type;
     master->dev.type = &pdm_master_device_type;
     master->dev.class = &pdm_master_class;
@@ -232,7 +199,6 @@ int pdm_master_register(struct pdm_master *master)
     dev_set_name(&master->dev, "pdm_master_%s", master->name);
 
     printk(KERN_INFO "Trying to add device: %s\n", dev_name(&master->dev));
-
     ret = device_add(&master->dev);
     if (ret) {
         printk(KERN_ERR "Failed to add device: %s, error: %d\n", dev_name(&master->dev), ret);
@@ -264,7 +230,6 @@ err_put_device:
 err_unlock:
     mutex_unlock(&pdm_master_list_mutex_lock);
     return ret;
-
 }
 
 
@@ -284,11 +249,43 @@ void pdm_master_unregister(struct pdm_master *master)
 
     device_unregister(&master->dev);
 
-    // TODO: 支持通知机制
-    // i3c_bus_notify(&master->bus, I3C_NOTIFY_BUS_REMOVE);
-
     printk(KERN_INFO "PDM Master unregistered: %s\n", dev_name(&master->dev));
 }
+
+
+// 申请一段连续内存，保存master的公共数据和私有数据
+struct pdm_master *pdm_master_alloc(unsigned int size)
+{
+    struct pdm_master   *master;
+    size_t master_size = sizeof(struct pdm_master);
+
+    master = kzalloc(size + master_size, GFP_KERNEL);
+    if (!master)
+        return NULL;
+
+    device_initialize(&master->dev);
+    master->dev.class = &pdm_master_class;
+    master->dev.parent = pdm_bus_type.dev_root;
+    pdm_master_set_devdata(master, (void *)master + master_size);
+
+    return master;
+}
+
+struct pdm_master *pdm_master_get(struct pdm_master *master)
+{
+    if (!master || !get_device(&master->dev))
+        return NULL;
+    return master;
+}
+
+void pdm_master_put(struct pdm_master *master)
+{
+    if (master)
+        put_device(&master->dev);
+}
+
+
+
 
 int pdm_master_init(void)
 {

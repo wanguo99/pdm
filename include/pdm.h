@@ -18,7 +18,7 @@ extern const  struct device_type pdm_device_type;
 /*                                                                              */
 /*                                公共数据类型定义                                      */
 /*                                                                              */
-#define PDM_DEVICE_NAME_SIZE	32
+#define PDM_DEVICE_NAME_SIZE    (64)
 
 struct pdm_device {
     int id;                 // 根据[master->name && name && id]可以唯一确定一个pdm设备
@@ -35,7 +35,7 @@ struct pdm_master {
     struct cdev cdev;
     struct file_operations fops;    // 每个master内部单独实现一套文件操作
     struct idr device_idr;          // 给子设备分配ID使用
-    struct rw_semaphore rwlock;     // 读写锁
+    struct rw_semaphore rwlock;     // 读写锁, sysfs读写master属性时使用
     unsigned int init_done : 1;     // 初始化标志
     struct list_head node;          // bus挂载点
     struct list_head clients;       // 子设备列表
@@ -43,8 +43,8 @@ struct pdm_master {
 
 
 struct pdm_device_id {
-	char compatible[PDM_DEVICE_NAME_SIZE];  // 驱动匹配字符串
-	kernel_ulong_t driver_data;             // 驱动私有数据
+    char compatible[PDM_DEVICE_NAME_SIZE];  // 驱动匹配字符串
+    kernel_ulong_t driver_data;             // 驱动私有数据
 };
 
 struct pdm_driver {
@@ -59,47 +59,42 @@ struct pdm_driver {
 /*                                    函数声明                                      */
 /*                                                                              */
 
+/*
+    common
+*/
+
 static inline struct pdm_driver *drv_to_pdmdrv(struct device_driver *drv)
 {
-	return container_of(drv, struct pdm_driver, driver);
+    return container_of(drv, struct pdm_driver, driver);
 }
 
-#define dev_to_pdmdev(__dev)	container_of(__dev, struct pdm_device, dev)
+#define dev_to_pdmdev(__dev)    container_of(__dev, struct pdm_device, dev)
 #define dev_to_pdm_master(__dev) container_of(__dev, struct pdm_master, dev)
-
-
 const struct pdm_device_id *pdm_match_id(const struct pdm_device_id *id, struct pdm_device *pdmdev);
 
 
-
-
+/*
+    pdm_master
+*/
 static inline void *pdm_master_get_devdata(struct pdm_master *master)
 {
-	return dev_get_drvdata(&master->dev);
+    return dev_get_drvdata(&master->dev);
 }
 
 static inline void pdm_master_set_devdata(struct pdm_master *master, void *data)
 {
-	dev_set_drvdata(&master->dev, data);
+    dev_set_drvdata(&master->dev, data);
 }
 
-// 申请一段连续内存，保存master的公共数据和私有数据
 struct pdm_master *pdm_master_alloc(unsigned int size);
-
-
 struct pdm_master *pdm_master_get(struct pdm_master *master);
-
 void pdm_master_put(struct pdm_master *master);
-
-int pdm_master_register(struct pdm_master *master);
+int  pdm_master_register(struct pdm_master *master);
 void pdm_master_unregister(struct pdm_master *master);
-int pdm_master_init(void);
+int  pdm_master_init(void);
 void pdm_master_exit(void);
 
 
-/*                                                                              */
-/*                              私有公共数据类型定义                                      */
-/*                                                                              */
 
 /*                                                                              */
 /*                                全局变量声明                                        */
@@ -111,9 +106,5 @@ extern struct bus_type             pdm_bus_type;
 extern const struct bus_type       pdm_bus_type;
 #endif
 
-#if 0
-extern struct class         pdm_master_class;
-extern const struct device_type    pdm_device_type;
-#endif
 
 #endif /* _PDM_H_ */

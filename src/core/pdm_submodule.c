@@ -12,11 +12,11 @@
 
 struct list_head pdm_submodule_driver_list;           // 保存已经注册的驱动信息
 
-#define DEBUG_SUB_DRIVER_SWITCH 0	// 是否开启子模块初始化
+#define DEBUG_SUB_DRIVER_SWITCH 0   // 是否开启子模块初始化
 
 static struct pdm_subdriver sub_drivers[] = {
 
-	/* CPLD master and device driver */
+    /* CPLD master and device driver */
     { .name = "cpld-master", .init = pdm_cpld_master_init, .exit = pdm_cpld_master_exit },
 
 #if DEBUG_SUB_DRIVER_SWITCH
