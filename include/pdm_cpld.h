@@ -13,7 +13,6 @@ struct pdm_cpld_operations {
 
 struct pdm_cpld_master {
     struct pdm_master *master;
-    struct pdm_cpld_operations ops;
 };
 
 struct pdm_cpld_device {
@@ -22,6 +21,7 @@ struct pdm_cpld_device {
         struct i2c_client *i2cdev;
         struct spi_device *spidev;
     }client;
+    struct pdm_cpld_operations ops;
 };
 
 int pdm_cpld_master_add_device(struct pdm_cpld_device *cpld_dev);

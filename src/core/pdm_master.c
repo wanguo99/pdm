@@ -232,6 +232,9 @@ int pdm_master_register(struct pdm_master *master)
         goto err_del_device;
     }
 
+    mutex_init(&master->client_list_mutex_lock);
+    INIT_LIST_HEAD(&master->clients);
+
     master->init_done = true;
     printk(KERN_INFO "PDM Master registered: %s\n", dev_name(&master->dev));
 
@@ -302,7 +305,7 @@ void pdm_master_put(struct pdm_master *master)
 int pdm_master_add_device(struct pdm_master *master, struct pdm_device *pdmdev)
 {
     pdmdev->master = master;
-
+    printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
     mutex_lock(&master->client_list_mutex_lock);
     list_add_tail(&pdmdev->node, &master->clients);
     mutex_unlock(&master->client_list_mutex_lock);
@@ -312,6 +315,7 @@ int pdm_master_add_device(struct pdm_master *master, struct pdm_device *pdmdev)
 
 int pdm_master_delete_device(struct pdm_master *master, struct pdm_device *pdmdev)
 {
+    printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
     mutex_lock(&master->client_list_mutex_lock);
     list_del(&pdmdev->node);
     mutex_unlock(&master->client_list_mutex_lock);

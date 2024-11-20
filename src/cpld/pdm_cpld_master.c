@@ -12,10 +12,41 @@ static struct pdm_cpld_master *g_pstCpldMaster;
 
 static long pdc_cpld_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
+    struct pdm_device *client;
+
     pr_info("-------------------------\n");
     pr_info("pdc_cpld_ioctl.\n");
     pr_info("-------------------------\n");
 
+    if (NULL == g_pstCpldMaster)
+    {
+        printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
+    }
+    if (NULL == g_pstCpldMaster->master)
+    {
+        printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
+    }
+    if (NULL == g_pstCpldMaster)
+    {
+        printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
+    }
+    mutex_lock(&g_pstCpldMaster->master->client_list_mutex_lock);
+
+    list_for_each_entry(client, &g_pstCpldMaster->master->clients, node)
+    {
+        if (NULL == client)
+        {
+            printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
+        }
+        else
+        {
+            printk(KERN_ERR "Client Name: %s \n", dev_name(&client->dev));
+        }
+    }
+
+    mutex_unlock(&g_pstCpldMaster->master->client_list_mutex_lock);
+
+    printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
     return 0;
 
     switch (cmd)
@@ -51,24 +82,22 @@ int pdm_cpld_master_init(void)
 		return -ENOMEM;
 	}
 
-	g_pstCpldMaster = pdm_master_get_devdata(master);   // 获取pdm_master私有数据
-    if (status < 0)
+	g_pstCpldMaster = pdm_master_get_devdata(master);
+    if (NULL == g_pstCpldMaster)
     {
         printk(KERN_ERR "pdm_master_get_devdata failed.\n");
 		goto err_master_put;
     }
 
-	g_pstCpldMaster->master = pdm_master_get(master);   // 引用计数加一
+	g_pstCpldMaster->master = pdm_master_get(master);
     if (status < 0)
     {
         printk(KERN_ERR "pdm_master_get failed.\n");
 		goto err_master_put;
     }
 
-
-    // 设置master名称
     strcpy(g_pstCpldMaster->master->name, "cpld");
-	status = pdm_master_register(master);           // 注册pdm_master
+	status = pdm_master_register(master);
 	if (status < 0)
 	{
         printk(KERN_ERR "pdm_master_register failed.\n");
@@ -76,12 +105,13 @@ int pdm_cpld_master_init(void)
 	}
 
     g_pstCpldMaster->master->fops.unlocked_ioctl = pdc_cpld_ioctl;
+
     printk(KERN_INFO "CPLD Master initialized OK.\n");
 
     return 0;
 
 err_master_put:
-    pdm_master_put(g_pstCpldMaster->master);
+    pdm_master_put(master);
 
 	return status;
 }

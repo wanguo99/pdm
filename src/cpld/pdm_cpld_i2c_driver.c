@@ -36,7 +36,6 @@ static int pdm_cpld_i2c_probe(struct i2c_client *client) {
 
     g_pstCpldDev->pdmdev = pdmdev;
     g_pstCpldDev->client.i2cdev = client;
-
     ret = pdm_cpld_master_add_device(g_pstCpldDev);
     if (ret) {
         pr_err("Failed to add cpld device, ret=%d\n", ret);
@@ -86,9 +85,16 @@ static const struct i2c_device_id pdm_cpld_i2c_id[] = {
 };
 MODULE_DEVICE_TABLE(i2c, pdm_cpld_i2c_id);
 
+static const struct of_device_id pdm_cpld_i2c_matches[] = {
+	{ .compatible = "pdm_cpld,i2c" },
+	{ }
+};
+MODULE_DEVICE_TABLE(of, pdm_cpld_i2c_matches);
+
 static struct i2c_driver pdm_cpld_i2c_driver = {
     .driver = {
         .name = "pdm_cpld",
+		.of_match_table = pdm_cpld_i2c_matches,
         .owner = THIS_MODULE,
     },
     .probe = pdm_cpld_i2c_probe,
