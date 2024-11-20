@@ -32,19 +32,19 @@ static ssize_t compatible_show(struct device *dev, struct device_attribute *da, 
 }
 static DEVICE_ATTR_RO(compatible);
 
-static ssize_t parent_name_show(struct device *dev, struct device_attribute *da, char *buf)
+static ssize_t master_name_show(struct device *dev, struct device_attribute *da, char *buf)
 {
     const struct pdm_device *pdmdev = dev_to_pdmdev(dev);
     const char *master_name = pdmdev->master ? pdmdev->master->name : "unknown";
     return sprintf(buf, "%s\n", master_name);
 }
-static DEVICE_ATTR_RO(parent_name);
+static DEVICE_ATTR_RO(master_name);
 
 // 属性组定义
 static struct attribute *pdm_device_attrs[] = {
     &dev_attr_id.attr,
     &dev_attr_compatible.attr,
-    &dev_attr_parent_name.attr,
+    &dev_attr_master_name.attr,
     NULL,
 };
 

@@ -79,7 +79,7 @@ static long pdm_master_fops_unlocked_ioctl_default(struct file *filp, unsigned i
 /*
     pdm_master_device_type
 */
-static ssize_t master_name_show(struct device *dev, struct device_attribute *da, char *buf)
+static ssize_t name_show(struct device *dev, struct device_attribute *da, char *buf)
 {
 	struct pdm_master *master = dev_to_pdm_master(dev);
 	ssize_t ret;
@@ -91,10 +91,10 @@ static ssize_t master_name_show(struct device *dev, struct device_attribute *da,
 	return ret;
 }
 
-static DEVICE_ATTR_RO(master_name);
+static DEVICE_ATTR_RO(name);
 
 static struct attribute *pdm_master_device_attrs[] = {
-	&dev_attr_master_name.attr,
+	&dev_attr_name.attr,
 	NULL,
 };
 ATTRIBUTE_GROUPS(pdm_master_device);
