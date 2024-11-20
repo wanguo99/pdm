@@ -13,40 +13,21 @@ static struct pdm_template_master *g_pstTemplateMaster;
 static long pdc_template_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
     struct pdm_device *client;
+    int index = 1;
 
     pr_info("-------------------------\n");
-    pr_info("pdc_template_ioctl.\n");
-    pr_info("-------------------------\n\n\n");
+    printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
+    pr_info("-------------------------\n\n");
 
-    if (NULL == g_pstTemplateMaster)
-    {
-        printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
-    }
-    if (NULL == g_pstTemplateMaster->master)
-    {
-        printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
-    }
-    if (NULL == g_pstTemplateMaster)
-    {
-        printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
-    }
     mutex_lock(&g_pstTemplateMaster->master->client_list_mutex_lock);
-
+    pr_info("Device List:\n\n");
     list_for_each_entry(client, &g_pstTemplateMaster->master->clients, node)
     {
-        if (NULL == client)
-        {
-            printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
-        }
-        else
-        {
-            printk(KERN_ERR "Client Name: %s \n", dev_name(&client->dev));
-        }
+        printk(KERN_ERR "[%d] Client Name: %s \n", index++, dev_name(&client->dev));
     }
-
     mutex_unlock(&g_pstTemplateMaster->master->client_list_mutex_lock);
 
-    printk(KERN_ERR "\n\n");
+    printk(KERN_ERR "\n");
     return 0;
 
     switch (cmd)

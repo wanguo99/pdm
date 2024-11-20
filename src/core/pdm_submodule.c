@@ -15,8 +15,8 @@ struct list_head pdm_submodule_driver_list;           // 保存已经注册的�
 static struct pdm_subdriver sub_drivers[] = {
 
     /* TEMPLATE master and device driver */
-    { .name = "template-master", .init = pdm_template_master_init, .exit = pdm_template_master_exit },
-    { .name = "template-spi-driver", .init = pdm_template_i2c_driver_init, .exit = pdm_template_i2c_driver_exit },
+    { .name = "TEMPLATE-Master", .init = pdm_template_master_init, .exit = pdm_template_master_exit },
+    { .name = "TEMPLATE-Spi-Driver", .init = pdm_template_i2c_driver_init, .exit = pdm_template_i2c_driver_exit },
 
     {}
 };

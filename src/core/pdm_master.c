@@ -13,6 +13,7 @@ struct mutex         pdm_master_list_mutex_lock;
 /*
     pdm_master->file_operations
 */
+#if 0
 static struct pdm_master *inode_to_pdm_master(struct inode *inode)
 {
     struct pdm_master *master;
@@ -38,40 +39,41 @@ static struct pdm_master *inode_to_pdm_master(struct inode *inode)
     }
     return master;
 }
+#endif
 
 static int pdm_master_fops_open_default(struct inode *inode, struct file *filp)
 {
-    struct pdm_master *master = inode_to_pdm_master(inode);
-    filp->private_data = master;
-    pr_info("Master %s opened\n", master->name);
+    // struct pdm_master *master = inode_to_pdm_master(inode);
+    // filp->private_data = master;
+    printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
     return 0;
 }
 
 static int pdm_master_fops_release_default(struct inode *inode, struct file *filp)
 {
-    struct pdm_master *master = filp->private_data;
-    pr_info("Master %s closed\n", master->name);
+    // struct pdm_master *master = filp->private_data;
+    printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
     return 0;
 }
 
 static ssize_t pdm_master_fops_read_default(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
 {
-    struct pdm_master *master = filp->private_data;
-    pr_info("Master %s read\n", master->name);
+    // struct pdm_master *master = filp->private_data;
+    printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
     return 0;
 }
 
 static ssize_t pdm_master_fops_write_default(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
 {
-    struct pdm_master *master = filp->private_data;
-    pr_info("Master %s write\n", master->name);
+    // struct pdm_master *master = filp->private_data;
+    printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
     return 0;
 }
 
 static long pdm_master_fops_unlocked_ioctl_default(struct file *filp, unsigned int cmd, unsigned long arg)
 {
-    struct pdm_master *master = filp->private_data;
-    pr_info("Master %s do not support ioctl operations.\n", master->name);
+    // struct pdm_master *master = filp->private_data;
+    pr_info("Master do not support ioctl operations.\n");
     return -ENOTSUPP;
 }
 
@@ -307,11 +309,8 @@ void pdm_master_put(struct pdm_master *master)
 int pdm_master_add_device(struct pdm_master *master, struct pdm_device *pdmdev)
 {
     pdmdev->master = master;
-    printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
     mutex_lock(&master->client_list_mutex_lock);
-    printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
     list_add_tail(&pdmdev->node, &master->clients);
-    printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
     mutex_unlock(&master->client_list_mutex_lock);
 
     return 0;

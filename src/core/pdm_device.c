@@ -129,7 +129,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
         return id;
     }
 
-    pdmdev->id = id;
+    pdmdev->id = id+1;
     status = bus_for_each_dev(&pdm_bus_type, NULL, pdmdev, pdm_device_check);
     if (status) {
         printk(KERN_ERR "Device %s already exist\n", dev_name(&pdmdev->dev));
@@ -139,7 +139,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
     }
 
     pdmdev->dev.parent = &master->dev;
-    dev_set_name(&pdmdev->dev, "pdm_device_%s:%d", master->name, pdmdev->id);
+    dev_set_name(&pdmdev->dev, "pdm_device_%s-%d.0", master->name, pdmdev->id);
 
     status = device_add(&pdmdev->dev);
     if (status < 0)
