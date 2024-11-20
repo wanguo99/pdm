@@ -235,6 +235,8 @@ int pdm_master_register(struct pdm_master *master)
     mutex_init(&master->client_list_mutex_lock);
     INIT_LIST_HEAD(&master->clients);
 
+    idr_init(&master->device_idr);
+
     master->init_done = true;
     printk(KERN_INFO "PDM Master registered: %s\n", dev_name(&master->dev));
 
