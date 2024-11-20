@@ -13,12 +13,6 @@ $(MODULE_NAME)-objs := 	src/core/pdm_submodule.o \
 						src/template/pdm_template_i2c_driver.o
 
 
-# $(MODULE_NAME)-objs += 	src/lcd/pdm_lcd_master.o \
-						src/lcd/pdm_lcd_i2c_driver.o
-
-# $(MODULE_NAME)-objs += 	src/led/pdm_led_master.o \
-						src/led/pdm_led_gpio_driver.o
-
 # 添加头文件路径
 ccflags-y += 	-I$(src)/include
 

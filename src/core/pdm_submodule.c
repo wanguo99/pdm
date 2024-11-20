@@ -7,8 +7,6 @@
 #include "pdm_submodule.h"
 
 #include "pdm_template.h"
-#include "pdm_lcd.h"
-#include "pdm_led.h"
 
 struct list_head pdm_submodule_driver_list;           // 保存已经注册的驱动信息
 
@@ -20,16 +18,6 @@ static struct pdm_subdriver sub_drivers[] = {
     { .name = "template-master", .init = pdm_template_master_init, .exit = pdm_template_master_exit },
     { .name = "template-spi-driver", .init = pdm_template_i2c_driver_init, .exit = pdm_template_i2c_driver_exit },
 
-#if DEBUG_SUB_DRIVER_SWITCH
-
-    /* LCD master and device driver */
-    { .name = "lcd-master", .init = pdm_lcd_master_init, .exit = pdm_lcd_master_exit },
-    { .name = "lcd-i2c-driver", .init = pdm_lcd_i2c_driver_init, .exit = pdm_lcd_i2c_driver_exit },
-
-    /* LED master and device driver */
-    { .name = "led-master", .init = pdm_led_master_init, .exit = pdm_led_master_exit },
-    { .name = "led-i2c-driver", .init = pdm_led_gpio_driver_init, .exit = pdm_led_gpio_driver_exit },
-#endif
     {}
 };
 
