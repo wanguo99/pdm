@@ -31,17 +31,19 @@ int pdm_cpld_master_init(void)
 
     // 分配内存
     g_pstCpldMaster = kzalloc(sizeof(struct pdm_cpld_master), GFP_KERNEL);
-    if (!g_pstCpldMaster) {
+    if (!g_pstCpldMaster)
+    {
         printk(KERN_ERR "Memory allocation failed\n");
         return -ENOMEM;
     }
 
-    // 设置设备名称
+    // 设置master名称
     strcpy(g_pstCpldMaster->master.name, "cpld");
 
     // 注册主设备
     ret = pdm_master_register(&g_pstCpldMaster->master);
-    if (ret) {
+    if (ret)
+    {
         printk(KERN_ERR "CPLD Master register failed. ret: %d.\n", ret);
         kfree(g_pstCpldMaster);
         return ret;

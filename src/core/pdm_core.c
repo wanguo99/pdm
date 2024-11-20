@@ -233,7 +233,7 @@ static struct attribute *pdm_master_device_attrs[] = {
 ATTRIBUTE_GROUPS(pdm_master_device);
 
 static const struct device_type pdm_master_device_type = {
-	.groups	=pdm_master_device_groups,
+	.groups = pdm_master_device_groups,
 };
 
 static void pdm_master_device_release(struct device *dev)
@@ -290,6 +290,8 @@ static int pdm_master_add_cdev(struct pdm_master *master)
 
     // 注册到pdm_master_class
     device_create(&pdm_master_class, NULL, master->devno, NULL, "pdm_master_%s", master->name);
+
+    printk(KERN_INFO "Add char device for %s ok\n", dev_name(&master->dev));
 
     return 0;
 }
