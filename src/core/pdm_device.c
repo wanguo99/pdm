@@ -1,3 +1,5 @@
+#include <linux/slab.h>
+
 #include "pdm.h"
 
 /*                                                                              */
@@ -56,4 +58,109 @@ const struct device_type pdm_device_type = {
     .groups = pdm_device_groups,
     .uevent = pdm_device_uevent,
 };
+
+static void pdm_device_release(struct device *dev)
+{
+    kfree(dev);
+}
+
+struct pdm_device *pdm_device_alloc(struct pdm_master *master)
+{
+    struct pdm_device   *pdmdev;
+
+    pdmdev = kzalloc(sizeof(struct pdm_device), GFP_KERNEL);
+    if (!pdmdev) {
+        return NULL;
+    }
+
+    pdmdev->dev.type = &pdm_device_type;
+    pdmdev->dev.bus = &pdm_bus_type;
+    pdmdev->dev.release = pdm_device_release;
+
+    device_initialize(&pdmdev->dev);
+
+    return pdmdev;
+}
+
+void pdm_device_free(struct pdm_device *pdmdev)
+{
+    if (!pdmdev)
+        return;
+
+    kfree(pdmdev);
+}
+
+
+static int pdm_device_check(struct device *dev, void *data)
+{
+    struct pdm_device *new_dev = dev_to_pdmdev(dev);
+    struct pdm_device *on_bus_dev = data;
+
+    if (new_dev->master == on_bus_dev->master
+        && new_dev->id == on_bus_dev->id
+        && (!memcmp(new_dev->compatible, on_bus_dev->compatible, PDM_DEVICE_NAME_SIZE)))
+    {
+        // 根据device master、device id、device compatible唯一确定一个pdm_device
+        return -EBUSY;
+    }
+    return 0;
+}
+
+int pdm_device_register(struct pdm_device *pdmdev)
+{
+    struct pdm_master *master = pdmdev->master;
+    int status;
+    int id;
+
+    if (!master)
+    {
+        pr_err("pdm_device_alloc: master is NULL\n");
+        return -EINVAL;
+    }
+
+    if (!pdm_master_get(master))
+        return -EBUSY;
+
+    id = idr_alloc(&master->device_idr, pdmdev, 0, 0, GFP_KERNEL);
+    if (id < 0)
+    {
+        pr_err("pdm_device_alloc: idr_alloc failed, status %d\n", id);
+        pdm_master_put(pdmdev->master);
+        return id;
+    }
+
+    pdmdev->id = id;
+    status = bus_for_each_dev(&pdm_bus_type, NULL, pdmdev, pdm_device_check);
+    if (status) {
+        printk(KERN_ERR "Device %s already exist\n", dev_name(&pdmdev->dev));
+        idr_remove(&pdmdev->master->device_idr, pdmdev->id);
+        pdm_master_put(pdmdev->master);
+        return status;
+    }
+
+    pdmdev->dev.parent = &master->dev;
+    status = device_add(&pdmdev->dev);
+    if (status < 0)
+    {
+        printk(KERN_ERR "Can't add %s, status %d\n", dev_name(&pdmdev->dev), status);
+        idr_remove(&pdmdev->master->device_idr, pdmdev->id);
+        pdm_master_put(pdmdev->master);
+        return status;
+    }
+
+    printk(KERN_INFO "Registered device %s OK.\n", dev_name(&pdmdev->dev));
+    return 0;
+}
+
+void pdm_device_unregister(struct pdm_device *pdmdev)
+{
+    if (!pdmdev)
+        return;
+
+    pr_info("Device %s unregistered.\n", dev_name(&pdmdev->dev));
+    idr_remove(&pdmdev->master->device_idr, pdmdev->id);
+    device_del(&pdmdev->dev);
+    put_device(&pdmdev->dev);
+    pdm_master_put(pdmdev->master);
+}
 

@@ -284,7 +284,26 @@ void pdm_master_put(struct pdm_master *master)
         put_device(&master->dev);
 }
 
+int pdm_master_add_device(struct pdm_master *master, struct pdm_device *pdmdev)
+{
+    pdmdev->master = master;
 
+    mutex_lock(&master->client_list_mutex_lock);
+    list_add_tail(&pdmdev->node, &master->clients);
+    mutex_unlock(&master->client_list_mutex_lock);
+
+    return 0;
+}
+
+int pdm_master_delete_device(struct pdm_master *master, struct pdm_device *pdmdev)
+{
+    mutex_lock(&master->client_list_mutex_lock);
+    list_del(&pdmdev->node);
+    mutex_unlock(&master->client_list_mutex_lock);
+    pdmdev->master = NULL;
+
+    return 0;
+}
 
 
 int pdm_master_init(void)

@@ -12,28 +12,32 @@ static int pdm_cpld_i2c_probe(struct i2c_client *client, const struct i2c_device
 #else
 static int pdm_cpld_i2c_probe(struct i2c_client *client) {
 #endif
-    struct pdm_device *cpld_dev;
+    struct pdm_cpld_device *cpld_dev;
     int ret;
 
     printk(KERN_INFO "CPLD I2C Device probed\n");
 
-    ret = pdm_device_alloc(&cpld_dev);
-    if (ret) {
+    cpld_dev->pdmdev = pdm_device_alloc();
+    if (ret)
+    {
         return ret;
     }
 
-    cpld_dev->i2c_client = client;
-
-    // Initialize any CPLD-specific data here
-
-    // Register the device
-    ret = pdm_cpld_device_register(cpld_dev);
-    if (ret) {
-        pdm_cpld_device_free(cpld_dev);
+    cpld_dev->client.i2cdev = client;
+    ret = pdm_cpld_master_add_device(cpld_dev);
+    if (ret)
+    {
+        pdm_device_unregister(cpld_dev);
+        pdm_device_free(cpld_dev);
         return ret;
     }
 
-    pdm_device_register();
+    ret = pdm_device_register(&cpld_dev->pdmdev);
+    if (ret)
+    {
+        pdm_device_free(cpld_dev);
+        return ret;
+    }
 
     return 0;
 }
@@ -48,7 +52,7 @@ static void pdm_cpld_i2c_remove(struct i2c_client *client) {
     printk(KERN_INFO "CPLD I2C Device removed\n");
 
     pdm_cpld_device_unregister(cpld_dev);
-    pdm_cpld_device_free(cpld_dev);
+    pdm_device_free(cpld_dev);
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 0, 0)
     return 0;

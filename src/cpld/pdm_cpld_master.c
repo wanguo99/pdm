@@ -23,6 +23,16 @@ static long pdc_cpld_ioctl(struct file *filp, unsigned int cmd, unsigned long ar
     return 0;
 }
 
+int pdm_cpld_master_add_device(struct pdm_cpld_device *cpld_dev)
+{
+    return pdm_master_add_device(g_pstCpldMaster->master, cpld_dev->pdmdev);
+}
+
+int pdm_cpld_master_del_device(struct pdm_cpld_device *cpld_dev)
+{
+    return pdm_master_delete_device(g_pstCpldMaster->master, cpld_dev->pdmdev);
+}
+
 int pdm_cpld_master_init(void)
 {
 	int status = 0;

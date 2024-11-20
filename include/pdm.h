@@ -33,12 +33,13 @@ struct pdm_master {
     struct device dev;
     dev_t devno;
     struct cdev cdev;
-    struct file_operations fops;    // 每个master内部单独实现一套文件操作
-    struct idr device_idr;          // 给子设备分配ID使用
-    struct rw_semaphore rwlock;     // 读写锁, sysfs读写master属性时使用
-    unsigned int init_done : 1;     // 初始化标志
-    struct list_head node;          // bus挂载点
-    struct list_head clients;       // 子设备列表
+    struct file_operations fops;            // 每个master内部单独实现一套文件操作
+    struct idr device_idr;                  // 给子设备分配ID使用
+    struct rw_semaphore rwlock;             // 读写锁, sysfs读写master属性时使用
+    unsigned int init_done : 1;             // 初始化标志
+    struct list_head node;                  // bus挂载点
+    struct list_head clients;               // 子设备列表
+    struct mutex client_list_mutex_lock;    // 子设备列表锁
 };
 
 
@@ -68,14 +69,24 @@ static inline struct pdm_driver *drv_to_pdmdrv(struct device_driver *drv)
     return container_of(drv, struct pdm_driver, driver);
 }
 
-#define dev_to_pdmdev(__dev)    container_of(__dev, struct pdm_device, dev)
-#define dev_to_pdm_master(__dev) container_of(__dev, struct pdm_master, dev)
+
+
 const struct pdm_device_id *pdm_match_id(const struct pdm_device_id *id, struct pdm_device *pdmdev);
+
+/*
+    pdm_device
+*/
+#define dev_to_pdmdev(__dev)    container_of(__dev, struct pdm_device, dev)
+struct pdm_device *pdm_device_alloc(struct pdm_master *master);
+void pdm_device_free(struct pdm_device *pdmdev);
+void pdm_device_unregister(struct pdm_device *pdmdev);
 
 
 /*
     pdm_master
 */
+#define dev_to_pdm_master(__dev) container_of(__dev, struct pdm_master, dev)
+
 static inline void *pdm_master_get_devdata(struct pdm_master *master)
 {
     return dev_get_drvdata(&master->dev);
@@ -93,6 +104,8 @@ int  pdm_master_register(struct pdm_master *master);
 void pdm_master_unregister(struct pdm_master *master);
 int  pdm_master_init(void);
 void pdm_master_exit(void);
+int pdm_master_add_device(struct pdm_master *master, struct pdm_device *pdmdev);
+int pdm_master_delete_device(struct pdm_master *master, struct pdm_device *pdmdev);
 
 
 
