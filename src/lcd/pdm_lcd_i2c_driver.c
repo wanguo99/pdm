@@ -21,7 +21,7 @@ static int pdm_lcd_i2c_probe(struct i2c_client *client) {
         return ret;
     }
 
-    // Initialize any CPLD-specific data here
+    // Initialize any TEMPLATE-specific data here
     lcd_dev->i2c_client = client;
 
 
@@ -81,14 +81,14 @@ int pdm_lcd_i2c_driver_init(void) {
 
     ret = i2c_add_driver(&pdm_lcd_i2c_driver);
     if (ret) {
-        printk(KERN_ERR "Failed to register CPLD I2C driver\n");
+        printk(KERN_ERR "Failed to register TEMPLATE I2C driver\n");
     }
 
     return ret;
 }
 
 void pdm_lcd_i2c_driver_exit(void) {
-    printk(KERN_INFO "CPLD I2C Driver exited\n");
+    printk(KERN_INFO "TEMPLATE I2C Driver exited\n");
 
     i2c_del_driver(&pdm_lcd_i2c_driver);
 }

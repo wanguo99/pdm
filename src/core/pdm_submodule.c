@@ -6,7 +6,7 @@
 #include "pdm.h"
 #include "pdm_submodule.h"
 
-#include "pdm_cpld.h"
+#include "pdm_template.h"
 #include "pdm_lcd.h"
 #include "pdm_led.h"
 
@@ -16,9 +16,9 @@ struct list_head pdm_submodule_driver_list;           // 保存已经注册的�
 
 static struct pdm_subdriver sub_drivers[] = {
 
-    /* CPLD master and device driver */
-    { .name = "cpld-master", .init = pdm_cpld_master_init, .exit = pdm_cpld_master_exit },
-    { .name = "cpld-spi-driver", .init = pdm_cpld_i2c_driver_init, .exit = pdm_cpld_i2c_driver_exit },
+    /* TEMPLATE master and device driver */
+    { .name = "template-master", .init = pdm_template_master_init, .exit = pdm_template_master_exit },
+    { .name = "template-spi-driver", .init = pdm_template_i2c_driver_init, .exit = pdm_template_i2c_driver_exit },
 
 #if DEBUG_SUB_DRIVER_SWITCH
 

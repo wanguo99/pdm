@@ -8,7 +8,7 @@
 struct pdm_lcd_device {
     struct pdm_device *pdm_dev;
     struct i2c_client *i2c_client;
-    // Add any CPLD-specific data here
+    // Add any TEMPLATE-specific data here
 };
 
 // Device allocation and free functions

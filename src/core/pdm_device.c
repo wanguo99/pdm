@@ -16,7 +16,7 @@ static int pdm_device_uevent(const struct device *dev, struct kobj_uevent_env *e
     int id = pdmdev->id;
     const char *master_name = pdmdev->master ? pdmdev->master->name : "unknown";
 
-    // 生成 MODALIAS 字符串, 例如：[pdm:pdm_master_cpld:cpld_i2c:0001]
+    // 生成 MODALIAS 字符串, 例如：[pdm:pdm_master_template:template_i2c:0001]
     return add_uevent_var(env, "MODALIAS=pdm:pdm_master_%s:%s-%04X", master_name, compatible, id);
 }
 
