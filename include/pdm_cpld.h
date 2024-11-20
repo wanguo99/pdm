@@ -19,10 +19,14 @@ struct pdm_cpld_master {
 struct pdm_cpld_device {
     struct pdm_device *pdmdev;
     union {
-        struct i2c_client i2cdev;
-        struct spi_device spidev;
+        struct i2c_client *i2cdev;
+        struct spi_device *spidev;
     }client;
 };
+
+int pdm_cpld_master_add_device(struct pdm_cpld_device *cpld_dev);
+int pdm_cpld_master_del_device(struct pdm_cpld_device *cpld_dev);
+
 
 // Master initialization and exit functions
 int pdm_cpld_master_init(void);

@@ -79,6 +79,7 @@ const struct pdm_device_id *pdm_match_id(const struct pdm_device_id *id, struct 
 #define dev_to_pdmdev(__dev)    container_of(__dev, struct pdm_device, dev)
 struct pdm_device *pdm_device_alloc(void);
 void pdm_device_free(struct pdm_device *pdmdev);
+int pdm_device_register(struct pdm_device *pdmdev);
 void pdm_device_unregister(struct pdm_device *pdmdev);
 
 
@@ -119,5 +120,7 @@ extern struct bus_type             pdm_bus_type;
 extern const struct bus_type       pdm_bus_type;
 #endif
 
+// pdm bus device root
+extern struct device pdm_bus_root;
 
 #endif /* _PDM_H_ */

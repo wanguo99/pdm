@@ -106,7 +106,7 @@ static const struct device_type pdm_master_device_type = {
 static void pdm_master_dev_release(struct device *dev)
 {
     struct pdm_master *master = dev_to_pdm_master(dev);
-   printk(KERN_INFO "Master %s released.\n", dev_name(&master->dev));
+    printk(KERN_INFO "Master %s released.\n", dev_name(&master->dev));
     //WARN_ON(!list_empty(&master->clients));
     return;
 }
@@ -124,6 +124,21 @@ struct class pdm_master_class = {
     .dev_release    = pdm_master_class_dev_release,
 };
 
+
+static void pdm_master_class_cdev_release(struct device *dev)
+{
+#if 1
+    struct pdm_master *master;
+    master = dev_to_pdm_master(dev);
+    kfree(master);
+#endif
+    return;
+}
+
+struct class pdm_master_cdev_class = {
+    .name       = "pdm_master_cdev",
+    .dev_release    = pdm_master_class_cdev_release,
+};
 
 static int pdm_master_add_cdev(struct pdm_master *master)
 {
@@ -155,7 +170,7 @@ static int pdm_master_add_cdev(struct pdm_master *master)
     }
 
     // 注册到pdm_master_class
-    device_create(&pdm_master_class, NULL, master->devno, NULL, "pdm_master_%s", master->name);
+    device_create(&pdm_master_cdev_class, NULL, master->devno, NULL, "pdm_master_%s", master->name);
 
     printk(KERN_INFO "Add char device for %s ok\n", dev_name(&master->dev));
 
@@ -165,7 +180,7 @@ static int pdm_master_add_cdev(struct pdm_master *master)
 // 卸载字符设备
 static void pdm_master_delete_cdev(struct pdm_master *master)
 {
-    device_destroy(&pdm_master_class, master->devno);
+    device_destroy(&pdm_master_cdev_class, master->devno);
     cdev_del(&master->cdev);
     unregister_chrdev_region(master->devno, 1);
 }
@@ -192,9 +207,10 @@ int pdm_master_register(struct pdm_master *master)
     }
     mutex_unlock(&pdm_master_list_mutex_lock);
 
-    master->dev.bus = &pdm_bus_type;
+    // master->dev.bus = &pdm_bus_type;
     master->dev.type = &pdm_master_device_type;
     master->dev.class = &pdm_master_class;
+    master->dev.parent = &pdm_bus_root;
     master->dev.release = pdm_master_dev_release;
     dev_set_name(&master->dev, "pdm_master_%s", master->name);
 
@@ -265,7 +281,6 @@ struct pdm_master *pdm_master_alloc(unsigned int size)
 
     device_initialize(&master->dev);
     master->dev.class = &pdm_master_class;
-    master->dev.parent = pdm_bus_type.dev_root;
     pdm_master_set_devdata(master, (void *)master + master_size);
 
     return master;
@@ -319,12 +334,23 @@ int pdm_master_init(void)
         return iRet;
     }
 
+    iRet = class_register(&pdm_master_cdev_class);
+    if (iRet < 0) {
+        pr_err("PDM: Failed to register class\n");
+        class_destroy(&pdm_master_class);
+        return iRet;
+    }
+
     return 0;
 }
 
 void pdm_master_exit(void)
 {
+    class_unregister(&pdm_master_cdev_class);
+    //class_destroy(&pdm_master_cdev_class);
+
     class_unregister(&pdm_master_class);
+    //class_destroy(&pdm_master_class);
     return;
 }
 

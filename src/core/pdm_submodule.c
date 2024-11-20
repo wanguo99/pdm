@@ -18,9 +18,9 @@ static struct pdm_subdriver sub_drivers[] = {
 
     /* CPLD master and device driver */
     { .name = "cpld-master", .init = pdm_cpld_master_init, .exit = pdm_cpld_master_exit },
+    { .name = "cpld-spi-driver", .init = pdm_cpld_i2c_driver_init, .exit = pdm_cpld_i2c_driver_exit },
 
 #if DEBUG_SUB_DRIVER_SWITCH
-    { .name = "cpld-spi-driver", .init = pdm_cpld_spi_driver_init, .exit = pdm_cpld_spi_driver_exit },
 
     /* LCD master and device driver */
     { .name = "lcd-master", .init = pdm_lcd_master_init, .exit = pdm_lcd_master_exit },

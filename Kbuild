@@ -10,7 +10,7 @@ $(MODULE_NAME)-objs := 	src/core/pdm_submodule.o \
 
 
  $(MODULE_NAME)-objs += 	src/cpld/pdm_cpld_master.o \
-#						src/cpld/pdm_cpld_i2c_driver.o
+						src/cpld/pdm_cpld_i2c_driver.o
 
 
 # $(MODULE_NAME)-objs += 	src/lcd/pdm_lcd_master.o \
