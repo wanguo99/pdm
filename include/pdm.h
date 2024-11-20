@@ -13,7 +13,6 @@
 /*                                                                              */
 
 extern const  struct device_type pdm_device_type;
-extern const  struct bus_type pdm_bus_type;
 
 /*                                                                              */
 /*                                公共数据类型定义                                      */
@@ -64,7 +63,7 @@ static inline struct pdm_driver *drv_to_pdmdrv(struct device_driver *drv)
 	return container_of(drv, struct pdm_driver, driver);
 }
 
-#define dev_to_pdmdev(__dev)	container_of_const(__dev, struct pdm_device, dev)
+#define dev_to_pdmdev(__dev)	container_of(__dev, struct pdm_device, dev)
 #define dev_to_pdm_master(__dev) container_of(__dev, struct pdm_master, dev)
 
 

@@ -12,12 +12,12 @@ static int pdm_cpld_i2c_probe(struct i2c_client *client, const struct i2c_device
 #else
 static int pdm_cpld_i2c_probe(struct i2c_client *client) {
 #endif
-    struct pdm_cpld_device *cpld_dev;
+    struct pdm_device *cpld_dev;
     int ret;
 
     printk(KERN_INFO "CPLD I2C Device probed\n");
 
-    ret = pdm_cpld_device_alloc(&cpld_dev);
+    ret = pdm_device_alloc(&cpld_dev);
     if (ret) {
         return ret;
     }
@@ -33,7 +33,7 @@ static int pdm_cpld_i2c_probe(struct i2c_client *client) {
         return ret;
     }
 
-    i2c_set_clientdata(client, cpld_dev);
+    pdm_device_register();
 
     return 0;
 }

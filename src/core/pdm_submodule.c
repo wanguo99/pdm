@@ -20,15 +20,15 @@ static struct pdm_subdriver sub_drivers[] = {
     { .name = "cpld-master", .init = pdm_cpld_master_init, .exit = pdm_cpld_master_exit },
 
 #if DEBUG_SUB_DRIVER_SWITCH
-    { .name = "cpld-spi-device", .init = pdm_cpld_spi_driver_init, .exit = pdm_cpld_spi_driver_exit },
+    { .name = "cpld-spi-driver", .init = pdm_cpld_spi_driver_init, .exit = pdm_cpld_spi_driver_exit },
 
     /* LCD master and device driver */
     { .name = "lcd-master", .init = pdm_lcd_master_init, .exit = pdm_lcd_master_exit },
-    { .name = "lcd-i2c-device", .init = pdm_lcd_i2c_driver_init, .exit = pdm_lcd_i2c_driver_exit },
+    { .name = "lcd-i2c-driver", .init = pdm_lcd_i2c_driver_init, .exit = pdm_lcd_i2c_driver_exit },
 
     /* LED master and device driver */
     { .name = "led-master", .init = pdm_led_master_init, .exit = pdm_led_master_exit },
-    { .name = "led-i2c-device", .init = pdm_led_gpio_driver_init, .exit = pdm_led_gpio_driver_exit },
+    { .name = "led-i2c-driver", .init = pdm_led_gpio_driver_init, .exit = pdm_led_gpio_driver_exit },
 #endif
     {}
 };

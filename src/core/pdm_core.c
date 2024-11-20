@@ -17,7 +17,11 @@
 /*                                                                              */
 /*                         pdm_device_type                                      */
 /*                                                                              */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 0)
+static int pdm_device_uevent(struct device *dev, struct kobj_uevent_env *env)
+#else
 static int pdm_device_uevent(const struct device *dev, struct kobj_uevent_env *env)
+#endif
 {
     const struct pdm_device *pdmdev = dev_to_pdmdev(dev);
     const char *compatible = pdmdev->compatible;
@@ -87,7 +91,7 @@ const struct pdm_device_id *pdm_match_id(const struct pdm_device_id *id, struct 
 EXPORT_SYMBOL_GPL(pdm_match_id);
 
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 0)
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(5, 15, 0)
 static int pdm_device_match(struct device *dev, const struct device_driver *drv) {
 #else
 static int pdm_device_match(struct device *dev, struct device_driver *drv) {
@@ -130,8 +134,11 @@ static void pdm_device_remove(struct device *dev)
 		driver->remove(pdmdev);
 }
 
-
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
+struct bus_type pdm_bus_type = {
+#else
 const struct bus_type pdm_bus_type = {
+#endif
     .name = "pdm",
     .match = pdm_device_match,
     .probe = pdm_device_probe,      // i3c_device_probe i2c_device_remove
