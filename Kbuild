@@ -4,7 +4,9 @@ obj-m := $(MODULE_NAME).o
 
 # 定义要编译的目标模块对象文件
 $(MODULE_NAME)-objs := 	src/core/pdm_submodule.o \
-						src/core/pdm_core.o
+						src/core/pdm_core.o \
+						src/core/pdm_master.o \
+						src/core/pdm_device.o
 
 
  $(MODULE_NAME)-objs += 	src/cpld/pdm_cpld_master.o \

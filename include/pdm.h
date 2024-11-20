@@ -5,6 +5,7 @@
 #include <linux/fs.h>
 #include <linux/idr.h>
 #include <linux/mod_devicetable.h>
+#include <linux/version.h>
 
 
 
@@ -69,12 +70,50 @@ static inline struct pdm_driver *drv_to_pdmdrv(struct device_driver *drv)
 
 const struct pdm_device_id *pdm_match_id(const struct pdm_device_id *id, struct pdm_device *pdmdev);
 
+
+
+
+static inline void *pdm_master_get_devdata(struct pdm_master *master)
+{
+	return dev_get_drvdata(&master->dev);
+}
+
+static inline void pdm_master_set_devdata(struct pdm_master *master, void *data)
+{
+	dev_set_drvdata(&master->dev, data);
+}
+
+// 申请一段连续内存，保存master的公共数据和私有数据
+struct pdm_master *pdm_master_alloc(unsigned int size);
+
+
+struct pdm_master *pdm_master_get(struct pdm_master *master);
+
+void pdm_master_put(struct pdm_master *master);
+
 int pdm_master_register(struct pdm_master *master);
 void pdm_master_unregister(struct pdm_master *master);
+int pdm_master_init(void);
+void pdm_master_exit(void);
 
 
 /*                                                                              */
 /*                              私有公共数据类型定义                                      */
 /*                                                                              */
+
+/*                                                                              */
+/*                                全局变量声明                                        */
+/*                                                                              */
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
+extern struct bus_type             pdm_bus_type;
+#else
+extern const struct bus_type       pdm_bus_type;
+#endif
+
+#if 0
+extern struct class         pdm_master_class;
+extern const struct device_type    pdm_device_type;
+#endif
 
 #endif /* _PDM_H_ */

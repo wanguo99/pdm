@@ -7,7 +7,7 @@
 
 
 struct pdm_cpld_master {
-    struct pdm_master master;
+    struct pdm_master *master;
 };
 
 

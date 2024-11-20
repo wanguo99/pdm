@@ -25,32 +25,50 @@ static long pdc_cpld_ioctl(struct file *filp, unsigned int cmd, unsigned long ar
 
 int pdm_cpld_master_init(void)
 {
-    int iRet;
+	int status = 0;
+	struct pdm_master *master;
 
-    g_pstCpldMaster = kzalloc(sizeof(struct pdm_cpld_master), GFP_KERNEL);
-    if (!g_pstCpldMaster)
+	master = pdm_master_alloc(sizeof(struct pdm_cpld_master));  // 申请pdm_master和私有数据内存
+	if (master == NULL)
+	{
+		printk(KERN_ERR "master allocation failed\n");
+		return -ENOMEM;
+	}
+
+	g_pstCpldMaster = pdm_master_get_devdata(master);   // 获取pdm_master私有数据
+    if (status < 0)
     {
-        printk(KERN_ERR "Memory allocation failed\n");
-        return -ENOMEM;
+        printk(KERN_ERR "pdm_master_get_devdata failed.\n");
+		goto err_master_put;
     }
+
+	g_pstCpldMaster->master = pdm_master_get(master);   // 引用计数加一
+    if (status < 0)
+    {
+        printk(KERN_ERR "pdm_master_get failed.\n");
+		goto err_master_put;
+    }
+
 
     // 设置master名称
-    strcpy(g_pstCpldMaster->master.name, "cpld");
-    iRet = pdm_master_register(&g_pstCpldMaster->master);
-    if (iRet)
-    {
-        printk(KERN_ERR "CPLD Master register failed. ret: %d.\n", iRet);
-        kfree(g_pstCpldMaster);
-        return iRet;
-    }
+    strcpy(g_pstCpldMaster->master->name, "cpld");
+	status = pdm_master_register(master);           // 注册pdm_master
+	if (status < 0)
+	{
+        printk(KERN_ERR "pdm_master_register failed.\n");
+        goto err_master_put;
+	}
 
-    g_pstCpldMaster->master.fops.unlocked_ioctl = pdc_cpld_ioctl;
-
+    g_pstCpldMaster->master->fops.unlocked_ioctl = pdc_cpld_ioctl;
     printk(KERN_INFO "CPLD Master initialized OK.\n");
 
     return 0;
-}
 
+err_master_put:
+    pdm_master_put(g_pstCpldMaster->master);
+
+	return status;
+}
 
 void pdm_cpld_master_exit(void)
 {
@@ -59,10 +77,8 @@ void pdm_cpld_master_exit(void)
         printk(KERN_ERR "CPLD Master exit called with g_pstCpldMaster as NULL\n");
         return;
     }
-
-    pdm_master_unregister(&g_pstCpldMaster->master);
-    kfree(g_pstCpldMaster);
-    g_pstCpldMaster = NULL;  // 防止悬挂指针
+    pdm_master_unregister(g_pstCpldMaster->master);
+    pdm_master_put(g_pstCpldMaster->master);
     printk(KERN_INFO "CPLD Master exited\n");
 }
 
