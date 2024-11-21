@@ -3,8 +3,8 @@
 
 #include "pdm.h"
 
-struct list_head     pdm_master_list;
-struct mutex         pdm_master_list_mutex_lock;
+static LIST_HEAD(pdm_master_list);
+static DEFINE_MUTEX(pdm_master_list_mutex_lock);
 
 
 /*                                                                              */
@@ -14,67 +14,34 @@ struct mutex         pdm_master_list_mutex_lock;
 /*
     pdm_master->file_operations
 */
-#if 0
-static struct pdm_master *inode_to_pdm_master(struct inode *inode)
-{
-    struct pdm_master *master;
-    struct device *dev;
-    struct cdev *cdev;
-
-    cdev = inode->i_cdev;
-    if (!cdev) {
-        osa_error("Failed to get cdev from inode\n");
-        return NULL;
-    }
-
-    dev = container_of(&cdev->kobj, struct device, kobj);
-    if (!dev) {
-        osa_error("Failed to get device from cdev\n");
-        return NULL;
-    }
-
-    master = dev_to_pdm_master(dev);
-    if (!master) {
-        osa_error("Failed to convert device to pdm_master\n");
-        return NULL;
-    }
-    return master;
-}
-#endif
 
 static int pdm_master_fops_open_default(struct inode *inode, struct file *filp)
 {
-    // struct pdm_master *master = inode_to_pdm_master(inode);
-    // filp->private_data = master;
-    osa_error("[WANGUO] (%s:%d) \n", __func__, __LINE__);
+    osa_info("Open function called.\n");
     return 0;
 }
 
 static int pdm_master_fops_release_default(struct inode *inode, struct file *filp)
 {
-    // struct pdm_master *master = filp->private_data;
-    osa_error("[WANGUO] (%s:%d) \n", __func__, __LINE__);
+    osa_info("Release function called.\n");
     return 0;
 }
 
 static ssize_t pdm_master_fops_read_default(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
 {
-    // struct pdm_master *master = filp->private_data;
-    osa_error("[WANGUO] (%s:%d) \n", __func__, __LINE__);
+    osa_info("Read function called.\n");
     return 0;
 }
 
 static ssize_t pdm_master_fops_write_default(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
 {
-    // struct pdm_master *master = filp->private_data;
-    osa_error("[WANGUO] (%s:%d) \n", __func__, __LINE__);
+    osa_info("Write function called.\n");
     return 0;
 }
 
 static long pdm_master_fops_unlocked_ioctl_default(struct file *filp, unsigned int cmd, unsigned long arg)
 {
-    // struct pdm_master *master = filp->private_data;
-    osa_info("Master do not support ioctl operations.\n");
+    osa_info("Master does not support ioctl operations.\n");
     return -ENOTSUPP;
 }
 
@@ -111,49 +78,30 @@ static void pdm_master_dev_release(struct device *dev)
     struct pdm_master *master = dev_to_pdm_master(dev);
 
     osa_info("Master %s released.\n", dev_name(&master->dev));
-
-    WARN_ON(!list_empty(&master->clients));
-    kfree(dev);
-
-    return;
-}
-
-
-static void pdm_master_class_dev_release(struct device *dev)
-{
-    struct pdm_master *master;
-    master = dev_to_pdm_master(dev);
-    if (master)
-    {
-        kfree(master);
-    }
+    kfree(master);
 }
 
 struct class pdm_master_class = {
-    .name       = "pdm_master",
-    .dev_release    = pdm_master_class_dev_release,
+    .name = "pdm_master",
+    .dev_release = pdm_master_dev_release,
 };
-
 
 static int pdm_master_add_cdev(struct pdm_master *master)
 {
     int ret;
 
-    // 分配设备号
     ret = alloc_chrdev_region(&master->devno, 0, 1, dev_name(&master->dev));
     if (ret < 0) {
         osa_error("Failed to allocate char device region for %s, error: %d.\n", dev_name(&master->dev), ret);
         return ret;
     }
 
-    // 初始化默认文件操作句柄，在master注册后，可以动态修改为实际的操作句柄
     master->fops.open = pdm_master_fops_open_default;
     master->fops.release = pdm_master_fops_release_default;
     master->fops.read = pdm_master_fops_read_default;
     master->fops.write = pdm_master_fops_write_default;
     master->fops.unlocked_ioctl = pdm_master_fops_unlocked_ioctl_default;
 
-    // 初始化字符设备
     cdev_init(&master->cdev, &master->fops);
     master->cdev.owner = THIS_MODULE;
     ret = cdev_add(&master->cdev, master->devno, 1);
@@ -163,15 +111,18 @@ static int pdm_master_add_cdev(struct pdm_master *master)
         return ret;
     }
 
-    // 注册到pdm_master_class
-    device_create(&pdm_master_class, NULL, master->devno, NULL, "pdm_master_%s_cdev", master->name);
+    if (!device_create(&pdm_master_class, NULL, master->devno, NULL, "pdm_master_%s_cdev", master->name)) {
+        cdev_del(&master->cdev);
+        unregister_chrdev_region(master->devno, 1);
+        osa_error("Failed to create device for %s.\n", master->name);
+        return -ENOMEM;
+    }
 
     osa_info("Add cdev for %s ok.\n", dev_name(&master->dev));
 
     return 0;
 }
 
-// 卸载字符设备
 static void pdm_master_delete_cdev(struct pdm_master *master)
 {
     device_destroy(&pdm_master_class, master->devno);
@@ -189,30 +140,49 @@ void pdm_master_set_devdata(struct pdm_master *master, void *data)
     dev_set_drvdata(&master->dev, data);
 }
 
+struct pdm_master *pdm_master_get(struct pdm_master *master)
+{
+    if (!master || !get_device(&master->dev))
+        return NULL;
+    return master;
+}
+
+void pdm_master_put(struct pdm_master *master)
+{
+    if (master) {
+        osa_info("DEVICE_REF_COUNT: %d", DEVICE_REF_COUNT(&master->dev));
+        put_device(&master->dev);
+        osa_info("DEVICE_REF_COUNT: %d", DEVICE_REF_COUNT(&master->dev));
+    }
+}
+
 struct pdm_master *pdm_master_alloc(unsigned int data_size)
 {
-    struct pdm_master   *master;
+    struct pdm_master *master;
     size_t master_size = sizeof(struct pdm_master);
 
     master = kzalloc(master_size + data_size, GFP_KERNEL);
     if (!master)
         return NULL;
 
-    device_initialize(&master->dev);
-    master->dev.class = &pdm_master_class;
+    osa_info("DEVICE_REF_COUNT: %d", DEVICE_REF_COUNT(&master->dev));
 
+    device_initialize(&master->dev);
+    master->dev.release = pdm_master_dev_release;
     pdm_master_set_devdata(master, (void *)master + master_size);
+
+    osa_info("DEVICE_REF_COUNT: %d", DEVICE_REF_COUNT(&master->dev));
 
     return master;
 }
 
-
 void pdm_master_free(struct pdm_master *master)
 {
-    if (!master)
-        return;
-
-    kfree(master);
+    if (master) {
+        osa_info("DEVICE_REF_COUNT: %d", DEVICE_REF_COUNT(&master->dev));
+        pdm_master_put(master);
+        osa_info("DEVICE_REF_COUNT: %d", DEVICE_REF_COUNT(&master->dev));
+    }
 }
 
 int pdm_master_register(struct pdm_master *master)
@@ -225,65 +195,72 @@ int pdm_master_register(struct pdm_master *master)
         return -EINVAL;
     }
 
+    if (!pdm_master_get(master))
+        return -EBUSY;
+
+    osa_info("DEVICE_REF_COUNT: %d", DEVICE_REF_COUNT(&master->dev));
+
     mutex_lock(&pdm_master_list_mutex_lock);
-    list_for_each_entry(existing_master, &pdm_master_list, node)
-    {
-        if (!strcmp(existing_master->name, master->name))
-        {
-            osa_error("Master name already exists: %s.\n", master->name);
+    list_for_each_entry(existing_master, &pdm_master_list, node) {
+        if (!strcmp(existing_master->name, master->name)) {
+            osa_error("Master already exists: %s.\n", master->name);
             mutex_unlock(&pdm_master_list_mutex_lock);
-            return -EEXIST;
+            ret = -EEXIST;
+            goto err_device_put;
         }
     }
     mutex_unlock(&pdm_master_list_mutex_lock);
 
     master->dev.type = &pdm_master_device_type;
     master->dev.class = &pdm_master_class;
-    master->dev.release = pdm_master_dev_release;
     dev_set_name(&master->dev, "pdm_master_%s", master->name);
+
+    osa_info("DEVICE_REF_COUNT: %d", DEVICE_REF_COUNT(&master->dev));
     ret = device_add(&master->dev);
     if (ret) {
         osa_error("Failed to add device: %s, error: %d.\n", dev_name(&master->dev), ret);
-        goto err_put_device;
+        goto err_device_put;
     }
+    osa_info("DEVICE_REF_COUNT: %d", DEVICE_REF_COUNT(&master->dev));
 
     ret = pdm_master_add_cdev(master);
     if (ret) {
-        osa_error("Failed to pdm_master_add_cdev, error: %d.\n", ret);
-        goto err_del_device;
+        osa_error("Failed to add cdev, error: %d.\n", ret);
+        goto err_device_unregister;
     }
-
-    mutex_init(&master->client_list_mutex_lock);
-    INIT_LIST_HEAD(&master->clients);
-
-    idr_init(&master->device_idr);
 
     mutex_lock(&pdm_master_list_mutex_lock);
     list_add_tail(&master->node, &pdm_master_list);
     mutex_unlock(&pdm_master_list_mutex_lock);
 
+    idr_init(&master->device_idr);
+
     master->init_done = true;
     osa_info("PDM Master Registered: %s.\n", dev_name(&master->dev));
+    osa_info("DEVICE_REF_COUNT: %d", DEVICE_REF_COUNT(&master->dev));
 
     return 0;
 
-err_del_device:
-    device_del(&master->dev);
+err_device_unregister:
+    device_unregister(&master->dev);
 
-err_put_device:
-    put_device(&master->dev);
-
+err_device_put:
+    pdm_master_put(master);
     return ret;
 }
 
-
 void pdm_master_unregister(struct pdm_master *master)
 {
-    if (NULL == master)
-    {
+    if (NULL == master) {
         osa_error("pdm_master_unregister: master is NULL\n");
         return;
     }
+
+    osa_info("DEVICE_REF_COUNT: %d", DEVICE_REF_COUNT(&master->dev));
+
+    mutex_lock(&master->client_list_mutex_lock);
+    WARN_ONCE(!list_empty(&master->clients), "Not all clients removed.");
+    mutex_unlock(&master->client_list_mutex_lock);
 
     master->init_done = false;
 
@@ -293,28 +270,22 @@ void pdm_master_unregister(struct pdm_master *master)
 
     idr_destroy(&master->device_idr);
     pdm_master_delete_cdev(master);
+
+    osa_info("DEVICE_REF_COUNT: %d", DEVICE_REF_COUNT(&master->dev));
     device_unregister(&master->dev);
-
     osa_info("PDM Master unregistered: %s.\n", dev_name(&master->dev));
-}
-
-
-
-struct pdm_master *pdm_master_get(struct pdm_master *master)
-{
-    if (!master || !get_device(&master->dev))
-        return NULL;
-    return master;
-}
-
-void pdm_master_put(struct pdm_master *master)
-{
-    if (master)
-        put_device(&master->dev);
 }
 
 int pdm_master_add_device(struct pdm_master *master, struct pdm_device *pdmdev)
 {
+    if (master)
+    {
+        printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
+    }
+    if (pdmdev)
+    {
+        printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
+    }
     pdmdev->master = master;
     mutex_lock(&master->client_list_mutex_lock);
     list_add_tail(&pdmdev->node, &master->clients);
@@ -332,37 +303,29 @@ int pdm_master_delete_device(struct pdm_master *master, struct pdm_device *pdmde
     return 0;
 }
 
-
-// 遍历master，查找real_device对应的pdm_device
 struct pdm_device *pdm_master_get_pdmdev_of_real_device(struct pdm_master *master, void *real_device)
 {
     struct pdm_device *existing_pdmdev;
 
     mutex_lock(&master->client_list_mutex_lock);
-    list_for_each_entry(existing_pdmdev, &master->clients, node)
-    {
-        if (existing_pdmdev->real_device == real_device)
-        {
+    list_for_each_entry(existing_pdmdev, &master->clients, node) {
+        if (existing_pdmdev->real_device == real_device) {
             mutex_unlock(&master->client_list_mutex_lock);
             return existing_pdmdev;
         }
     }
+    mutex_unlock(&master->client_list_mutex_lock);
 
-    osa_error("%s:%d:[%s] Failed \n", __FILE__, __LINE__, __func__);
+    osa_error("Failed to find device for real_device at %p.\n", real_device);
     return NULL;
 }
 
 int pdm_master_init(void)
 {
-    int iRet = 0;
-
-    mutex_init(&pdm_master_list_mutex_lock);
-    INIT_LIST_HEAD(&pdm_master_list);
-
-    iRet = class_register(&pdm_master_class);
-    if (iRet < 0) {
+    int ret = class_register(&pdm_master_class);
+    if (ret < 0) {
         osa_error("PDM: Failed to register class\n");
-        return iRet;
+        return ret;
     }
     osa_info("Register PDM Master Class.\n");
 
@@ -372,6 +335,5 @@ int pdm_master_init(void)
 void pdm_master_exit(void)
 {
     class_unregister(&pdm_master_class);
-    return;
+    osa_info("Unregister PDM Master Class.\n");
 }
-

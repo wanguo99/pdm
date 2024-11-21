@@ -10,6 +10,9 @@
 #include <linux/string.h>  // 包含字符串处理函数
 
 
+#define DEVICE_REF_COUNT(dev) (kref_read(&(dev)->kobj.kref))
+
+
 /*                                                                              */
 /*                                公共日志打印接口                                      */
 /*                                                                              */

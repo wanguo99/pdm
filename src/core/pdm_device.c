@@ -5,6 +5,7 @@
 /*                                                                              */
 /*                         pdm_device_type                                      */
 /*                                                                              */
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 0)
 static int pdm_device_uevent(struct device *dev, struct kobj_uevent_env *env)
 #else
@@ -23,14 +24,14 @@ static int pdm_device_uevent(const struct device *dev, struct kobj_uevent_env *e
 static ssize_t id_show(struct device *dev, struct device_attribute *da, char *buf)
 {
     const struct pdm_device *pdmdev = dev_to_pdmdev(dev);
-    return sprintf(buf, "%d\n", pdmdev->id);
+    return sysfs_emit(buf, "%d\n", pdmdev->id);
 }
 static DEVICE_ATTR_RO(id);
 
 static ssize_t compatible_show(struct device *dev, struct device_attribute *da, char *buf)
 {
     const struct pdm_device *pdmdev = dev_to_pdmdev(dev);
-    return sprintf(buf, "%s\n", pdmdev->compatible);
+    return sysfs_emit(buf, "%s\n", pdmdev->compatible);
 }
 static DEVICE_ATTR_RO(compatible);
 
@@ -38,7 +39,7 @@ static ssize_t master_name_show(struct device *dev, struct device_attribute *da,
 {
     const struct pdm_device *pdmdev = dev_to_pdmdev(dev);
     const char *master_name = pdmdev->master ? pdmdev->master->name : "unknown";
-    return sprintf(buf, "%s\n", master_name);
+    return sysfs_emit(buf, "%s\n", master_name);
 }
 static DEVICE_ATTR_RO(master_name);
 
@@ -61,7 +62,8 @@ const struct device_type pdm_device_type = {
 
 static void pdm_device_release(struct device *dev)
 {
-    kfree(dev);
+    struct pdm_device *pdmdev = dev_to_pdmdev(dev);
+    kfree(pdmdev);
 }
 
 void *pdm_device_get_devdata(struct pdm_device *pdmdev)
@@ -76,7 +78,7 @@ void pdm_device_set_devdata(struct pdm_device *pdmdev, void *data)
 
 struct pdm_device *pdm_device_alloc(unsigned int data_size)
 {
-    struct pdm_device   *pdmdev;
+    struct pdm_device *pdmdev;
     size_t pdmdev_size = sizeof(struct pdm_device);
 
     pdmdev = kzalloc(pdmdev_size + data_size, GFP_KERNEL);
@@ -84,7 +86,6 @@ struct pdm_device *pdm_device_alloc(unsigned int data_size)
         return NULL;
 
     device_initialize(&pdmdev->dev);
-
     pdmdev->dev.type = &pdm_device_type;
     pdmdev->dev.bus = &pdm_bus_type;
     pdmdev->dev.release = pdm_device_release;
@@ -99,7 +100,7 @@ void pdm_device_free(struct pdm_device *pdmdev)
     if (!pdmdev)
         return;
 
-    kfree(pdmdev);
+    put_device(&pdmdev->dev);
 }
 
 
@@ -110,7 +111,7 @@ static int pdm_device_check(struct device *dev, void *data)
 
     if ((new_dev->master == on_bus_dev->master)
         && (new_dev->id == on_bus_dev->id)
-        && (new_dev->compatible != on_bus_dev->compatible))
+        && strcmp(new_dev->compatible, on_bus_dev->compatible) != 0) // Use strcmp for string comparison
     {
         // 根据device master、device id、device compatible唯一确定一个pdm_device
         return -EBUSY;
@@ -126,7 +127,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
 
     if (!master)
     {
-        osa_error("pdm_device_alloc: master is NULL\n");
+        osa_error("pdm_device_register: master is NULL\n");
         return -EINVAL;
     }
 
@@ -136,7 +137,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
     id = idr_alloc(&master->device_idr, pdmdev, 0, 0, GFP_KERNEL);
     if (id < 0)
     {
-        osa_error("pdm_device_alloc: idr_alloc failed, status %d\n", id);
+        osa_error("pdm_device_register: idr_alloc failed, status %d\n", id);
         pdm_master_put(pdmdev->master);
         return id;
     }
@@ -144,9 +145,9 @@ int pdm_device_register(struct pdm_device *pdmdev)
     pdmdev->id = id;
     status = bus_for_each_dev(&pdm_bus_type, NULL, pdmdev, pdm_device_check);
     if (status) {
-        osa_error("Device %s already exist\n", dev_name(&pdmdev->dev));
-        pdm_master_put(pdmdev->master);
-        idr_remove(&pdmdev->master->device_idr, pdmdev->id);
+        osa_error("Device %s already exists\n", dev_name(&pdmdev->dev));
+        idr_remove(&master->device_idr, pdmdev->id);
+        pdm_master_put(master);
         return status;
     }
 
@@ -157,13 +158,12 @@ int pdm_device_register(struct pdm_device *pdmdev)
     if (status < 0)
     {
         osa_error("Can't add %s, status %d\n", dev_name(&pdmdev->dev), status);
-        pdm_master_put(pdmdev->master);
-        idr_remove(&pdmdev->master->device_idr, pdmdev->id);
+        idr_remove(&master->device_idr, pdmdev->id);
+        pdm_master_put(master);
         return status;
     }
 
     osa_info("Device %s registered.\n", dev_name(&pdmdev->dev));
-
     return 0;
 }
 
@@ -172,9 +172,8 @@ void pdm_device_unregister(struct pdm_device *pdmdev)
     if (!pdmdev)
         return;
 
-    osa_info("Device %s unregistered.\n", dev_name(&pdmdev->dev));
-    pdm_master_put(pdmdev->master);
     device_unregister(&pdmdev->dev);
     idr_remove(&pdmdev->master->device_idr, pdmdev->id);
+    pdm_master_put(pdmdev->master);
+    osa_info("Device %s unregistered.\n", dev_name(&pdmdev->dev));
 }
-
