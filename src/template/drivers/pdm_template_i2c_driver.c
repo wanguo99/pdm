@@ -73,16 +73,9 @@ static void pdm_template_i2c_remove(struct i2c_client *client) {
         return;
     }
 
-    printk(KERN_ERR "%s:%d:[%s]  \n", __FILE__, __LINE__, __func__);
     pdm_device_unregister(pdmdev);
-
-    printk(KERN_ERR "%s:%d:[%s]  pdmdev: %p\n", __FILE__, __LINE__, __func__, pdmdev);
     pdm_template_master_del_device(pdmdev);
-
-    printk(KERN_ERR "%s:%d:[%s]  \n", __FILE__, __LINE__, __func__);
     pdm_device_free(pdmdev);
-
-    printk(KERN_ERR "%s:%d:[%s]  \n", __FILE__, __LINE__, __func__);
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 0, 0)
     return 0;

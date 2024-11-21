@@ -68,11 +68,19 @@ static int pdm_device_probe(struct device *dev)
 
 static void pdm_device_remove(struct device *dev)
 {
+    if (NULL == dev){
+        return;
+    }
+
     struct pdm_device *pdmdev = dev_to_pdmdev(dev);
     struct pdm_driver *driver = drv_to_pdmdrv(dev->driver);
 
-    if (driver->remove)
-        driver->remove(pdmdev);
+    if ((NULL == driver) || (NULL == pdmdev) || (NULL == driver->remove)){
+        return;
+    }
+
+    driver->remove(pdmdev);
+    return;
 }
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
@@ -139,16 +147,12 @@ static void __exit pdm_exit(void)
         debugfs_remove_recursive(pdm_debugfs_root);
     }
 
-    printk(KERN_ERR "%s:%d:[%s]  \n", __FILE__, __LINE__, __func__);
     pdm_submodule_unregister_drivers();
-
-    printk(KERN_ERR "%s:%d:[%s]  \n", __FILE__, __LINE__, __func__);
     pdm_master_exit();
-
-    printk(KERN_ERR "%s:%d:[%s]  \n", __FILE__, __LINE__, __func__);
     bus_unregister(&pdm_bus_type);
 
     pr_info("PDM: Unregistered successfully\n");
+
     return;
 }
 

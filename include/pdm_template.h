@@ -15,9 +15,6 @@ struct pdm_template_master_priv {
 };
 
 struct pdm_template_device_priv {
-    union {
-        struct i2c_client *i2cdev;
-    }real_device;
 
     struct pdm_template_operations *ops;
 };

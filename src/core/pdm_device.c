@@ -145,8 +145,8 @@ int pdm_device_register(struct pdm_device *pdmdev)
     status = bus_for_each_dev(&pdm_bus_type, NULL, pdmdev, pdm_device_check);
     if (status) {
         printk(KERN_ERR "Device %s already exist\n", dev_name(&pdmdev->dev));
-        idr_remove(&pdmdev->master->device_idr, pdmdev->id);
         pdm_master_put(pdmdev->master);
+        idr_remove(&pdmdev->master->device_idr, pdmdev->id);
         return status;
     }
 
@@ -157,12 +157,13 @@ int pdm_device_register(struct pdm_device *pdmdev)
     if (status < 0)
     {
         printk(KERN_ERR "Can't add %s, status %d\n", dev_name(&pdmdev->dev), status);
-        idr_remove(&pdmdev->master->device_idr, pdmdev->id);
         pdm_master_put(pdmdev->master);
+        idr_remove(&pdmdev->master->device_idr, pdmdev->id);
         return status;
     }
 
-    printk(KERN_INFO "Registered device %s OK.\n", dev_name(&pdmdev->dev));
+    pr_info("Device %s registered.\n", dev_name(&pdmdev->dev));
+
     return 0;
 }
 
@@ -171,12 +172,9 @@ void pdm_device_unregister(struct pdm_device *pdmdev)
     if (!pdmdev)
         return;
 
-    pr_info("Device %s unregister.\n", dev_name(&pdmdev->dev));
-    idr_remove(&pdmdev->master->device_idr, pdmdev->id);
-    printk(KERN_ERR "%s:%d:[%s]  \n", __FILE__, __LINE__, __func__);
-    device_unregister(&pdmdev->dev);
-    printk(KERN_ERR "%s:%d:[%s]  \n", __FILE__, __LINE__, __func__);
+    pr_info("Device %s unregistered.\n", dev_name(&pdmdev->dev));
     pdm_master_put(pdmdev->master);
-    printk(KERN_ERR "%s:%d:[%s]  \n", __FILE__, __LINE__, __func__);
+    device_unregister(&pdmdev->dev);
+    idr_remove(&pdmdev->master->device_idr, pdmdev->id);
 }
 

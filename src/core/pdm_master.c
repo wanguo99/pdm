@@ -110,10 +110,11 @@ static void pdm_master_dev_release(struct device *dev)
 {
     struct pdm_master *master = dev_to_pdm_master(dev);
 
+    printk(KERN_INFO "Master %s released.\n", dev_name(&master->dev));
+
     WARN_ON(!list_empty(&master->clients));
     kfree(dev);
 
-    printk(KERN_INFO "Master %s released.\n", dev_name(&master->dev));
     return;
 }
 
@@ -122,7 +123,10 @@ static void pdm_master_class_dev_release(struct device *dev)
 {
     struct pdm_master *master;
     master = dev_to_pdm_master(dev);
-    kfree(master);
+    if (master)
+    {
+        kfree(master);
+    }
 }
 
 struct class pdm_master_class = {
@@ -130,21 +134,6 @@ struct class pdm_master_class = {
     .dev_release    = pdm_master_class_dev_release,
 };
 
-
-static void pdm_master_class_cdev_release(struct device *dev)
-{
-#if 1
-    struct pdm_master *master;
-    master = dev_to_pdm_master(dev);
-    kfree(master);
-#endif
-    return;
-}
-
-struct class pdm_master_cdev_class = {
-    .name       = "pdm_master_cdev",
-    .dev_release    = pdm_master_class_cdev_release,
-};
 
 static int pdm_master_add_cdev(struct pdm_master *master)
 {
@@ -336,11 +325,9 @@ int pdm_master_add_device(struct pdm_master *master, struct pdm_device *pdmdev)
 
 int pdm_master_delete_device(struct pdm_master *master, struct pdm_device *pdmdev)
 {
-    printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
     mutex_lock(&master->client_list_mutex_lock);
     list_del(&pdmdev->node);
     mutex_unlock(&master->client_list_mutex_lock);
-    // pdmdev->master = NULL;
 
     return 0;
 }
@@ -356,7 +343,6 @@ struct pdm_device *pdm_master_get_pdmdev_of_real_device(struct pdm_master *maste
     {
         if (existing_pdmdev->real_device == real_device)
         {
-            printk(KERN_ERR "%s:%d:[%s]  Found pdm_device: %s\n", __FILE__, __LINE__, __func__, dev_name(&existing_pdmdev->dev));
             mutex_unlock(&master->client_list_mutex_lock);
             return existing_pdmdev;
         }

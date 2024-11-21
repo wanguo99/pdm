@@ -5,12 +5,9 @@
 
 #include "pdm.h"
 #include "pdm_submodule.h"
-
 #include "pdm_template.h"
 
-struct list_head pdm_submodule_driver_list;           // 保存已经注册的驱动信息
-
-#define DEBUG_SUB_DRIVER_SWITCH 0   // 是否开启子模块初始化
+struct list_head pdm_submodule_driver_list;
 
 static struct pdm_subdriver sub_drivers[] = {
 
@@ -21,38 +18,28 @@ static struct pdm_subdriver sub_drivers[] = {
     {}
 };
 
-// 注册单个子模块驱动
 static int pdm_submodule_register_driver(struct pdm_subdriver *driver) {
-    int ret;
-
+    int iRet;
     if (driver->init) {
-        ret = driver->init();
-        if (ret) {
+        iRet = driver->init();
+        if (iRet) {
             printk(KERN_INFO "%s: Driver register failed. ret = %d.",
-                        driver->name ? driver->name : "Unknown", ret);
-            return ret;
+                        driver->name ? driver->name : "Unknown", iRet);
+            return iRet;
         }
     }
-
     list_add_tail(&driver->list, &pdm_submodule_driver_list);
-    printk(KERN_INFO "%s: Driver registered.", driver->name ? driver->name : "Unknown");
     return 0;
 }
 
-// 注销单个子模块驱动
 static int pdm_submodule_unregister_driver(struct pdm_subdriver *driver) {
-
     if (driver->exit) {
         driver->exit();
     }
-
     list_del(&driver->list);
-    printk(KERN_INFO "%s: Driver unregistered.", driver->name ? driver->name : "Unknown");
     return 0;
 }
 
-
-// 初始化所有子模块驱动
 int pdm_submodule_register_drivers(void)
 {
     int i, ret;
@@ -71,8 +58,6 @@ int pdm_submodule_register_drivers(void)
     return 0;
 }
 
-
-// 注销所有子模块驱动
 void pdm_submodule_unregister_drivers(void)
 {
     struct pdm_subdriver *driver, *tmp;
@@ -84,4 +69,4 @@ void pdm_submodule_unregister_drivers(void)
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("wanguo");
-MODULE_DESCRIPTION("PDM Submodule Driver Framework.");
+MODULE_DESCRIPTION("PDM Submodule Driver.");
