@@ -68,7 +68,7 @@ static int pdm_template_i2c_remove(struct i2c_client *client) {
 static void pdm_template_i2c_remove(struct i2c_client *client) {
 #endif
 
-    pdm_device_register(g_pstTemplateDev->pdmdev);
+    pdm_device_unregister(g_pstTemplateDev->pdmdev);
     pdm_template_master_del_device(g_pstTemplateDev);
     pdm_device_free(g_pstTemplateDev->pdmdev);
     kfree(g_pstTemplateDev);

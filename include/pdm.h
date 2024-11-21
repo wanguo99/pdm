@@ -99,6 +99,8 @@ static inline void pdm_master_set_devdata(struct pdm_master *master, void *data)
 }
 
 struct pdm_master *pdm_master_alloc(unsigned int size);
+void pdm_master_free(struct pdm_master *master);
+
 struct pdm_master *pdm_master_get(struct pdm_master *master);
 void pdm_master_put(struct pdm_master *master);
 int  pdm_master_register(struct pdm_master *master);
@@ -119,8 +121,5 @@ extern struct bus_type             pdm_bus_type;
 #else
 extern const struct bus_type       pdm_bus_type;
 #endif
-
-// pdm bus device root
-extern struct device pdm_bus_root;
 
 #endif /* _PDM_H_ */

@@ -14,16 +14,6 @@
 
 static struct dentry       *pdm_debugfs_root;
 
-static void pdm_bus_root_dev_release(struct device *dev)
-{
-    printk(KERN_INFO "Device %s released.\n", dev_name(dev));
-    return;
-}
-
-struct device pdm_bus_root = {
-	.init_name	= "pdm_bus_root",
-};
-EXPORT_SYMBOL_GPL(pdm_bus_root);
 
 /*                                                                              */
 /*                            pdm_bus_type                                      */
@@ -105,17 +95,10 @@ static int __init pdm_init(void)
 {
     int iRet;
 
-    pdm_bus_root.release = pdm_bus_root_dev_release;
-	iRet = device_register(&pdm_bus_root);
-	if (iRet) {
-		put_device(&pdm_bus_root);
-		return iRet;
-	}
-
     iRet = bus_register(&pdm_bus_type);
     if (iRet < 0) {
         pr_err("PDM: Failed to register bus\n");
-        goto err_dev_unregister;
+        return iRet;
     }
 
     iRet = pdm_master_init();
@@ -144,8 +127,6 @@ err_master_exit:
     pdm_master_exit();
 err_bus_unregister:
     bus_unregister(&pdm_bus_type);
-err_dev_unregister:
-    device_unregister(&pdm_bus_root);
 
     return iRet;
 }
@@ -153,11 +134,20 @@ err_dev_unregister:
 // 模块退出
 static void __exit pdm_exit(void)
 {
-    debugfs_remove_recursive(pdm_debugfs_root);
+    if (!IS_ERR(pdm_debugfs_root))
+    {
+        debugfs_remove_recursive(pdm_debugfs_root);
+    }
+
+    printk(KERN_ERR "%s:%d:[%s]  \n", __FILE__, __LINE__, __func__);
     pdm_submodule_unregister_drivers();
+
+    printk(KERN_ERR "%s:%d:[%s]  \n", __FILE__, __LINE__, __func__);
     pdm_master_exit();
+
+    printk(KERN_ERR "%s:%d:[%s]  \n", __FILE__, __LINE__, __func__);
     bus_unregister(&pdm_bus_type);
-    device_unregister(&pdm_bus_root);
+
     pr_info("PDM: Unregistered successfully\n");
     return;
 }

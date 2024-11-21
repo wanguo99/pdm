@@ -11,8 +11,10 @@ struct pdm_template_operations {
     int (*write_reg)(int addr, int value);
 };
 
-struct pdm_template_master {
-    struct pdm_master *master;
+struct pdm_template_private_data {
+    void *Data_1;
+    void *Data_2;
+    /* ----------------------- */
 };
 
 struct pdm_template_device {

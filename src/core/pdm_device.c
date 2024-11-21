@@ -129,7 +129,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
         return id;
     }
 
-    pdmdev->id = id+1;
+    pdmdev->id = id;
     status = bus_for_each_dev(&pdm_bus_type, NULL, pdmdev, pdm_device_check);
     if (status) {
         printk(KERN_ERR "Device %s already exist\n", dev_name(&pdmdev->dev));
@@ -159,10 +159,15 @@ void pdm_device_unregister(struct pdm_device *pdmdev)
     if (!pdmdev)
         return;
 
+    dump_stack();
     pr_info("Device %s unregistered.\n", dev_name(&pdmdev->dev));
+    pr_info("pdmdev: %p.\n", pdmdev);
+    pr_info("pdmdev->id: %d.\n", pdmdev->id);
+    pr_info("pdmdev->master: %p.\n", pdmdev->master);
+    pr_info("pdmdev->master->device_idr: %p.\n", &pdmdev->master->device_idr);
+
     idr_remove(&pdmdev->master->device_idr, pdmdev->id);
-    device_del(&pdmdev->dev);
-    put_device(&pdmdev->dev);
+    device_unregister(&pdmdev->dev);
     pdm_master_put(pdmdev->master);
 }
 

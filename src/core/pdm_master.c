@@ -1,4 +1,5 @@
 #include <linux/slab.h>
+#include <linux/platform_device.h>
 
 #include "pdm.h"
 
@@ -108,8 +109,11 @@ static const struct device_type pdm_master_device_type = {
 static void pdm_master_dev_release(struct device *dev)
 {
     struct pdm_master *master = dev_to_pdm_master(dev);
+
+    WARN_ON(!list_empty(&master->clients));
+    kfree(dev);
+
     printk(KERN_INFO "Master %s released.\n", dev_name(&master->dev));
-    //WARN_ON(!list_empty(&master->clients));
     return;
 }
 
@@ -163,7 +167,6 @@ static int pdm_master_add_cdev(struct pdm_master *master)
     // 初始化字符设备
     cdev_init(&master->cdev, &master->fops);
     master->cdev.owner = THIS_MODULE;
-
     ret = cdev_add(&master->cdev, master->devno, 1);
     if (ret < 0) {
         unregister_chrdev_region(master->devno, 1);
@@ -172,7 +175,7 @@ static int pdm_master_add_cdev(struct pdm_master *master)
     }
 
     // 注册到pdm_master_class
-    device_create(&pdm_master_cdev_class, NULL, master->devno, NULL, "pdm_master_%s", master->name);
+    device_create(&pdm_master_class, NULL, master->devno, NULL, "pdm_master_%s_cdev", master->name);
 
     printk(KERN_INFO "Add char device for %s ok\n", dev_name(&master->dev));
 
@@ -182,7 +185,7 @@ static int pdm_master_add_cdev(struct pdm_master *master)
 // 卸载字符设备
 static void pdm_master_delete_cdev(struct pdm_master *master)
 {
-    device_destroy(&pdm_master_cdev_class, master->devno);
+    device_destroy(&pdm_master_class, master->devno);
     cdev_del(&master->cdev);
     unregister_chrdev_region(master->devno, 1);
 }
@@ -192,42 +195,33 @@ int pdm_master_register(struct pdm_master *master)
     int ret;
     struct pdm_master *existing_master;
 
-    // 检查设备名称是否已设置
     if (!strlen(master->name)) {
         printk(KERN_ERR "Master name not set\n");
         return -EINVAL;
     }
 
-    // 检查设备名称是否已存在
     mutex_lock(&pdm_master_list_mutex_lock);
-    list_for_each_entry(existing_master, &pdm_master_list, node) {
-        if (strcmp(existing_master->name, master->name) == 0) {
+    list_for_each_entry(existing_master, &pdm_master_list, node)
+    {
+        if (!strcmp(existing_master->name, master->name))
+        {
             printk(KERN_ERR "Master name already exists: %s\n", master->name);
-            ret = -EEXIST;
-            goto err_unlock;
+            mutex_unlock(&pdm_master_list_mutex_lock);
+            return -EEXIST;
         }
     }
     mutex_unlock(&pdm_master_list_mutex_lock);
 
-    // master->dev.bus = &pdm_bus_type;
     master->dev.type = &pdm_master_device_type;
     master->dev.class = &pdm_master_class;
-    //master->dev.parent = &pdm_bus_root;
     master->dev.release = pdm_master_dev_release;
     dev_set_name(&master->dev, "pdm_master_%s", master->name);
-
-    printk(KERN_INFO "Trying to add device: %s\n", dev_name(&master->dev));
     ret = device_add(&master->dev);
     if (ret) {
         printk(KERN_ERR "Failed to add device: %s, error: %d\n", dev_name(&master->dev), ret);
         goto err_put_device;
     }
 
-    mutex_lock(&pdm_master_list_mutex_lock);
-    list_add_tail(&master->node, &pdm_master_list);
-    mutex_unlock(&pdm_master_list_mutex_lock);
-
-    // 创建字符设备文件
     ret = pdm_master_add_cdev(master);
     if (ret) {
         printk(KERN_ERR "Failed to pdm_master_add_cdev, error: %d\n", ret);
@@ -238,6 +232,10 @@ int pdm_master_register(struct pdm_master *master)
     INIT_LIST_HEAD(&master->clients);
 
     idr_init(&master->device_idr);
+
+    mutex_lock(&pdm_master_list_mutex_lock);
+    list_add_tail(&master->node, &pdm_master_list);
+    mutex_unlock(&pdm_master_list_mutex_lock);
 
     master->init_done = true;
     printk(KERN_INFO "PDM Master registered: %s\n", dev_name(&master->dev));
@@ -250,8 +248,6 @@ err_del_device:
 err_put_device:
     put_device(&master->dev);
 
-err_unlock:
-    mutex_unlock(&pdm_master_list_mutex_lock);
     return ret;
 }
 
@@ -264,33 +260,44 @@ void pdm_master_unregister(struct pdm_master *master)
         return;
     }
 
-    pdm_master_delete_cdev(master);
+    master->init_done = false;
 
     mutex_lock(&pdm_master_list_mutex_lock);
     list_del(&master->node);
     mutex_unlock(&pdm_master_list_mutex_lock);
 
+    idr_destroy(&master->device_idr);
+    pdm_master_delete_cdev(master);
     device_unregister(&master->dev);
 
     printk(KERN_INFO "PDM Master unregistered: %s\n", dev_name(&master->dev));
 }
 
 
-// 申请一段连续内存，保存master的公共数据和私有数据
-struct pdm_master *pdm_master_alloc(unsigned int size)
+struct pdm_master *pdm_master_alloc(unsigned int data_size)
 {
     struct pdm_master   *master;
     size_t master_size = sizeof(struct pdm_master);
 
-    master = kzalloc(size + master_size, GFP_KERNEL);
+    master = kzalloc(master_size + data_size, GFP_KERNEL);
     if (!master)
         return NULL;
 
     device_initialize(&master->dev);
     master->dev.class = &pdm_master_class;
+
     pdm_master_set_devdata(master, (void *)master + master_size);
 
     return master;
+}
+
+
+void pdm_master_free(struct pdm_master *master)
+{
+    if (!master)
+        return;
+
+    kfree(master);
 }
 
 struct pdm_master *pdm_master_get(struct pdm_master *master)
@@ -322,7 +329,7 @@ int pdm_master_delete_device(struct pdm_master *master, struct pdm_device *pdmde
     mutex_lock(&master->client_list_mutex_lock);
     list_del(&pdmdev->node);
     mutex_unlock(&master->client_list_mutex_lock);
-    pdmdev->master = NULL;
+    // pdmdev->master = NULL;
 
     return 0;
 }
@@ -341,23 +348,12 @@ int pdm_master_init(void)
         return iRet;
     }
 
-    iRet = class_register(&pdm_master_cdev_class);
-    if (iRet < 0) {
-        pr_err("PDM: Failed to register class\n");
-        class_destroy(&pdm_master_class);
-        return iRet;
-    }
-
     return 0;
 }
 
 void pdm_master_exit(void)
 {
-    class_unregister(&pdm_master_cdev_class);
-    //class_destroy(&pdm_master_cdev_class);
-
     class_unregister(&pdm_master_class);
-    //class_destroy(&pdm_master_class);
     return;
 }
 
