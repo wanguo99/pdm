@@ -64,20 +64,32 @@ static void pdm_device_release(struct device *dev)
     kfree(dev);
 }
 
-struct pdm_device *pdm_device_alloc(void)
+void *pdm_device_get_devdata(struct pdm_device *pdmdev)
+{
+    return dev_get_drvdata(&pdmdev->dev);
+}
+
+void pdm_device_set_devdata(struct pdm_device *pdmdev, void *data)
+{
+    dev_set_drvdata(&pdmdev->dev, data);
+}
+
+struct pdm_device *pdm_device_alloc(unsigned int data_size)
 {
     struct pdm_device   *pdmdev;
+    size_t pdmdev_size = sizeof(struct pdm_device);
 
-    pdmdev = kzalloc(sizeof(struct pdm_device), GFP_KERNEL);
-    if (!pdmdev) {
+    pdmdev = kzalloc(pdmdev_size + data_size, GFP_KERNEL);
+    if (!pdmdev)
         return NULL;
-    }
+
+    device_initialize(&pdmdev->dev);
 
     pdmdev->dev.type = &pdm_device_type;
     pdmdev->dev.bus = &pdm_bus_type;
     pdmdev->dev.release = pdm_device_release;
 
-    device_initialize(&pdmdev->dev);
+    pdm_device_set_devdata(pdmdev, (void *)pdmdev + pdmdev_size);
 
     return pdmdev;
 }
@@ -159,15 +171,12 @@ void pdm_device_unregister(struct pdm_device *pdmdev)
     if (!pdmdev)
         return;
 
-    dump_stack();
-    pr_info("Device %s unregistered.\n", dev_name(&pdmdev->dev));
-    pr_info("pdmdev: %p.\n", pdmdev);
-    pr_info("pdmdev->id: %d.\n", pdmdev->id);
-    pr_info("pdmdev->master: %p.\n", pdmdev->master);
-    pr_info("pdmdev->master->device_idr: %p.\n", &pdmdev->master->device_idr);
-
+    pr_info("Device %s unregister.\n", dev_name(&pdmdev->dev));
     idr_remove(&pdmdev->master->device_idr, pdmdev->id);
+    printk(KERN_ERR "%s:%d:[%s]  \n", __FILE__, __LINE__, __func__);
     device_unregister(&pdmdev->dev);
+    printk(KERN_ERR "%s:%d:[%s]  \n", __FILE__, __LINE__, __func__);
     pdm_master_put(pdmdev->master);
+    printk(KERN_ERR "%s:%d:[%s]  \n", __FILE__, __LINE__, __func__);
 }
 

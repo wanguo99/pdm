@@ -190,6 +190,42 @@ static void pdm_master_delete_cdev(struct pdm_master *master)
     unregister_chrdev_region(master->devno, 1);
 }
 
+void *pdm_master_get_devdata(struct pdm_master *master)
+{
+    return dev_get_drvdata(&master->dev);
+}
+
+void pdm_master_set_devdata(struct pdm_master *master, void *data)
+{
+    dev_set_drvdata(&master->dev, data);
+}
+
+struct pdm_master *pdm_master_alloc(unsigned int data_size)
+{
+    struct pdm_master   *master;
+    size_t master_size = sizeof(struct pdm_master);
+
+    master = kzalloc(master_size + data_size, GFP_KERNEL);
+    if (!master)
+        return NULL;
+
+    device_initialize(&master->dev);
+    master->dev.class = &pdm_master_class;
+
+    pdm_master_set_devdata(master, (void *)master + master_size);
+
+    return master;
+}
+
+
+void pdm_master_free(struct pdm_master *master)
+{
+    if (!master)
+        return;
+
+    kfree(master);
+}
+
 int pdm_master_register(struct pdm_master *master)
 {
     int ret;
@@ -274,31 +310,6 @@ void pdm_master_unregister(struct pdm_master *master)
 }
 
 
-struct pdm_master *pdm_master_alloc(unsigned int data_size)
-{
-    struct pdm_master   *master;
-    size_t master_size = sizeof(struct pdm_master);
-
-    master = kzalloc(master_size + data_size, GFP_KERNEL);
-    if (!master)
-        return NULL;
-
-    device_initialize(&master->dev);
-    master->dev.class = &pdm_master_class;
-
-    pdm_master_set_devdata(master, (void *)master + master_size);
-
-    return master;
-}
-
-
-void pdm_master_free(struct pdm_master *master)
-{
-    if (!master)
-        return;
-
-    kfree(master);
-}
 
 struct pdm_master *pdm_master_get(struct pdm_master *master)
 {
@@ -334,6 +345,26 @@ int pdm_master_delete_device(struct pdm_master *master, struct pdm_device *pdmde
     return 0;
 }
 
+
+// 遍历master，查找real_device对应的pdm_device
+struct pdm_device *pdm_master_get_pdmdev_of_real_device(struct pdm_master *master, void *real_device)
+{
+    struct pdm_device *existing_pdmdev;
+
+    mutex_lock(&master->client_list_mutex_lock);
+    list_for_each_entry(existing_pdmdev, &master->clients, node)
+    {
+        if (existing_pdmdev->real_device == real_device)
+        {
+            printk(KERN_ERR "%s:%d:[%s]  Found pdm_device: %s\n", __FILE__, __LINE__, __func__, dev_name(&existing_pdmdev->dev));
+            mutex_unlock(&master->client_list_mutex_lock);
+            return existing_pdmdev;
+        }
+    }
+
+    printk(KERN_ERR "%s:%d:[%s] Failed \n", __FILE__, __LINE__, __func__);
+    return NULL;
+}
 
 int pdm_master_init(void)
 {

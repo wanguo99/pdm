@@ -11,23 +11,20 @@ struct pdm_template_operations {
     int (*write_reg)(int addr, int value);
 };
 
-struct pdm_template_private_data {
-    void *Data_1;
-    void *Data_2;
-    /* ----------------------- */
+struct pdm_template_master_priv {
 };
 
-struct pdm_template_device {
-    struct pdm_device *pdmdev;
+struct pdm_template_device_priv {
     union {
         struct i2c_client *i2cdev;
-        struct spi_device *spidev;
-    }client;
-    struct pdm_template_operations ops;
+    }real_device;
+
+    struct pdm_template_operations *ops;
 };
 
-int pdm_template_master_add_device(struct pdm_template_device *template_dev);
-int pdm_template_master_del_device(struct pdm_template_device *template_dev);
+struct pdm_device *pdm_template_master_get_pdmdev_of_real_device(void *real_device);
+int pdm_template_master_add_device(struct pdm_device *pdmdev);
+int pdm_template_master_del_device(struct pdm_device *pdmdev);
 
 
 // Master initialization and exit functions

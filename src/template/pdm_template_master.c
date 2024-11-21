@@ -32,30 +32,35 @@ static long pdc_template_ioctl(struct file *filp, unsigned int cmd, unsigned lon
     return 0;
 }
 
-int pdm_template_master_add_device(struct pdm_template_device *template_dev)
+struct pdm_device *pdm_template_master_get_pdmdev_of_real_device(void *real_device)
 {
-    return pdm_master_add_device(g_pstPdmMaster, template_dev->pdmdev);
+    return pdm_master_get_pdmdev_of_real_device(g_pstPdmMaster, real_device);
 }
 
-int pdm_template_master_del_device(struct pdm_template_device *template_dev)
+int pdm_template_master_add_device(struct pdm_device *pdmdev)
 {
-    return pdm_master_delete_device(g_pstPdmMaster, template_dev->pdmdev);
+    return pdm_master_add_device(g_pstPdmMaster, pdmdev);
+}
+
+int pdm_template_master_del_device(struct pdm_device *pdmdev)
+{
+    return pdm_master_delete_device(g_pstPdmMaster, pdmdev);
 }
 
 int pdm_template_master_init(void)
 {
 	int status = 0;
-    struct pdm_template_private_data *pstTemplateData = NULL;
+    struct pdm_template_master_priv *pstTemplateMasterPriv = NULL;
 
-	g_pstPdmMaster = pdm_master_alloc(sizeof(struct pdm_template_private_data));  // 申请pdm_master和私有数据内存
+	g_pstPdmMaster = pdm_master_alloc(sizeof(struct pdm_template_master_priv));  // 申请pdm_master和私有数据内存
 	if (g_pstPdmMaster == NULL)
 	{
 		printk(KERN_ERR "master allocation failed\n");
 		return -ENOMEM;
 	}
 
-	pstTemplateData = pdm_master_get_devdata(g_pstPdmMaster);
-    if (NULL == pstTemplateData)
+	pstTemplateMasterPriv = pdm_master_get_devdata(g_pstPdmMaster);
+    if (NULL == pstTemplateMasterPriv)
     {
         printk(KERN_ERR "pdm_master_get_devdata failed.\n");
 		goto err_master_free;

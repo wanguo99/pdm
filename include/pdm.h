@@ -26,6 +26,7 @@ struct pdm_device {
     struct device dev;
     struct pdm_master *master;
     struct list_head node;
+    void *real_device;
 };
 
 struct pdm_master {
@@ -77,8 +78,12 @@ const struct pdm_device_id *pdm_match_id(const struct pdm_device_id *id, struct 
     pdm_device
 */
 #define dev_to_pdmdev(__dev)    container_of(__dev, struct pdm_device, dev)
-struct pdm_device *pdm_device_alloc(void);
+
+void *pdm_device_get_devdata(struct pdm_device *pdmdev);
+void pdm_device_set_devdata(struct pdm_device *pdmdev, void *data);
+struct pdm_device *pdm_device_alloc(unsigned int data_size);
 void pdm_device_free(struct pdm_device *pdmdev);
+
 int pdm_device_register(struct pdm_device *pdmdev);
 void pdm_device_unregister(struct pdm_device *pdmdev);
 
@@ -88,16 +93,8 @@ void pdm_device_unregister(struct pdm_device *pdmdev);
 */
 #define dev_to_pdm_master(__dev) container_of(__dev, struct pdm_master, dev)
 
-static inline void *pdm_master_get_devdata(struct pdm_master *master)
-{
-    return dev_get_drvdata(&master->dev);
-}
-
-static inline void pdm_master_set_devdata(struct pdm_master *master, void *data)
-{
-    dev_set_drvdata(&master->dev, data);
-}
-
+void *pdm_master_get_devdata(struct pdm_master *master);
+void pdm_master_set_devdata(struct pdm_master *master, void *data);
 struct pdm_master *pdm_master_alloc(unsigned int size);
 void pdm_master_free(struct pdm_master *master);
 
@@ -107,6 +104,8 @@ int  pdm_master_register(struct pdm_master *master);
 void pdm_master_unregister(struct pdm_master *master);
 int  pdm_master_init(void);
 void pdm_master_exit(void);
+
+struct pdm_device *pdm_master_get_pdmdev_of_real_device(struct pdm_master *master, void *real_device);
 int pdm_master_add_device(struct pdm_master *master, struct pdm_device *pdmdev);
 int pdm_master_delete_device(struct pdm_master *master, struct pdm_device *pdmdev);
 

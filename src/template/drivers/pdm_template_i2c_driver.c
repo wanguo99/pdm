@@ -8,7 +8,7 @@
 #include "pdm_template.h"
 
 
-struct pdm_template_device *g_pstTemplateDev;
+
 
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 0, 0)
@@ -18,46 +18,45 @@ static int pdm_template_i2c_probe(struct i2c_client *client) {
 #endif
 
     struct pdm_device *pdmdev;
+    struct pdm_template_device_priv *pstTemplateDevPriv;
     int ret;
 
     printk(KERN_INFO "TEMPLATE I2C Device probed\n");
 
-    g_pstTemplateDev = kzalloc(sizeof(struct pdm_template_device), GFP_KERNEL);
-    if (!g_pstTemplateDev) {
-        pr_err("Failed to allocate memory for template_dev\n");
+    pdmdev = pdm_device_alloc(sizeof(struct pdm_template_device_priv));
+    if (!pdmdev) {
+        pr_err("Failed to allocate pdm_device\n");
         return -ENOMEM;
     }
 
-    pdmdev = pdm_device_alloc();
-    if (!pdmdev) {
-        pr_err("Failed to allocate pdm_device\n");
-        goto free_template_dev;
-    }
-
-    g_pstTemplateDev->pdmdev = pdmdev;
-    g_pstTemplateDev->client.i2cdev = client;
-    ret = pdm_template_master_add_device(g_pstTemplateDev);
+    // 指定当前pdm_device使用的master
+    ret = pdm_template_master_add_device(pdmdev);
     if (ret) {
         pr_err("Failed to add template device, ret=%d\n", ret);
         goto free_pdmdev;
     }
 
-    ret = pdm_device_register(g_pstTemplateDev->pdmdev);
+    ret = pdm_device_register(pdmdev);
     if (ret) {
         pr_err("Failed to register pdm_device, ret=%d\n", ret);
         goto master_del_pdmdev;
     }
 
+    // 保存物理设备地址
+    pdmdev->real_device = client;
+
+    // 设置私有数据
+    pstTemplateDevPriv = pdm_device_get_devdata(pdmdev);
+    pstTemplateDevPriv->ops = NULL;
+
     return 0;
 
 master_del_pdmdev:
-    pdm_template_master_del_device(g_pstTemplateDev);
+    pdm_template_master_del_device(pdmdev);
 
 free_pdmdev:
-    pdm_device_free(g_pstTemplateDev->pdmdev);
+    pdm_device_free(pdmdev);
 
-free_template_dev:
-    kfree(g_pstTemplateDev);
     return ret;
 }
 
@@ -67,11 +66,23 @@ static int pdm_template_i2c_remove(struct i2c_client *client) {
 #else
 static void pdm_template_i2c_remove(struct i2c_client *client) {
 #endif
+    struct pdm_device *pdmdev = pdm_template_master_get_pdmdev_of_real_device(client);
+    if (NULL == pdmdev)
+    {
+        printk(KERN_ERR "%s:%d:[%s]  \n", __FILE__, __LINE__, __func__);
+        return;
+    }
 
-    pdm_device_unregister(g_pstTemplateDev->pdmdev);
-    pdm_template_master_del_device(g_pstTemplateDev);
-    pdm_device_free(g_pstTemplateDev->pdmdev);
-    kfree(g_pstTemplateDev);
+    printk(KERN_ERR "%s:%d:[%s]  \n", __FILE__, __LINE__, __func__);
+    pdm_device_unregister(pdmdev);
+
+    printk(KERN_ERR "%s:%d:[%s]  pdmdev: %p\n", __FILE__, __LINE__, __func__, pdmdev);
+    pdm_template_master_del_device(pdmdev);
+
+    printk(KERN_ERR "%s:%d:[%s]  \n", __FILE__, __LINE__, __func__);
+    pdm_device_free(pdmdev);
+
+    printk(KERN_ERR "%s:%d:[%s]  \n", __FILE__, __LINE__, __func__);
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 0, 0)
     return 0;
