@@ -73,21 +73,10 @@ int pdm_template_master_init(void)
         goto err_master_free;
 	}
 
-	g_pstPdmMaster = pdm_master_get(g_pstPdmMaster);
-    if (status < 0)
-    {
-        osa_error("pdm_master_get failed.\n");
-		goto err_master_unregister;
-    }
-
     g_pstPdmMaster->fops.unlocked_ioctl = pdc_template_ioctl;
 
     osa_info("Template Master initialized OK.\n");
-
     return 0;
-
-err_master_unregister:
-    pdm_master_unregister(g_pstPdmMaster);
 
 err_master_free:
     pdm_master_free(g_pstPdmMaster);
@@ -102,8 +91,6 @@ void pdm_template_master_exit(void)
         osa_error("Template Master exit called with g_pstTemplateMaster as NULL\n");
         return;
     }
-
-    pdm_master_put(g_pstPdmMaster);
 
     pdm_master_unregister(g_pstPdmMaster);
     pdm_master_free(g_pstPdmMaster);
