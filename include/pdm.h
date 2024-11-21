@@ -17,7 +17,7 @@
 #define BASENAME(file) (strrchr(file, '/') ? strrchr(file, '/') + 1 : file)
 #define FILE_BASENAME (BASENAME(__FILE__))
 
-// 定义 pr_fmt 宏
+// 定义 osa_fmt 宏
 #define osa_fmt(fmt) "[" KBUILD_MODNAME "]: " fmt
 
 #define osa_error(fmt, ...) \

@@ -74,7 +74,7 @@ static ssize_t pdm_master_fops_write_default(struct file *filp, const char __use
 static long pdm_master_fops_unlocked_ioctl_default(struct file *filp, unsigned int cmd, unsigned long arg)
 {
     // struct pdm_master *master = filp->private_data;
-    pr_info("Master do not support ioctl operations.\n");
+    osa_info("Master do not support ioctl operations.\n");
     return -ENOTSUPP;
 }
 
@@ -361,7 +361,7 @@ int pdm_master_init(void)
 
     iRet = class_register(&pdm_master_class);
     if (iRet < 0) {
-        osa_err("PDM: Failed to register class\n");
+        osa_error("PDM: Failed to register class\n");
         return iRet;
     }
     osa_info("Register PDM Master Class.\n");

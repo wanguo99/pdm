@@ -49,7 +49,7 @@ int pdm_submodule_register_drivers(void)
     for (i = 0; sub_drivers[i].init; i++) {
         ret = pdm_submodule_register_driver(&sub_drivers[i]);
         if (ret) {
-            osa_err("Failed to register driver %d\n", i);
+            osa_error("Failed to register driver %d\n", i);
             pdm_submodule_unregister_drivers();
             return ret;
         }

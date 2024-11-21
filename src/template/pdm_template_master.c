@@ -16,12 +16,12 @@ static long pdc_template_ioctl(struct file *filp, unsigned int cmd, unsigned lon
     struct pdm_device *client;
     int index = 1;
 
-    pr_info("-------------------------\n");
+    osa_info("-------------------------\n");
     printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
-    pr_info("-------------------------\n\n");
+    osa_info("-------------------------\n\n");
 
     mutex_lock(&g_pstPdmMaster->client_list_mutex_lock);
-    pr_info("Device List:\n\n");
+    osa_info("Device List:\n\n");
     list_for_each_entry(client, &g_pstPdmMaster->clients, node)
     {
         printk(KERN_ERR "[%d] Client Name: %s \n", index++, dev_name(&client->dev));

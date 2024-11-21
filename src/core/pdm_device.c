@@ -126,7 +126,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
 
     if (!master)
     {
-        osa_err("pdm_device_alloc: master is NULL\n");
+        osa_error("pdm_device_alloc: master is NULL\n");
         return -EINVAL;
     }
 
@@ -136,7 +136,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
     id = idr_alloc(&master->device_idr, pdmdev, 0, 0, GFP_KERNEL);
     if (id < 0)
     {
-        osa_err("pdm_device_alloc: idr_alloc failed, status %d\n", id);
+        osa_error("pdm_device_alloc: idr_alloc failed, status %d\n", id);
         pdm_master_put(pdmdev->master);
         return id;
     }
@@ -162,7 +162,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
         return status;
     }
 
-    pr_info("Device %s registered.\n", dev_name(&pdmdev->dev));
+    osa_info("Device %s registered.\n", dev_name(&pdmdev->dev));
 
     return 0;
 }
@@ -172,7 +172,7 @@ void pdm_device_unregister(struct pdm_device *pdmdev)
     if (!pdmdev)
         return;
 
-    pr_info("Device %s unregistered.\n", dev_name(&pdmdev->dev));
+    osa_info("Device %s unregistered.\n", dev_name(&pdmdev->dev));
     pdm_master_put(pdmdev->master);
     device_unregister(&pdmdev->dev);
     idr_remove(&pdmdev->master->device_idr, pdmdev->id);
