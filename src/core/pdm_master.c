@@ -361,9 +361,10 @@ int pdm_master_init(void)
 
     iRet = class_register(&pdm_master_class);
     if (iRet < 0) {
-        pr_err("PDM: Failed to register class\n");
+        osa_err("PDM: Failed to register class\n");
         return iRet;
     }
+    osa_info("Register PDM Master Class.\n");
 
     return 0;
 }

@@ -126,7 +126,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
 
     if (!master)
     {
-        pr_err("pdm_device_alloc: master is NULL\n");
+        osa_err("pdm_device_alloc: master is NULL\n");
         return -EINVAL;
     }
 
@@ -136,7 +136,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
     id = idr_alloc(&master->device_idr, pdmdev, 0, 0, GFP_KERNEL);
     if (id < 0)
     {
-        pr_err("pdm_device_alloc: idr_alloc failed, status %d\n", id);
+        osa_err("pdm_device_alloc: idr_alloc failed, status %d\n", id);
         pdm_master_put(pdmdev->master);
         return id;
     }

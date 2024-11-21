@@ -25,20 +25,20 @@ static int pdm_template_i2c_probe(struct i2c_client *client) {
 
     pdmdev = pdm_device_alloc(sizeof(struct pdm_template_device_priv));
     if (!pdmdev) {
-        pr_err("Failed to allocate pdm_device\n");
+        osa_err("Failed to allocate pdm_device\n");
         return -ENOMEM;
     }
 
     // 指定当前pdm_device使用的master
     ret = pdm_template_master_add_device(pdmdev);
     if (ret) {
-        pr_err("Failed to add template device, ret=%d\n", ret);
+        osa_err("Failed to add template device, ret=%d\n", ret);
         goto free_pdmdev;
     }
 
     ret = pdm_device_register(pdmdev);
     if (ret) {
-        pr_err("Failed to register pdm_device, ret=%d\n", ret);
+        osa_err("Failed to register pdm_device, ret=%d\n", ret);
         goto master_del_pdmdev;
     }
 

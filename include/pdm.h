@@ -7,7 +7,34 @@
 #include <linux/mod_devicetable.h>
 #include <linux/version.h>
 
+#include <linux/string.h>  // 包含字符串处理函数
 
+
+/*                                                                              */
+/*                                公共日志打印接口                                      */
+/*                                                                              */
+
+#define BASENAME(file) (strrchr(file, '/') ? strrchr(file, '/') + 1 : file)
+#define FILE_BASENAME (BASENAME(__FILE__))
+
+// 定义 pr_fmt 宏
+#define osa_fmt(fmt) "[" KBUILD_MODNAME "]: " fmt
+
+#define osa_error(fmt, ...) \
+	printk(KERN_ERR osa_fmt("%s:%d %s(): " fmt), FILE_BASENAME, __LINE__, __func__, ##__VA_ARGS__)
+
+#define osa_warn(fmt, ...) \
+	printk(KERN_WARNING osa_fmt("%s:%d %s(): " fmt), FILE_BASENAME, __LINE__, __func__, ##__VA_ARGS__)
+
+#define osa_info(fmt, ...) \
+        printk(KERN_INFO osa_fmt("%s:%d %s(): " fmt), FILE_BASENAME, __LINE__, __func__, ##__VA_ARGS__)
+
+#define osa_debug(fmt, ...) \
+	printk(KERN_DEBUG osa_fmt("%s:%d %s(): " fmt), FILE_BASENAME, __LINE__, __func__, ##__VA_ARGS__)
+
+// 不带代码信息的打印
+#define osa_print(fmt, ...) \
+	printk(KERN_ERR osa_fmt(fmt), ##__VA_ARGS__)
 
 /*                                                                              */
 /*                                公共数据类型声明                                      */

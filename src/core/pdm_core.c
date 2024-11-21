@@ -12,7 +12,7 @@
 #include "pdm_submodule.h"
 
 
-static struct dentry       *pdm_debugfs_root;
+static struct dentry       *pdm_debugfs;
 
 
 /*                                                                              */
@@ -103,32 +103,36 @@ static int __init pdm_init(void)
 {
     int iRet;
 
+    osa_info("Peripheral Driver Module Init.\n");
+
     iRet = bus_register(&pdm_bus_type);
     if (iRet < 0) {
-        pr_err("PDM: Failed to register bus\n");
+        osa_error("Register PDM Bus Failed.\n");
         return iRet;
     }
+    osa_info("Register PDM Bus OK.\n");
 
     iRet = pdm_master_init();
     if (iRet < 0) {
-        pr_err("PDM: Failed to init master\n");
+        osa_error("Initialize PDM Master Failed.\n");
         goto err_bus_unregister;
     }
+    osa_info("Initialize PDM Master OK.\n");
 
     iRet = pdm_submodule_register_drivers();
     if (iRet < 0) {
-        pr_err("PDM: Failed to register submodule drivers\n");
+        osa_error("Register PDM Submodules Failed.\n");
         goto err_master_exit;
     }
+    osa_info("Register PDM Submodules OK.\n");
 
-    pdm_debugfs_root = debugfs_create_dir("pdm", NULL);
-    if (IS_ERR(pdm_debugfs_root))
-    {
-        pr_err("PDM: Failed to create debugfs\n");
+    pdm_debugfs = debugfs_create_dir("pdm", NULL);
+    if (IS_ERR(pdm_debugfs)){
+        osa_error("Register PDM debugfs Failed.\n");
     }
+    osa_info("Register PDM debugfs OK.\n");
 
-    pr_info("PDM: Initialized successfully\n");
-
+    osa_info("Peripheral Driver Module Init OK.\n");
     return 0;
 
 err_master_exit:
@@ -142,17 +146,21 @@ err_bus_unregister:
 // 模块退出
 static void __exit pdm_exit(void)
 {
-    if (!IS_ERR(pdm_debugfs_root))
-    {
-        debugfs_remove_recursive(pdm_debugfs_root);
+    if (!IS_ERR(pdm_debugfs)){
+        debugfs_remove_recursive(pdm_debugfs);
+        osa_info("Unregister PDM debugfs OK.\n");
     }
 
     pdm_submodule_unregister_drivers();
+    osa_info("Unregister PDM Submodules OK.\n");
+
     pdm_master_exit();
+    osa_info("Deinitialize PDM Master OK.\n");
+
     bus_unregister(&pdm_bus_type);
+    osa_info("Unregister PDM Bus OK.\n");
 
-    pr_info("PDM: Unregistered successfully\n");
-
+    osa_info("Peripheral Driver Module Exit OK.\n");
     return;
 }
 
