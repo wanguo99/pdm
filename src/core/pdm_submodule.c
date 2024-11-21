@@ -11,9 +11,9 @@ struct list_head pdm_submodule_driver_list;
 
 static struct pdm_subdriver sub_drivers[] = {
 
-    /* TEMPLATE master and device driver */
-    // { .name = "TEMPLATE-Master", .init = pdm_template_master_init, .exit = pdm_template_master_exit },
-    // { .name = "TEMPLATE-Spi-Driver", .init = pdm_template_i2c_driver_init, .exit = pdm_template_i2c_driver_exit },
+    /* Template master and device driver */
+    { .name = "Template Master", .init = pdm_template_master_init, .exit = pdm_template_master_exit },
+    // { .name = "Template Spi Driver", .init = pdm_template_i2c_driver_init, .exit = pdm_template_i2c_driver_exit },
 
     {}
 };
@@ -23,7 +23,7 @@ static int pdm_submodule_register_driver(struct pdm_subdriver *driver) {
     if (driver->init) {
         iRet = driver->init();
         if (iRet) {
-            printk(KERN_INFO "%s: Driver register failed. ret = %d.",
+            osa_info("%s: Driver register failed. ret = %d.",
                         driver->name ? driver->name : "Unknown", iRet);
             return iRet;
         }

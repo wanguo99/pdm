@@ -17,18 +17,17 @@ static long pdc_template_ioctl(struct file *filp, unsigned int cmd, unsigned lon
     int index = 1;
 
     osa_info("-------------------------\n");
-    printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
     osa_info("-------------------------\n\n");
 
     mutex_lock(&g_pstPdmMaster->client_list_mutex_lock);
     osa_info("Device List:\n\n");
     list_for_each_entry(client, &g_pstPdmMaster->clients, node)
     {
-        printk(KERN_ERR "[%d] Client Name: %s \n", index++, dev_name(&client->dev));
+        osa_error("[%d] Client Name: %s.\n", index++, dev_name(&client->dev));
     }
     mutex_unlock(&g_pstPdmMaster->client_list_mutex_lock);
 
-    printk(KERN_ERR "\n");
+    osa_error("\n");
     return 0;
 }
 
@@ -52,24 +51,17 @@ int pdm_template_master_init(void)
 	int status = 0;
     struct pdm_template_master_priv *pstTemplateMasterPriv = NULL;
 
-	g_pstPdmMaster = pdm_master_alloc(sizeof(struct pdm_template_master_priv));  // 申请pdm_master和私有数据内存
+	g_pstPdmMaster = pdm_master_alloc(sizeof(struct pdm_template_master_priv));
 	if (g_pstPdmMaster == NULL)
 	{
-		printk(KERN_ERR "master allocation failed\n");
+		osa_error("master allocation failed\n");
 		return -ENOMEM;
 	}
 
 	pstTemplateMasterPriv = pdm_master_get_devdata(g_pstPdmMaster);
     if (NULL == pstTemplateMasterPriv)
     {
-        printk(KERN_ERR "pdm_master_get_devdata failed.\n");
-		goto err_master_free;
-    }
-
-	g_pstPdmMaster = pdm_master_get(g_pstPdmMaster);
-    if (status < 0)
-    {
-        printk(KERN_ERR "pdm_master_get failed.\n");
+        osa_error("pdm_master_get_devdata failed.\n");
 		goto err_master_free;
     }
 
@@ -77,18 +69,25 @@ int pdm_template_master_init(void)
 	status = pdm_master_register(g_pstPdmMaster);
 	if (status < 0)
 	{
-        printk(KERN_ERR "pdm_master_register failed.\n");
-        goto err_master_put;
+        osa_error("pdm_master_register failed.\n");
+        goto err_master_free;
 	}
+
+	g_pstPdmMaster = pdm_master_get(g_pstPdmMaster);
+    if (status < 0)
+    {
+        osa_error("pdm_master_get failed.\n");
+		goto err_master_unregister;
+    }
 
     g_pstPdmMaster->fops.unlocked_ioctl = pdc_template_ioctl;
 
-    printk(KERN_INFO "TEMPLATE Master initialized OK.\n");
+    osa_info("Template Master initialized OK.\n");
 
     return 0;
 
-err_master_put:
-    pdm_master_put(g_pstPdmMaster);
+err_master_unregister:
+    pdm_master_unregister(g_pstPdmMaster);
 
 err_master_free:
     pdm_master_free(g_pstPdmMaster);
@@ -100,15 +99,16 @@ void pdm_template_master_exit(void)
 {
     if (!g_pstPdmMaster)
     {
-        printk(KERN_ERR "TEMPLATE Master exit called with g_pstTemplateMaster as NULL\n");
+        osa_error("Template Master exit called with g_pstTemplateMaster as NULL\n");
         return;
     }
 
-    pdm_master_unregister(g_pstPdmMaster);
     pdm_master_put(g_pstPdmMaster);
+
+    pdm_master_unregister(g_pstPdmMaster);
     pdm_master_free(g_pstPdmMaster);
 
-    printk(KERN_INFO "TEMPLATE Master exited\n");
+    osa_info("Template Master exit.\n");
 }
 
 

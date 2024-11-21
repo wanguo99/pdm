@@ -23,19 +23,19 @@ static struct pdm_master *inode_to_pdm_master(struct inode *inode)
 
     cdev = inode->i_cdev;
     if (!cdev) {
-        printk(KERN_ERR "Failed to get cdev from inode\n");
+        osa_error("Failed to get cdev from inode\n");
         return NULL;
     }
 
     dev = container_of(&cdev->kobj, struct device, kobj);
     if (!dev) {
-        printk(KERN_ERR "Failed to get device from cdev\n");
+        osa_error("Failed to get device from cdev\n");
         return NULL;
     }
 
     master = dev_to_pdm_master(dev);
     if (!master) {
-        printk(KERN_ERR "Failed to convert device to pdm_master\n");
+        osa_error("Failed to convert device to pdm_master\n");
         return NULL;
     }
     return master;
@@ -46,28 +46,28 @@ static int pdm_master_fops_open_default(struct inode *inode, struct file *filp)
 {
     // struct pdm_master *master = inode_to_pdm_master(inode);
     // filp->private_data = master;
-    printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
+    osa_error("[WANGUO] (%s:%d) \n", __func__, __LINE__);
     return 0;
 }
 
 static int pdm_master_fops_release_default(struct inode *inode, struct file *filp)
 {
     // struct pdm_master *master = filp->private_data;
-    printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
+    osa_error("[WANGUO] (%s:%d) \n", __func__, __LINE__);
     return 0;
 }
 
 static ssize_t pdm_master_fops_read_default(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
 {
     // struct pdm_master *master = filp->private_data;
-    printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
+    osa_error("[WANGUO] (%s:%d) \n", __func__, __LINE__);
     return 0;
 }
 
 static ssize_t pdm_master_fops_write_default(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
 {
     // struct pdm_master *master = filp->private_data;
-    printk(KERN_ERR "[WANGUO] (%s:%d) \n", __func__, __LINE__);
+    osa_error("[WANGUO] (%s:%d) \n", __func__, __LINE__);
     return 0;
 }
 
@@ -110,7 +110,7 @@ static void pdm_master_dev_release(struct device *dev)
 {
     struct pdm_master *master = dev_to_pdm_master(dev);
 
-    printk(KERN_INFO "Master %s released.\n", dev_name(&master->dev));
+    osa_info("Master %s released.\n", dev_name(&master->dev));
 
     WARN_ON(!list_empty(&master->clients));
     kfree(dev);
@@ -142,7 +142,7 @@ static int pdm_master_add_cdev(struct pdm_master *master)
     // 分配设备号
     ret = alloc_chrdev_region(&master->devno, 0, 1, dev_name(&master->dev));
     if (ret < 0) {
-        printk(KERN_ERR "Failed to allocate char device region for %s, error: %d\n", dev_name(&master->dev), ret);
+        osa_error("Failed to allocate char device region for %s, error: %d.\n", dev_name(&master->dev), ret);
         return ret;
     }
 
@@ -159,14 +159,14 @@ static int pdm_master_add_cdev(struct pdm_master *master)
     ret = cdev_add(&master->cdev, master->devno, 1);
     if (ret < 0) {
         unregister_chrdev_region(master->devno, 1);
-        printk(KERN_ERR "Failed to add char device for %s, error: %d\n", dev_name(&master->dev), ret);
+        osa_error("Failed to add char device for %s, error: %d.\n", dev_name(&master->dev), ret);
         return ret;
     }
 
     // 注册到pdm_master_class
     device_create(&pdm_master_class, NULL, master->devno, NULL, "pdm_master_%s_cdev", master->name);
 
-    printk(KERN_INFO "Add char device for %s ok\n", dev_name(&master->dev));
+    osa_info("Add cdev for %s ok.\n", dev_name(&master->dev));
 
     return 0;
 }
@@ -221,7 +221,7 @@ int pdm_master_register(struct pdm_master *master)
     struct pdm_master *existing_master;
 
     if (!strlen(master->name)) {
-        printk(KERN_ERR "Master name not set\n");
+        osa_error("Master name not set.\n");
         return -EINVAL;
     }
 
@@ -230,7 +230,7 @@ int pdm_master_register(struct pdm_master *master)
     {
         if (!strcmp(existing_master->name, master->name))
         {
-            printk(KERN_ERR "Master name already exists: %s\n", master->name);
+            osa_error("Master name already exists: %s.\n", master->name);
             mutex_unlock(&pdm_master_list_mutex_lock);
             return -EEXIST;
         }
@@ -243,13 +243,13 @@ int pdm_master_register(struct pdm_master *master)
     dev_set_name(&master->dev, "pdm_master_%s", master->name);
     ret = device_add(&master->dev);
     if (ret) {
-        printk(KERN_ERR "Failed to add device: %s, error: %d\n", dev_name(&master->dev), ret);
+        osa_error("Failed to add device: %s, error: %d.\n", dev_name(&master->dev), ret);
         goto err_put_device;
     }
 
     ret = pdm_master_add_cdev(master);
     if (ret) {
-        printk(KERN_ERR "Failed to pdm_master_add_cdev, error: %d\n", ret);
+        osa_error("Failed to pdm_master_add_cdev, error: %d.\n", ret);
         goto err_del_device;
     }
 
@@ -263,7 +263,7 @@ int pdm_master_register(struct pdm_master *master)
     mutex_unlock(&pdm_master_list_mutex_lock);
 
     master->init_done = true;
-    printk(KERN_INFO "PDM Master registered: %s\n", dev_name(&master->dev));
+    osa_info("PDM Master Registered: %s.\n", dev_name(&master->dev));
 
     return 0;
 
@@ -281,7 +281,7 @@ void pdm_master_unregister(struct pdm_master *master)
 {
     if (NULL == master)
     {
-        printk(KERN_ERR "pdm_master_unregister: master is NULL\n");
+        osa_error("pdm_master_unregister: master is NULL\n");
         return;
     }
 
@@ -295,7 +295,7 @@ void pdm_master_unregister(struct pdm_master *master)
     pdm_master_delete_cdev(master);
     device_unregister(&master->dev);
 
-    printk(KERN_INFO "PDM Master unregistered: %s\n", dev_name(&master->dev));
+    osa_info("PDM Master unregistered: %s.\n", dev_name(&master->dev));
 }
 
 
@@ -348,7 +348,7 @@ struct pdm_device *pdm_master_get_pdmdev_of_real_device(struct pdm_master *maste
         }
     }
 
-    printk(KERN_ERR "%s:%d:[%s] Failed \n", __FILE__, __LINE__, __func__);
+    osa_error("%s:%d:[%s] Failed \n", __FILE__, __LINE__, __func__);
     return NULL;
 }
 

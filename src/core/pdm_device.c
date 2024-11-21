@@ -144,7 +144,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
     pdmdev->id = id;
     status = bus_for_each_dev(&pdm_bus_type, NULL, pdmdev, pdm_device_check);
     if (status) {
-        printk(KERN_ERR "Device %s already exist\n", dev_name(&pdmdev->dev));
+        osa_error("Device %s already exist\n", dev_name(&pdmdev->dev));
         pdm_master_put(pdmdev->master);
         idr_remove(&pdmdev->master->device_idr, pdmdev->id);
         return status;
@@ -156,7 +156,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
     status = device_add(&pdmdev->dev);
     if (status < 0)
     {
-        printk(KERN_ERR "Can't add %s, status %d\n", dev_name(&pdmdev->dev), status);
+        osa_error("Can't add %s, status %d\n", dev_name(&pdmdev->dev), status);
         pdm_master_put(pdmdev->master);
         idr_remove(&pdmdev->master->device_idr, pdmdev->id);
         return status;

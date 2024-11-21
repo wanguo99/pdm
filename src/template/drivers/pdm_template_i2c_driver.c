@@ -21,24 +21,24 @@ static int pdm_template_i2c_probe(struct i2c_client *client) {
     struct pdm_template_device_priv *pstTemplateDevPriv;
     int ret;
 
-    printk(KERN_INFO "TEMPLATE I2C Device probed\n");
+    osa_info("Template I2C Device Probed.\n");
 
     pdmdev = pdm_device_alloc(sizeof(struct pdm_template_device_priv));
     if (!pdmdev) {
-        osa_error("Failed to allocate pdm_device\n");
+        osa_error("Failed to allocate pdm_device.\n");
         return -ENOMEM;
     }
 
     // 指定当前pdm_device使用的master
     ret = pdm_template_master_add_device(pdmdev);
     if (ret) {
-        osa_error("Failed to add template device, ret=%d\n", ret);
+        osa_error("Failed to add template device, ret=%d.\n", ret);
         goto free_pdmdev;
     }
 
     ret = pdm_device_register(pdmdev);
     if (ret) {
-        osa_error("Failed to register pdm_device, ret=%d\n", ret);
+        osa_error("Failed to register pdm_device, ret=%d.\n", ret);
         goto master_del_pdmdev;
     }
 
@@ -69,7 +69,7 @@ static void pdm_template_i2c_remove(struct i2c_client *client) {
     struct pdm_device *pdmdev = pdm_template_master_get_pdmdev_of_real_device(client);
     if (NULL == pdmdev)
     {
-        printk(KERN_ERR "%s:%d:[%s]  \n", __FILE__, __LINE__, __func__);
+        osa_error("%s:%d:[%s]  \n", __FILE__, __LINE__, __func__);
         return;
     }
 
@@ -109,22 +109,22 @@ static struct i2c_driver pdm_template_i2c_driver = {
 int pdm_template_i2c_driver_init(void) {
     int ret;
 
-    printk(KERN_INFO "TEMPLATE I2C Driver initialized\n");
+    osa_info("Template I2C Driver initialized.\n");
 
     ret = i2c_add_driver(&pdm_template_i2c_driver);
     if (ret) {
-        printk(KERN_ERR "Failed to register TEMPLATE I2C driver\n");
+        osa_error("Failed to register TEMPLATE I2C driver.\n");
     }
 
     return ret;
 }
 
 void pdm_template_i2c_driver_exit(void) {
-    printk(KERN_INFO "TEMPLATE I2C Driver exited\n");
+    osa_info("Template I2C Driver exit.\n");
 
     i2c_del_driver(&pdm_template_i2c_driver);
 }
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("wanguo");
-MODULE_DESCRIPTION("PDM TEMPLATE I2C Driver.");
+MODULE_DESCRIPTION("PDM Template I2C Driver.");
