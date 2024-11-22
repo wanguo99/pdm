@@ -44,24 +44,24 @@ static int pdm_template_i2c_real_probe(struct i2c_client *client, const struct i
     struct pdm_template_device_priv *pstTemplateDevPriv;
     int ret;
 
-    osa_info("Template I2C Device Probed.\n");
+    OSA_INFO("Template I2C Device Probed.\n");
 
     pdmdev = pdm_device_alloc(sizeof(struct pdm_template_device_priv));
     if (!pdmdev) {
-        osa_error("Failed to allocate pdm_device.\n");
+        OSA_ERROR("Failed to allocate pdm_device.\n");
         return -ENOMEM;
     }
 
     pdmdev->real_device = client;
     ret = pdm_template_master_register_device(pdmdev);
     if (ret) {
-        osa_error("Failed to add template device, ret=%d.\n", ret);
+        OSA_ERROR("Failed to add template device, ret=%d.\n", ret);
         goto free_pdmdev;
     }
 
     pstTemplateDevPriv = pdm_device_get_devdata(pdmdev);
     if (!pstTemplateDevPriv) {
-        osa_error("Failed to get device private data.\n");
+        OSA_ERROR("Failed to get device private data.\n");
         ret = -EFAULT;
         goto unregister_pdmdev;
     }
@@ -83,7 +83,7 @@ static int pdm_template_i2c_real_remove(struct i2c_client *client) {
 
     struct pdm_device *pdmdev = pdm_template_master_find_pdmdev(client);
     if (NULL == pdmdev){
-        osa_error("Failed to find pdm device from master.\n");
+        OSA_ERROR("Failed to find pdm device from master.\n");
         return -ENODEV;
     }
 
@@ -119,20 +119,20 @@ static struct i2c_driver pdm_template_i2c_driver = {
 int pdm_template_i2c_driver_init(void) {
     int ret;
 
-    osa_info("Template I2C Driver Initializing.\n");
+    OSA_INFO("Template I2C Driver Initializing.\n");
     ret = i2c_add_driver(&pdm_template_i2c_driver);
     if (ret) {
-        osa_error("Failed to register Template I2C Driver.\n");
+        OSA_ERROR("Failed to register Template I2C Driver.\n");
         return ret;
     }
-    osa_info("Template I2C Driver Initialized.\n");
+    OSA_INFO("Template I2C Driver Initialized.\n");
     return 0;
 }
 
 void pdm_template_i2c_driver_exit(void) {
-    osa_info("Template I2C Driver Exiting.\n");
+    OSA_INFO("Template I2C Driver Exiting.\n");
     i2c_del_driver(&pdm_template_i2c_driver);
-    osa_info("Template I2C Driver Exited.\n");
+    OSA_INFO("Template I2C Driver Exited.\n");
 }
 
 MODULE_LICENSE("GPL");

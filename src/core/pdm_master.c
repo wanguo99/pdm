@@ -17,31 +17,31 @@ static DEFINE_MUTEX(pdm_master_list_mutex_lock);
 
 static int pdm_master_fops_open_default(struct inode *inode, struct file *filp)
 {
-    osa_info("Open function called.\n");
+    OSA_INFO("Open function called.\n");
     return 0;
 }
 
 static int pdm_master_fops_release_default(struct inode *inode, struct file *filp)
 {
-    osa_info("Release function called.\n");
+    OSA_INFO("Release function called.\n");
     return 0;
 }
 
 static ssize_t pdm_master_fops_read_default(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
 {
-    osa_info("Read function called.\n");
+    OSA_INFO("Read function called.\n");
     return 0;
 }
 
 static ssize_t pdm_master_fops_write_default(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
 {
-    osa_info("Write function called.\n");
+    OSA_INFO("Write function called.\n");
     return 0;
 }
 
 static long pdm_master_fops_unlocked_ioctl_default(struct file *filp, unsigned int cmd, unsigned long arg)
 {
-    osa_info("Master does not support ioctl operations.\n");
+    OSA_INFO("Master does not support ioctl operations.\n");
     return -ENOTSUPP;
 }
 
@@ -77,7 +77,7 @@ static void pdm_master_dev_release(struct device *dev)
 {
     struct pdm_master *master = dev_to_pdm_master(dev);
 
-    osa_info("Master %s released.\n", dev_name(&master->dev));
+    OSA_INFO("Master %s released.\n", dev_name(&master->dev));
     kfree(master);
 }
 
@@ -92,7 +92,7 @@ static int pdm_master_add_cdev(struct pdm_master *master)
 
     ret = alloc_chrdev_region(&master->devno, 0, 1, dev_name(&master->dev));
     if (ret < 0) {
-        osa_error("Failed to allocate char device region for %s, error: %d.\n", dev_name(&master->dev), ret);
+        OSA_ERROR("Failed to allocate char device region for %s, error: %d.\n", dev_name(&master->dev), ret);
         return ret;
     }
 
@@ -107,18 +107,18 @@ static int pdm_master_add_cdev(struct pdm_master *master)
     ret = cdev_add(&master->cdev, master->devno, 1);
     if (ret < 0) {
         unregister_chrdev_region(master->devno, 1);
-        osa_error("Failed to add char device for %s, error: %d.\n", dev_name(&master->dev), ret);
+        OSA_ERROR("Failed to add char device for %s, error: %d.\n", dev_name(&master->dev), ret);
         return ret;
     }
 
     if (!device_create(&pdm_master_class, NULL, master->devno, NULL, "pdm_master_%s_cdev", master->name)) {
         cdev_del(&master->cdev);
         unregister_chrdev_region(master->devno, 1);
-        osa_error("Failed to create device for %s.\n", master->name);
+        OSA_ERROR("Failed to create device for %s.\n", master->name);
         return -ENOMEM;
     }
 
-    osa_info("Add cdev for %s ok.\n", dev_name(&master->dev));
+    OSA_INFO("Add cdev for %s ok.\n", dev_name(&master->dev));
 
     return 0;
 }
@@ -161,7 +161,7 @@ struct pdm_master *pdm_master_alloc(unsigned int data_size)
 
     master = kzalloc(master_size + data_size, GFP_KERNEL);
     if (!master) {
-        osa_error("Failed to allocate memory for pdm_master");
+        OSA_ERROR("Failed to allocate memory for pdm_master");
         return NULL;
     }
 
@@ -223,7 +223,7 @@ int pdm_master_register(struct pdm_master *master)
     struct pdm_master *existing_master;
 
     if (!strlen(master->name)) {
-        osa_error("Master name not set.\n");
+        OSA_ERROR("Master name not set.\n");
         return -EINVAL;
     }
 
@@ -233,7 +233,7 @@ int pdm_master_register(struct pdm_master *master)
     mutex_lock(&pdm_master_list_mutex_lock);
     list_for_each_entry(existing_master, &pdm_master_list, entry) {
         if (!strcmp(existing_master->name, master->name)) {
-            osa_error("Master already exists: %s.\n", master->name);
+            OSA_ERROR("Master already exists: %s.\n", master->name);
             mutex_unlock(&pdm_master_list_mutex_lock);
             ret = -EEXIST;
             goto err_device_put;
@@ -247,13 +247,13 @@ int pdm_master_register(struct pdm_master *master)
 
     ret = device_add(&master->dev);
     if (ret) {
-        osa_error("Failed to add device: %s, error: %d.\n", dev_name(&master->dev), ret);
+        OSA_ERROR("Failed to add device: %s, error: %d.\n", dev_name(&master->dev), ret);
         goto err_device_put;
     }
 
     ret = pdm_master_add_cdev(master);
     if (ret) {
-        osa_error("Failed to add cdev, error: %d.\n", ret);
+        OSA_ERROR("Failed to add cdev, error: %d.\n", ret);
         goto err_device_unregister;
     }
 
@@ -266,7 +266,7 @@ int pdm_master_register(struct pdm_master *master)
     mutex_unlock(&master->idr_mutex_lock);
 
     master->init_done = true;
-    osa_info("PDM Master Registered: %s.\n", dev_name(&master->dev));
+    OSA_INFO("PDM Master Registered: %s.\n", dev_name(&master->dev));
 
     return 0;
 
@@ -281,7 +281,7 @@ err_device_put:
 void pdm_master_unregister(struct pdm_master *master)
 {
     if (NULL == master) {
-        osa_error("pdm_master_unregister: master is NULL\n");
+        OSA_ERROR("pdm_master_unregister: master is NULL\n");
         return;
     }
 
@@ -301,7 +301,7 @@ void pdm_master_unregister(struct pdm_master *master)
 
     pdm_master_delete_cdev(master);
     device_unregister(&master->dev);
-    osa_info("PDM Master unregistered: %s.\n", dev_name(&master->dev));
+    OSA_INFO("PDM Master unregistered: %s.\n", dev_name(&master->dev));
 }
 
 int pdm_master_add_device(struct pdm_master *master, struct pdm_device *pdmdev)
@@ -344,7 +344,7 @@ struct pdm_device *pdm_master_find_pdmdev(struct pdm_master *master, void *real_
     }
     mutex_unlock(&master->client_list_mutex_lock);
 
-    osa_error("Failed to find device for real_device at %p.\n", real_device);
+    OSA_ERROR("Failed to find device for real_device at %p.\n", real_device);
     return NULL;
 }
 
@@ -352,10 +352,10 @@ int pdm_master_init(void)
 {
     int ret = class_register(&pdm_master_class);
     if (ret < 0) {
-        osa_error("PDM: Failed to register class\n");
+        OSA_ERROR("PDM: Failed to register class\n");
         return ret;
     }
-    osa_info("Register PDM Master Class.\n");
+    OSA_INFO("Register PDM Master Class.\n");
 
     return 0;
 }
@@ -363,5 +363,5 @@ int pdm_master_init(void)
 void pdm_master_exit(void)
 {
     class_unregister(&pdm_master_class);
-    osa_info("Unregister PDM Master Class.\n");
+    OSA_INFO("Unregister PDM Master Class.\n");
 }

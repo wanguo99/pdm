@@ -126,7 +126,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
 
     if (!master)
     {
-        osa_error("pdm_device_register: master is NULL\n");
+        OSA_ERROR("pdm_device_register: master is NULL\n");
         return -EINVAL;
     }
 
@@ -137,13 +137,13 @@ int pdm_device_register(struct pdm_device *pdmdev)
 
     status = pdm_master_id_alloc(master, pdmdev);
     if (status) {
-        osa_error("id_alloc failed, status %d\n", status);
+        OSA_ERROR("id_alloc failed, status %d\n", status);
         goto err_put_master;
     }
 
     status = bus_for_each_dev(&pdm_bus_type, NULL, pdmdev, pdm_device_check);
     if (status) {
-        osa_error("Device %s already exists\n", dev_name(&pdmdev->dev));
+        OSA_ERROR("Device %s already exists\n", dev_name(&pdmdev->dev));
         goto err_free_id;
     }
 
@@ -152,11 +152,11 @@ int pdm_device_register(struct pdm_device *pdmdev)
     status = device_add(&pdmdev->dev);
     if (status < 0)
     {
-        osa_error("Can't add %s, status %d\n", dev_name(&pdmdev->dev), status);
+        OSA_ERROR("Can't add %s, status %d\n", dev_name(&pdmdev->dev), status);
         goto err_free_id;
     }
 
-    osa_info("Device %s registered.\n", dev_name(&pdmdev->dev));
+    OSA_INFO("Device %s registered.\n", dev_name(&pdmdev->dev));
     return 0;
 
 err_free_id:
@@ -176,5 +176,5 @@ void pdm_device_unregister(struct pdm_device *pdmdev)
     device_unregister(&pdmdev->dev);
     pdm_master_id_free(pdmdev->master, pdmdev);
     pdm_master_put(pdmdev->master);
-    osa_info("Device %s unregistered.\n", dev_name(&pdmdev->dev));
+    OSA_INFO("Device %s unregistered.\n", dev_name(&pdmdev->dev));
 }

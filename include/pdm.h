@@ -20,24 +20,25 @@
 #define BASENAME(file) (strrchr(file, '/') ? strrchr(file, '/') + 1 : file)
 #define FILE_BASENAME (BASENAME(__FILE__))
 
-// 定义 osa_fmt 宏
-#define osa_fmt(fmt) "[" KBUILD_MODNAME "]: " fmt
-
-#define osa_error(fmt, ...) \
-	printk(KERN_ERR osa_fmt("%s:%d %s(): " fmt), FILE_BASENAME, __LINE__, __func__, ##__VA_ARGS__)
-
-#define osa_warn(fmt, ...) \
-	printk(KERN_WARNING osa_fmt("%s:%d %s(): " fmt), FILE_BASENAME, __LINE__, __func__, ##__VA_ARGS__)
-
-#define osa_info(fmt, ...) \
-        printk(KERN_INFO osa_fmt("%s:%d %s(): " fmt), FILE_BASENAME, __LINE__, __func__, ##__VA_ARGS__)
-
-#define osa_debug(fmt, ...) \
-	printk(KERN_DEBUG osa_fmt("%s:%d %s(): " fmt), FILE_BASENAME, __LINE__, __func__, ##__VA_ARGS__)
+// 定义 OSA_fmt 宏
+#define OSA_fmt(fmt) "[" KBUILD_MODNAME "]: " fmt
 
 // 不带代码信息的打印
-#define osa_print(fmt, ...) \
-	printk(KERN_ERR osa_fmt(fmt), ##__VA_ARGS__)
+#define OSA_print(fmt, ...) \
+	printk(KERN_ERR OSA_fmt(fmt), ##__VA_ARGS__)
+
+#define OSA_ERROR(fmt, ...) \
+	printk(KERN_ERR OSA_fmt("[ERROR] %s:%d %s(): " fmt), FILE_BASENAME, __LINE__, __func__, ##__VA_ARGS__)
+
+#define OSA_WARN(fmt, ...) \
+	printk(KERN_WARNING OSA_fmt("[WARNING] %s:%d %s(): " fmt), FILE_BASENAME, __LINE__, __func__, ##__VA_ARGS__)
+
+#define OSA_INFO(fmt, ...) \
+        printk(KERN_INFO OSA_fmt("[INFO] %s:%d %s(): " fmt), FILE_BASENAME, __LINE__, __func__, ##__VA_ARGS__)
+
+#define OSA_DEBUG(fmt, ...) \
+	printk(KERN_DEBUG OSA_fmt("[DEBUG] %s:%d %s(): " fmt), FILE_BASENAME, __LINE__, __func__, ##__VA_ARGS__)
+
 
 /*                                                                              */
 /*                                公共数据类型声明                                      */

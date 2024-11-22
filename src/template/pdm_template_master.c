@@ -16,22 +16,22 @@ static long pdc_template_ioctl(struct file *filp, unsigned int cmd, unsigned lon
     int index = 1;
 
     if (!g_pstPdmMaster) {
-        osa_error("Master is not initialized.\n");
+        OSA_ERROR("Master is not initialized.\n");
         return -ENODEV;
     }
 
-    osa_info("-------------------------\n");
-    osa_info("-------------------------\n\n");
+    OSA_INFO("-------------------------\n");
+    OSA_INFO("-------------------------\n\n");
 
     mutex_lock(&g_pstPdmMaster->client_list_mutex_lock);
-    osa_info("Device List:\n\n");
+    OSA_INFO("Device List:\n\n");
     list_for_each_entry(client, &g_pstPdmMaster->client_list, entry)
     {
-        osa_info("[%d] Client Name: %s.\n", index++, dev_name(&client->dev));
+        OSA_INFO("[%d] Client Name: %s.\n", index++, dev_name(&client->dev));
     }
     mutex_unlock(&g_pstPdmMaster->client_list_mutex_lock);
 
-    osa_info("\n");
+    OSA_INFO("\n");
     return 0;
 }
 
@@ -88,13 +88,13 @@ int pdm_template_master_init(void)
 
     g_pstPdmMaster = pdm_master_alloc(sizeof(struct pdm_template_master_priv));
     if (!g_pstPdmMaster) {
-        osa_error("Master allocation failed\n");
+        OSA_ERROR("Master allocation failed\n");
         return -ENOMEM;
     }
 
     pstTemplateMasterPriv = pdm_master_get_devdata(g_pstPdmMaster);
     if (!pstTemplateMasterPriv) {
-        osa_error("pdm_master_get_devdata failed.\n");
+        OSA_ERROR("pdm_master_get_devdata failed.\n");
         status = -ENODATA;
         goto err_master_free;
     }
@@ -103,11 +103,11 @@ int pdm_template_master_init(void)
     g_pstPdmMaster->fops.unlocked_ioctl = pdc_template_ioctl;
     status = pdm_master_register(g_pstPdmMaster);
     if (status < 0) {
-        osa_error("pdm_master_register failed.\n");
+        OSA_ERROR("pdm_master_register failed.\n");
         goto err_master_free;
     }
 
-    osa_info("Template Master initialized OK.\n");
+    OSA_INFO("Template Master initialized OK.\n");
     return 0;
 
 err_master_free:
@@ -124,7 +124,7 @@ void pdm_template_master_exit(void)
         g_pstPdmMaster = NULL;  // Ensure no dangling pointer
     }
 
-    osa_info("Template Master exit.\n");
+    OSA_INFO("Template Master exit.\n");
 }
 
 MODULE_LICENSE("GPL");

@@ -21,7 +21,7 @@ static int pdm_submodule_register_driver(struct pdm_subdriver *driver) {
     if (driver->init) {
         ret = driver->init();
         if (ret) {
-            osa_error("Failed to register driver %s, ret = %d.\n", driver->name ? driver->name : "Unknown", ret);
+            OSA_ERROR("Failed to register driver %s, ret = %d.\n", driver->name ? driver->name : "Unknown", ret);
             return ret;
         }
     }
@@ -43,7 +43,7 @@ int pdm_submodule_register_drivers(void)
     for (i = 0; sub_drivers[i].name; i++) {
         ret = pdm_submodule_register_driver(&sub_drivers[i]);
         if (ret) {
-            osa_error("Failed to register driver %s at index %d\n", sub_drivers[i].name, i);
+            OSA_ERROR("Failed to register driver %s at index %d\n", sub_drivers[i].name, i);
             pdm_submodule_unregister_drivers();
             return ret;
         }
