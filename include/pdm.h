@@ -6,38 +6,11 @@
 #include <linux/idr.h>
 #include <linux/mod_devicetable.h>
 #include <linux/version.h>
+#include <linux/string.h>
 
-#include <linux/string.h>  // 包含字符串处理函数
-
+#include "pdm_osa.h"
 
 #define DEVICE_REF_COUNT(dev) (kref_read(&(dev)->kobj.kref))
-
-
-/*                                                                              */
-/*                                公共日志打印接口                                      */
-/*                                                                              */
-
-#define BASENAME(file) (strrchr(file, '/') ? strrchr(file, '/') + 1 : file)
-#define FILE_BASENAME (BASENAME(__FILE__))
-
-// 定义 OSA_fmt 宏
-#define OSA_fmt(fmt) "[" KBUILD_MODNAME "]: " fmt
-
-// 不带代码信息的打印
-#define OSA_print(fmt, ...) \
-	printk(KERN_ERR OSA_fmt(fmt), ##__VA_ARGS__)
-
-#define OSA_ERROR(fmt, ...) \
-	printk(KERN_ERR OSA_fmt("[ERROR] %s:%d %s(): " fmt), FILE_BASENAME, __LINE__, __func__, ##__VA_ARGS__)
-
-#define OSA_WARN(fmt, ...) \
-	printk(KERN_WARNING OSA_fmt("[WARNING] %s:%d %s(): " fmt), FILE_BASENAME, __LINE__, __func__, ##__VA_ARGS__)
-
-#define OSA_INFO(fmt, ...) \
-        printk(KERN_INFO OSA_fmt("[INFO] %s:%d %s(): " fmt), FILE_BASENAME, __LINE__, __func__, ##__VA_ARGS__)
-
-#define OSA_DEBUG(fmt, ...) \
-	printk(KERN_DEBUG OSA_fmt("[DEBUG] %s:%d %s(): " fmt), FILE_BASENAME, __LINE__, __func__, ##__VA_ARGS__)
 
 
 /*                                                                              */
