@@ -422,6 +422,10 @@ int pdm_master_register(struct pdm_master *master)
     idr_init(&master->device_idr);
     mutex_unlock(&master->idr_mutex_lock);
 
+    mutex_lock(&master->client_list_mutex_lock);
+    INIT_LIST_HEAD(&master->client_list);
+    mutex_unlock(&master->client_list_mutex_lock);
+
     master->init_done = true;
     OSA_INFO("PDM Master Registered: %s.\n", dev_name(&master->dev));
 
