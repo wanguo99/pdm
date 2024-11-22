@@ -16,7 +16,7 @@ static int pdm_device_verify(struct pdm_device *pdmdev)
         goto err_invalid;
     }
 
-    if ((!pdmdev->compatible) || (!strlen(pdmdev->compatible))) {
+    if (!strlen(pdmdev->compatible)) {
         OSA_ERROR("pdmdev->compatible is invalid\n");
         goto err_invalid;
     }

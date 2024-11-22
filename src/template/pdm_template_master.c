@@ -8,8 +8,23 @@
 #include "pdm.h"
 #include "pdm_template.h"
 
+/**
+ * @brief 全局 PDM 主设备指针
+ *
+ * 该指针用于存储 PDM 主设备的实例，初始化为 NULL。
+ */
 static struct pdm_master *g_pstPdmMaster = NULL;  // Initialize to NULL
 
+/**
+ * @brief PDC 模板设备的 IOCTL 操作
+ *
+ * 该函数处理 PDC 模板设备的 IOCTL 请求，主要用于调试和显示设备列表。
+ *
+ * @param filp 文件指针
+ * @param cmd 命令码
+ * @param arg 参数
+ * @return 成功返回 0，失败返回负错误码
+ */
 static long pdc_template_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
     struct pdm_device *client;
@@ -25,8 +40,7 @@ static long pdc_template_ioctl(struct file *filp, unsigned int cmd, unsigned lon
 
     mutex_lock(&g_pstPdmMaster->client_list_mutex_lock);
     OSA_INFO("Device List:\n\n");
-    list_for_each_entry(client, &g_pstPdmMaster->client_list, entry)
-    {
+    list_for_each_entry(client, &g_pstPdmMaster->client_list, entry) {
         OSA_INFO("[%d] Client Name: %s.\n", index++, dev_name(&client->dev));
     }
     mutex_unlock(&g_pstPdmMaster->client_list_mutex_lock);
@@ -35,11 +49,27 @@ static long pdc_template_ioctl(struct file *filp, unsigned int cmd, unsigned lon
     return 0;
 }
 
+/**
+ * @brief 查找 PDM 设备
+ *
+ * 该函数用于查找与给定实际设备对应的 PDM 设备。
+ *
+ * @param real_device 实际设备指针
+ * @return 成功返回 PDM 设备指针，失败返回 NULL
+ */
 struct pdm_device *pdm_template_master_find_pdmdev(void *real_device)
 {
     return pdm_master_find_pdmdev(g_pstPdmMaster, real_device);
 }
 
+/**
+ * @brief 注册 PDM 设备
+ *
+ * 该函数用于注册 PDM 设备，将其添加到设备管理器中，并注册设备。
+ *
+ * @param pdmdev PDM 设备指针
+ * @return 成功返回 0，失败返回负错误码
+ */
 int pdm_template_master_register_device(struct pdm_device *pdmdev)
 {
     int ret;
@@ -66,7 +96,13 @@ int pdm_template_master_register_device(struct pdm_device *pdmdev)
     return 0;
 }
 
-
+/**
+ * @brief 注销 PDM 设备
+ *
+ * 该函数用于注销 PDM 设备，将其从设备管理器中移除，并注销设备。
+ *
+ * @param pdmdev PDM 设备指针
+ */
 void pdm_template_master_unregister_device(struct pdm_device *pdmdev)
 {
     if (!pdmdev) {
@@ -80,7 +116,13 @@ void pdm_template_master_unregister_device(struct pdm_device *pdmdev)
     pr_info("Device %s unregistered from master.\n", dev_name(&pdmdev->dev));
 }
 
-
+/**
+ * @brief 初始化 PDM 模板主设备
+ *
+ * 该函数用于初始化 PDM 模板主设备，分配内存、设置名称、注册设备等。
+ *
+ * @return 成功返回 0，失败返回负错误码
+ */
 int pdm_template_master_init(void)
 {
     int status = 0;
@@ -116,6 +158,11 @@ err_master_free:
     return status;
 }
 
+/**
+ * @brief 退出 PDM 模板主设备
+ *
+ * 该函数用于退出 PDM 模板主设备，注销设备并释放内存。
+ */
 void pdm_template_master_exit(void)
 {
     if (g_pstPdmMaster) {

@@ -41,12 +41,12 @@ extern const struct device_type pdm_device_type;
  * @brief PDM 设备结构体
  */
 struct pdm_device {
-    int id;                       /**< 设备ID */
-    const char *compatible;       /**< 设备兼容字符串 */
-    struct device dev;            /**< 设备结构体 */
-    struct pdm_master *master;    /**< 指向所属的PDM主控制器 */
-    struct list_head entry;       /**< 设备链表节点 */
-    void *real_device;            /**< 指向实际的设备结构体 */
+    int id;                                     /**< 设备ID */
+    char compatible[PDM_DEVICE_NAME_SIZE];      /**< 设备兼容字符串 */
+    struct device dev;                          /**< 设备结构体 */
+    struct pdm_master *master;                  /**< 指向所属的PDM主控制器 */
+    struct list_head entry;                     /**< 设备链表节点 */
+    void *real_device;                          /**< 指向实际的设备结构体 */
 };
 
 /**
