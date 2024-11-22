@@ -25,18 +25,24 @@ DEBUG_OSA_LOG_ENABLE ?= 1
 DEBUG_OSA_LOG_WITH_FILE_LINE ?= 1
 DEBUG_OSA_LOG_WITH_FUNCTION ?= 0
 
-# 如果传递了 osa_log 参数，则启用日志打印
+# 检查 osa_log_enable 参数，启用或禁用日志打印
 ifeq ($(strip $(osa_log_enable)),0)
 DEBUG_OSA_LOG_ENABLE := 0
+else ifeq ($(strip $(osa_log_enable)),1)
+DEBUG_OSA_LOG_ENABLE := 1
 endif
 
-# 如果传递了 osa_log_with_file_line 参数，则启用文件名和行号打印
+# 检查 osa_log_with_file_line 参数，启用或禁用文件名和行号打印
 ifeq ($(strip $(osa_log_with_file_line)),0)
 DEBUG_OSA_LOG_WITH_FILE_LINE := 0
+else ifeq ($(strip $(osa_log_with_file_line)),1)
+DEBUG_OSA_LOG_WITH_FILE_LINE := 1
 endif
 
-# 如果传递了 osa_log_with_function 参数，则启用函数名打印
-ifeq ($(strip $(osa_log_with_function)),1)
+# 检查 osa_log_with_function 参数，启用或禁用函数名打印
+ifeq ($(strip $(osa_log_with_function)),0)
+DEBUG_OSA_LOG_WITH_FUNCTION := 0
+else ifeq ($(strip $(osa_log_with_function)),1)
 DEBUG_OSA_LOG_WITH_FUNCTION := 1
 endif
 

@@ -1,9 +1,8 @@
-# Peripheral Driver Module
+# Peripheral Driver Module (PDM)
 
 ## 简介
 
-PDM (Peripheral Driver Module) 是一个用于提供通用外设访问框架的驱动模块。
-它通过定义一套统一的接口和模型，简化了外设的访问和管理流程，使其更加标准化。
+PDM (Peripheral Driver Module) 是一个用于提供通用外设访问框架的驱动模块。它通过定义一套统一的接口和模型，简化了外设的访问和管理流程，使其更加标准化。
 
 PDM 主要由以下几个部分组成：
 - **PDM Core**: 驱动的核心入口，负责 PDM 总线的注册、PDM 主设备的初始化、子模块的初始化以及外设驱动的注册。
@@ -17,24 +16,24 @@ PDM 主要由以下几个部分组成：
 ```
 .
 ├── include
-│   ├── pdm.h
-│   ├── pdm_osa.h
-│   ├── pdm_submodule.h
-│   └── pdm_template.h
+│   ├── pdm.h
+│   ├── pdm_osa.h
+│   ├── pdm_submodule.h
+│   └── pdm_template.h
 ├── Kbuild
 ├── LICENSE
 ├── Makefile
 ├── README.md
 ├── src
-│   ├── core
-│   │   ├── pdm_core.c
-│   │   ├── pdm_device.c
-│   │   ├── pdm_master.c
-│   │   └── pdm_submodule.c
-│   └── template
-│       ├── drivers
-│       │   └── pdm_template_i2c_driver.c
-│       └── pdm_template_master.c
+│   ├── core
+│   │   ├── pdm_core.c
+│   │   ├── pdm_device.c
+│   │   ├── pdm_master.c
+│   │   └── pdm_submodule.c
+│   └── template
+│       ├── drivers
+│       │   └── pdm_template_i2c_driver.c
+│       └── pdm_template_master.c
 └── test
     └── test.c
 ```
@@ -44,7 +43,6 @@ PDM 主要由以下几个部分组成：
 ### 前提条件
 
 确保你已经安装了以下工具和库：
-
 - `make`
 - `gcc`
 - `kernel headers` 和 `kernel build system`
@@ -60,9 +58,17 @@ PDM 主要由以下几个部分组成：
 
 2. **本地编译**：
 
-   ```sh
-   make
-   ```
+   - 编译:
+
+     ```sh
+     make
+     ```
+
+   - 清理:
+
+     ```sh
+     make clean
+     ```
 
    这将编译 PDM 模块，并生成 `pdm.ko` 文件。
 
@@ -81,6 +87,25 @@ PDM 主要由以下几个部分组成：
      ```sh
      make
      ```
+
+4. **编译选项**：
+
+   - **日志管理**：
+     该驱动支持日志打印信息的配置：
+
+     - **日志总开关**：
+       要关闭所有日志打印功能，可以在编译时使用以下命令：
+
+       ```sh
+       make osa_log_enable=0
+       ```
+
+     - **开启文件名、行号和函数名信息打印**：
+       要开启日志打印并包含文件名、行号和函数名信息，可以在编译时使用以下命令：
+
+       ```sh
+       make osa_log_enable=1 osa_log_with_function=1 osa_log_with_file_line=1
+       ```
 
 ## 安装
 
@@ -194,4 +219,3 @@ PDM 模块遵循 GPL 许可证。更多信息请参见 [LICENSE](LICENSE) 文件
 ## 版本历史
 
 - v1.0.0: 初始版本
-
