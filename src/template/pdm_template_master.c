@@ -39,7 +39,8 @@ static long pdc_template_ioctl(struct file *filp, unsigned int cmd, unsigned lon
     OSA_INFO("Device List:\n");
     mutex_lock(&g_pstPdmMaster->client_list_mutex_lock);
     list_for_each_entry(client, &g_pstPdmMaster->client_list, entry) {
-        OSA_INFO("  [%d] Client Name: %s.\n", index++, dev_name(&client->dev));
+        OSA_INFO("  [%d] Client Name: %s.\n", index, dev_name(&client->dev));
+		index++;
     }
     mutex_unlock(&g_pstPdmMaster->client_list_mutex_lock);
 
@@ -75,7 +76,7 @@ int pdm_template_master_register_device(struct pdm_device *pdmdev)
     int ret;
 
     if (!g_pstPdmMaster || !pdmdev) {
-        OSA_ERROR("pdm_template_master_register_device: Invalid input parameters\n");
+        OSA_ERROR("Invalid input parameters\n");
         return -EINVAL;
     }
 
@@ -92,7 +93,7 @@ int pdm_template_master_register_device(struct pdm_device *pdmdev)
         return ret;
     }
 
-    OSA_INFO("Device %s registered with master.\n", dev_name(&pdmdev->dev));
+    OSA_INFO("Device %s registered.\n", dev_name(&pdmdev->dev));
     return 0;
 }
 
@@ -106,14 +107,14 @@ int pdm_template_master_register_device(struct pdm_device *pdmdev)
 void pdm_template_master_unregister_device(struct pdm_device *pdmdev)
 {
     if (!pdmdev) {
-        OSA_ERROR("pdm_template_master_unregister_device: pdmdev is NULL\n");
+        OSA_ERROR("pdmdev is NULL\n");
         return;
     }
 
     pdm_device_unregister(pdmdev);
     pdm_master_delete_device(g_pstPdmMaster, pdmdev);
 
-    OSA_INFO("Device %s unregistered from master.\n", dev_name(&pdmdev->dev));
+    OSA_INFO("Device %s unregistered.\n", dev_name(&pdmdev->dev));
 }
 
 /**

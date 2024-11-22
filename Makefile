@@ -20,13 +20,33 @@ TARGET_ROOT ?= "/"
 ROOT_SYMBOL_DIR := $(TARGET_ROOT)/lib/$(KERNEL_VERSION)/symvers
 # EXTRA_SYMBOLS ?= $(ROOT_SYMBOL_DIR)/osa/Module.symvers
 
+# 日志打印开关, 默认只打印文件名和行号，函数名需要手动开启
+DEBUG_OSA_LOG_ENABLE ?= 1
+DEBUG_OSA_LOG_WITH_FILE_LINE ?= 1
+DEBUG_OSA_LOG_WITH_FUNCTION ?= 0
+
+# 如果传递了 osa_log 参数，则启用日志打印
+ifeq ($(strip $(osa_log_enable)),0)
+DEBUG_OSA_LOG_ENABLE := 0
+endif
+
+# 如果传递了 osa_log_with_file_line 参数，则启用文件名和行号打印
+ifeq ($(strip $(osa_log_with_file_line)),0)
+DEBUG_OSA_LOG_WITH_FILE_LINE := 0
+endif
+
+# 如果传递了 osa_log_with_function 参数，则启用函数名打印
+ifeq ($(strip $(osa_log_with_function)),1)
+DEBUG_OSA_LOG_WITH_FUNCTION := 1
+endif
 
 # 默认目标
 all: modules
 
 # 编译规则
 modules:
-	$(MAKE) -C $(KERNELDIR) M=$(CURDIR) KBUILD_EXTRA_SYMBOLS="$(EXTRA_SYMBOLS)" modules
+	$(MAKE) -C $(KERNELDIR) M=$(CURDIR) KBUILD_EXTRA_SYMBOLS="$(EXTRA_SYMBOLS)" \
+		CFLAGS_MODULE="-DDEBUG_OSA_LOG_ENABLE=$(DEBUG_OSA_LOG_ENABLE) -DDEBUG_OSA_LOG_WITH_FILE_LINE=$(DEBUG_OSA_LOG_WITH_FILE_LINE) -DDEBUG_OSA_LOG_WITH_FUNCTION=$(DEBUG_OSA_LOG_WITH_FUNCTION)" modules
 
 # 清理规则
 clean:
@@ -43,6 +63,5 @@ install: modules
 uninstall:
 	@echo "Uninstalling modules from $(DESTDIR)"
 	@rm -rf $(DESTDIR)
-
 
 .PHONY: all modules clean install uninstall
