@@ -59,6 +59,9 @@ struct pdm_device {
     void *real_device;
 };
 
+#define PDM_MASTER_IDR_START 0
+#define PDM_MASTER_IDR_END 1024
+
 struct pdm_master {
     char   name[PDM_DEVICE_NAME_SIZE];
     struct device dev;
@@ -66,6 +69,7 @@ struct pdm_master {
     struct cdev cdev;
     struct file_operations fops;            // 每个master内部单独实现一套文件操作
     struct idr device_idr;                  // 给子设备分配ID使用
+    struct mutex idr_mutex_lock;            // 子设备列表锁
     struct rw_semaphore rwlock;             // 读写锁, sysfs读写master属性时使用
     unsigned int init_done : 1;             // 初始化标志
     struct list_head entry;                 // bus挂载点
@@ -135,7 +139,10 @@ void pdm_master_unregister(struct pdm_master *master);
 int  pdm_master_init(void);
 void pdm_master_exit(void);
 
-struct pdm_device *pdm_master_get_pdmdev_of_real_device(struct pdm_master *master, void *real_device);
+struct pdm_device *pdm_master_find_pdmdev(struct pdm_master *master, void *real_device);
+
+int pdm_master_id_alloc(struct pdm_master *master, struct pdm_device *pdmdev);
+void pdm_master_id_free(struct pdm_master *master, struct pdm_device *pdmdev);
 int pdm_master_add_device(struct pdm_master *master, struct pdm_device *pdmdev);
 int pdm_master_delete_device(struct pdm_master *master, struct pdm_device *pdmdev);
 

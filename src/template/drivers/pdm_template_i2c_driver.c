@@ -66,7 +66,7 @@ static int pdm_template_i2c_remove(struct i2c_client *client) {
 #else
 static void pdm_template_i2c_remove(struct i2c_client *client) {
 #endif
-    struct pdm_device *pdmdev = pdm_template_master_get_pdmdev_of_real_device(client);
+    struct pdm_device *pdmdev = pdm_template_master_find_pdmdev(client);
     if (NULL == pdmdev)
     {
         osa_error("%s:%d:[%s]  \n", __FILE__, __LINE__, __func__);

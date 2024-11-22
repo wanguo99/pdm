@@ -19,7 +19,7 @@ struct pdm_template_device_priv {
     struct pdm_template_operations *ops;
 };
 
-struct pdm_device *pdm_template_master_get_pdmdev_of_real_device(void *real_device);
+struct pdm_device *pdm_template_master_find_pdmdev(void *real_device);
 int pdm_template_master_add_device(struct pdm_device *pdmdev);
 int pdm_template_master_del_device(struct pdm_device *pdmdev);
 

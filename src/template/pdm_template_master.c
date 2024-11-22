@@ -35,9 +35,9 @@ static long pdc_template_ioctl(struct file *filp, unsigned int cmd, unsigned lon
     return 0;
 }
 
-struct pdm_device *pdm_template_master_get_pdmdev_of_real_device(void *real_device)
+struct pdm_device *pdm_template_master_find_pdmdev(void *real_device)
 {
-    return pdm_master_get_pdmdev_of_real_device(g_pstPdmMaster, real_device);
+    return pdm_master_find_pdmdev(g_pstPdmMaster, real_device);
 }
 
 int pdm_template_master_add_device(struct pdm_device *pdmdev)
@@ -77,13 +77,12 @@ int pdm_template_master_init(void)
     }
 
     strcpy(g_pstPdmMaster->name, "template");
+    g_pstPdmMaster->fops.unlocked_ioctl = pdc_template_ioctl;
     status = pdm_master_register(g_pstPdmMaster);
     if (status < 0) {
         osa_error("pdm_master_register failed.\n");
         goto err_master_free;
     }
-
-    g_pstPdmMaster->fops.unlocked_ioctl = pdc_template_ioctl;
 
     osa_info("Template Master initialized OK.\n");
     return 0;

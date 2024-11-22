@@ -150,9 +150,7 @@ struct pdm_master *pdm_master_get(struct pdm_master *master)
 void pdm_master_put(struct pdm_master *master)
 {
     if (master) {
-        osa_info("DEVICE_REF_COUNT: %d", DEVICE_REF_COUNT(&master->dev));
         put_device(&master->dev);
-        osa_info("DEVICE_REF_COUNT: %d", DEVICE_REF_COUNT(&master->dev));
     }
 }
 
@@ -162,16 +160,14 @@ struct pdm_master *pdm_master_alloc(unsigned int data_size)
     size_t master_size = sizeof(struct pdm_master);
 
     master = kzalloc(master_size + data_size, GFP_KERNEL);
-    if (!master)
+    if (!master) {
+        osa_error("Failed to allocate memory for pdm_master");
         return NULL;
-
-    osa_info("DEVICE_REF_COUNT: %d", DEVICE_REF_COUNT(&master->dev));
+    }
 
     device_initialize(&master->dev);
     master->dev.release = pdm_master_dev_release;
     pdm_master_set_devdata(master, (void *)master + master_size);
-
-    osa_info("DEVICE_REF_COUNT: %d", DEVICE_REF_COUNT(&master->dev));
 
     return master;
 }
@@ -179,10 +175,46 @@ struct pdm_master *pdm_master_alloc(unsigned int data_size)
 void pdm_master_free(struct pdm_master *master)
 {
     if (master) {
-        osa_info("DEVICE_REF_COUNT: %d", DEVICE_REF_COUNT(&master->dev));
         pdm_master_put(master);
-        osa_info("DEVICE_REF_COUNT: %d", DEVICE_REF_COUNT(&master->dev));
     }
+}
+
+int pdm_master_id_alloc(struct pdm_master *master, struct pdm_device *pdmdev)
+{
+	int id;
+
+    if (!master || !pdmdev) {
+        pr_err("Invalid input parameters\n");
+        return -EINVAL;
+    }
+
+	mutex_lock(&master->idr_mutex_lock);
+    id = idr_alloc(&master->device_idr, pdmdev, PDM_MASTER_IDR_START, PDM_MASTER_IDR_END, GFP_KERNEL);
+	mutex_unlock(&master->idr_mutex_lock);
+    if (id < 0) {
+        if (id == -ENOSPC) {
+            pr_err("No available IDs in the range\n");
+            return -EBUSY;
+        } else {
+            pr_err("Failed to allocate ID: %d\n", id);
+            return id;
+        }
+    }
+
+	pdmdev->id = id;
+	return 0;
+}
+
+void pdm_master_id_free(struct pdm_master *master, struct pdm_device *pdmdev)
+{
+    if (!master || !pdmdev) {
+        pr_err("Invalid input parameters\n");
+        return;
+    }
+
+    mutex_lock(&master->idr_mutex_lock);
+    idr_remove(&master->device_idr, pdmdev->id);
+    mutex_unlock(&master->idr_mutex_lock);
 }
 
 int pdm_master_register(struct pdm_master *master)
@@ -197,8 +229,6 @@ int pdm_master_register(struct pdm_master *master)
 
     if (!pdm_master_get(master))
         return -EBUSY;
-
-    osa_info("DEVICE_REF_COUNT: %d", DEVICE_REF_COUNT(&master->dev));
 
     mutex_lock(&pdm_master_list_mutex_lock);
     list_for_each_entry(existing_master, &pdm_master_list, entry) {
@@ -215,13 +245,11 @@ int pdm_master_register(struct pdm_master *master)
     master->dev.class = &pdm_master_class;
     dev_set_name(&master->dev, "pdm_master_%s", master->name);
 
-    osa_info("DEVICE_REF_COUNT: %d", DEVICE_REF_COUNT(&master->dev));
     ret = device_add(&master->dev);
     if (ret) {
         osa_error("Failed to add device: %s, error: %d.\n", dev_name(&master->dev), ret);
         goto err_device_put;
     }
-    osa_info("DEVICE_REF_COUNT: %d", DEVICE_REF_COUNT(&master->dev));
 
     ret = pdm_master_add_cdev(master);
     if (ret) {
@@ -233,11 +261,12 @@ int pdm_master_register(struct pdm_master *master)
     list_add_tail(&master->entry, &pdm_master_list);
     mutex_unlock(&pdm_master_list_mutex_lock);
 
+    mutex_lock(&master->idr_mutex_lock);
     idr_init(&master->device_idr);
+    mutex_unlock(&master->idr_mutex_lock);
 
     master->init_done = true;
     osa_info("PDM Master Registered: %s.\n", dev_name(&master->dev));
-    osa_info("DEVICE_REF_COUNT: %d", DEVICE_REF_COUNT(&master->dev));
 
     return 0;
 
@@ -256,8 +285,6 @@ void pdm_master_unregister(struct pdm_master *master)
         return;
     }
 
-    osa_info("DEVICE_REF_COUNT: %d", DEVICE_REF_COUNT(&master->dev));
-
     mutex_lock(&master->client_list_mutex_lock);
     WARN_ONCE(!list_empty(&master->client_list), "Not all clients removed.");
     mutex_unlock(&master->client_list_mutex_lock);
@@ -268,10 +295,11 @@ void pdm_master_unregister(struct pdm_master *master)
     list_del(&master->entry);
     mutex_unlock(&pdm_master_list_mutex_lock);
 
+    mutex_lock(&master->idr_mutex_lock);
     idr_destroy(&master->device_idr);
-    pdm_master_delete_cdev(master);
+    mutex_unlock(&master->idr_mutex_lock);
 
-    osa_info("DEVICE_REF_COUNT: %d", DEVICE_REF_COUNT(&master->dev));
+    pdm_master_delete_cdev(master);
     device_unregister(&master->dev);
     osa_info("PDM Master unregistered: %s.\n", dev_name(&master->dev));
 }
@@ -303,7 +331,7 @@ int pdm_master_delete_device(struct pdm_master *master, struct pdm_device *pdmde
     return 0;
 }
 
-struct pdm_device *pdm_master_get_pdmdev_of_real_device(struct pdm_master *master, void *real_device)
+struct pdm_device *pdm_master_find_pdmdev(struct pdm_master *master, void *real_device)
 {
     struct pdm_device *existing_pdmdev;
 

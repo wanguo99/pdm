@@ -123,7 +123,6 @@ int pdm_device_register(struct pdm_device *pdmdev)
 {
     struct pdm_master *master = pdmdev->master;
     int status;
-    int id;
 
     if (!master)
     {
@@ -131,49 +130,51 @@ int pdm_device_register(struct pdm_device *pdmdev)
         return -EINVAL;
     }
 
-    if (!pdm_master_get(master))
+    if (!pdm_master_get(master)) {
+        pr_err("pdm_device_register: Failed to get master\n");
         return -EBUSY;
-
-    id = idr_alloc(&master->device_idr, pdmdev, 0, 0, GFP_KERNEL);
-    if (id < 0)
-    {
-        osa_error("pdm_device_register: idr_alloc failed, status %d\n", id);
-        pdm_master_put(pdmdev->master);
-        return id;
     }
 
-    pdmdev->id = id;
+    status = pdm_master_id_alloc(master, pdmdev);
+    if (status) {
+        osa_error("id_alloc failed, status %d\n", status);
+        goto err_put_master;
+    }
+
     status = bus_for_each_dev(&pdm_bus_type, NULL, pdmdev, pdm_device_check);
     if (status) {
         osa_error("Device %s already exists\n", dev_name(&pdmdev->dev));
-        idr_remove(&master->device_idr, pdmdev->id);
-        pdm_master_put(master);
-        return status;
+        goto err_free_id;
     }
 
     pdmdev->dev.parent = &master->dev;
     dev_set_name(&pdmdev->dev, "pdm_device_%s-%d.0", master->name, pdmdev->id);
-
     status = device_add(&pdmdev->dev);
     if (status < 0)
     {
         osa_error("Can't add %s, status %d\n", dev_name(&pdmdev->dev), status);
-        idr_remove(&master->device_idr, pdmdev->id);
-        pdm_master_put(master);
-        return status;
+        goto err_free_id;
     }
 
     osa_info("Device %s registered.\n", dev_name(&pdmdev->dev));
     return 0;
+
+err_free_id:
+    pdm_master_id_free(master, pdmdev);
+err_put_master:
+    pdm_master_put(master);
+    return status;
 }
 
 void pdm_device_unregister(struct pdm_device *pdmdev)
 {
-    if (!pdmdev)
+    if (!pdmdev) {
+        pr_err("pdm_device_unregister: pdmdev is NULL\n");
         return;
+    }
 
     device_unregister(&pdmdev->dev);
-    idr_remove(&pdmdev->master->device_idr, pdmdev->id);
+    pdm_master_id_free(pdmdev->master, pdmdev);
     pdm_master_put(pdmdev->master);
     osa_info("Device %s unregistered.\n", dev_name(&pdmdev->dev));
 }
