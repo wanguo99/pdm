@@ -7,6 +7,7 @@
 #include "pdm.h"
 #include "pdm_template.h"
 
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 0, 0)
 struct i2c_device_id {
     char name[I2C_NAME_SIZE];
@@ -14,6 +15,30 @@ struct i2c_device_id {
 };
 #endif
 
+static int pdm_template_i2c_real_probe(struct i2c_client *client, const struct i2c_device_id *id);
+static int pdm_template_i2c_real_remove(struct i2c_client *client);
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 0, 0)
+static int pdm_template_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id) {
+    return pdm_template_i2c_real_probe(client, id);
+}
+#else
+static int pdm_template_i2c_probe(struct i2c_client *client) {
+    return pdm_template_i2c_real_probe(client, NULL);
+}
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 0, 0)
+static int pdm_template_i2c_remove(struct i2c_client *client) {
+    return pdm_template_i2c_real_remove(client);
+}
+#else
+static void pdm_template_i2c_remove(struct i2c_client *client) {
+    (void)pdm_template_i2c_real_remove(client);
+}
+#endif
+
+/* 驱动功能实现 */
 static int pdm_template_i2c_real_probe(struct i2c_client *client, const struct i2c_device_id *id) {
     struct pdm_device *pdmdev;
     struct pdm_template_device_priv *pstTemplateDevPriv;
@@ -58,7 +83,7 @@ static int pdm_template_i2c_real_remove(struct i2c_client *client) {
 
     struct pdm_device *pdmdev = pdm_template_master_find_pdmdev(client);
     if (NULL == pdmdev){
-        osa_error("%s:%d:[%s]  \n", __FILE__, __LINE__, __func__);
+        osa_error("Failed to find pdm device from master.\n");
         return -ENODEV;
     }
 
@@ -67,28 +92,7 @@ static int pdm_template_i2c_real_remove(struct i2c_client *client) {
     return 0;
 }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 0, 0)
-static int pdm_template_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id) {
-    return pdm_template_i2c_real_probe(client, id);
-}
-#else
-static int pdm_template_i2c_probe(struct i2c_client *client) {
-    return pdm_template_i2c_real_probe(client, NULL);
-}
-#endif
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 0, 0)
-static int pdm_template_i2c_remove(struct i2c_client *client) {
-    return pdm_template_i2c_real_remove(client);
-}
-#else
-static void pdm_template_i2c_remove(struct i2c_client *client) {
-    (void)pdm_template_i2c_real_remove(client);
-}
-#endif
-
-
-
+/* 设备驱动 */
 static const struct i2c_device_id pdm_template_i2c_id[] = {
     { "pdm_template", 0 },
     { }
@@ -114,18 +118,21 @@ static struct i2c_driver pdm_template_i2c_driver = {
 
 int pdm_template_i2c_driver_init(void) {
     int ret;
+
+    osa_info("Template I2C Driver Initializing.\n");
     ret = i2c_add_driver(&pdm_template_i2c_driver);
     if (ret) {
-        osa_error("Failed to register Template I2C driver.\n");
+        osa_error("Failed to register Template I2C Driver.\n");
+        return ret;
     }
-
-    osa_info("Template I2C Driver initialized.\n");
+    osa_info("Template I2C Driver Initialized.\n");
     return 0;
 }
 
 void pdm_template_i2c_driver_exit(void) {
-    osa_info("Template I2C Driver exit.\n");
+    osa_info("Template I2C Driver Exiting.\n");
     i2c_del_driver(&pdm_template_i2c_driver);
+    osa_info("Template I2C Driver Exited.\n");
 }
 
 MODULE_LICENSE("GPL");
