@@ -11,13 +11,26 @@
 #include "pdm.h"
 #include "pdm_submodule.h"
 
-
-static struct dentry       *pdm_debugfs;
-
+/**
+ * @brief 调试文件系统目录
+ *
+ * 该指针用于存储 PDM 调试文件系统的目录。
+ */
+static struct dentry *pdm_debugfs;
 
 /*                                                                              */
 /*                            pdm_bus_type                                      */
 /*                                                                              */
+
+/**
+ * @brief 匹配 PDM 设备 ID
+ *
+ * 该函数用于匹配 PDM 设备的 ID。
+ *
+ * @param id PDM 设备 ID 表
+ * @param pdmdev PDM 设备指针
+ * @return 匹配成功返回相应的 ID，失败返回 NULL
+ */
 const struct pdm_device_id *pdm_match_id(const struct pdm_device_id *id, struct pdm_device *pdmdev)
 {
     if (!(id && pdmdev))
@@ -32,7 +45,15 @@ const struct pdm_device_id *pdm_match_id(const struct pdm_device_id *id, struct 
 }
 EXPORT_SYMBOL_GPL(pdm_match_id);
 
-
+/**
+ * @brief 匹配 PDM 设备和驱动
+ *
+ * 该函数用于匹配 PDM 设备和驱动。
+ *
+ * @param dev 设备指针
+ * @param drv 驱动指针
+ * @return 匹配成功返回 1，失败返回 0
+ */
 #if LINUX_VERSION_CODE <= KERNEL_VERSION(5, 15, 0)
 static int pdm_device_match(struct device *dev, const struct device_driver *drv) {
 #else
@@ -45,19 +66,21 @@ static int pdm_device_match(struct device *dev, struct device_driver *drv) {
         return 0;
 
     pdmdev = dev_to_pdmdev(dev);
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 0)
     pdmdrv = drv_to_pdmdrv(drv);
-#else
-    pdmdrv = drv_to_pdmdrv(drv);
-#endif
-
     if (pdm_match_id(&pdmdrv->id_table, pdmdev))
         return 1;
 
     return 0;
 }
 
+/**
+ * @brief 探测 PDM 设备
+ *
+ * 该函数用于处理 PDM 设备的探测操作。
+ *
+ * @param dev 设备指针
+ * @return 成功返回 0，失败返回负错误码
+ */
 static int pdm_device_probe(struct device *dev)
 {
     struct pdm_device *pdmdev = dev_to_pdmdev(dev);
@@ -66,23 +89,34 @@ static int pdm_device_probe(struct device *dev)
     return driver->probe(pdmdev);
 }
 
+/**
+ * @brief 移除 PDM 设备
+ *
+ * 该函数用于处理 PDM 设备的移除操作。
+ *
+ * @param dev 设备指针
+ */
 static void pdm_device_remove(struct device *dev)
 {
-    if (NULL == dev){
+    if (NULL == dev) {
         return;
     }
 
     struct pdm_device *pdmdev = dev_to_pdmdev(dev);
     struct pdm_driver *driver = drv_to_pdmdrv(dev->driver);
 
-    if ((NULL == driver) || (NULL == pdmdev) || (NULL == driver->remove)){
+    if ((NULL == driver) || (NULL == pdmdev) || (NULL == driver->remove)) {
         return;
     }
 
     driver->remove(pdmdev);
-    return;
 }
 
+/**
+ * @brief PDM 总线类型
+ *
+ * 该结构体定义了 PDM 总线的基本信息和操作函数。
+ */
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
 struct bus_type pdm_bus_type = {
 #else
@@ -94,11 +128,17 @@ const struct bus_type pdm_bus_type = {
     .remove = pdm_device_remove,
 };
 
-
 /*                                                                              */
 /*                              module_init                                     */
 /*                                                                              */
 
+/**
+ * @brief 初始化 PDM 模块
+ *
+ * 该函数用于初始化 PDM 模块，包括注册总线、初始化主设备和子模块等。
+ *
+ * @return 成功返回 0，失败返回负错误码
+ */
 static int __init pdm_init(void)
 {
     int iRet;
@@ -127,10 +167,11 @@ static int __init pdm_init(void)
     OSA_INFO("Register PDM Submodules OK.\n");
 
     pdm_debugfs = debugfs_create_dir("pdm", NULL);
-    if (IS_ERR(pdm_debugfs)){
+    if (IS_ERR(pdm_debugfs)) {
         OSA_ERROR("Register PDM debugfs Failed.\n");
+    } else {
+        OSA_INFO("Register PDM debugfs OK.\n");
     }
-    OSA_INFO("Register PDM debugfs OK.\n");
 
     OSA_INFO("Peripheral Driver Module Init OK.\n");
     return 0;
@@ -143,10 +184,14 @@ err_bus_unregister:
     return iRet;
 }
 
-// 模块退出
+/**
+ * @brief 退出 PDM 模块
+ *
+ * 该函数用于退出 PDM 模块，包括注销总线、卸载主设备和子模块等。
+ */
 static void __exit pdm_exit(void)
 {
-    if (!IS_ERR(pdm_debugfs)){
+    if (!IS_ERR(pdm_debugfs)) {
         debugfs_remove_recursive(pdm_debugfs);
         OSA_INFO("Unregister PDM debugfs OK.\n");
     }
@@ -161,9 +206,7 @@ static void __exit pdm_exit(void)
     OSA_INFO("Unregister PDM Bus OK.\n");
 
     OSA_INFO("Peripheral Driver Module Exit OK.\n");
-    return;
 }
-
 
 module_init(pdm_init);
 module_exit(pdm_exit);
