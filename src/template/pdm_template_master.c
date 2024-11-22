@@ -40,23 +40,46 @@ struct pdm_device *pdm_template_master_find_pdmdev(void *real_device)
     return pdm_master_find_pdmdev(g_pstPdmMaster, real_device);
 }
 
-int pdm_template_master_add_device(struct pdm_device *pdmdev)
+int pdm_template_master_register_device(struct pdm_device *pdmdev)
 {
-    if (!g_pstPdmMaster) {
-        osa_error("Master is not initialized.\n");
-        return -ENODEV;
+    int ret;
+
+    if (!g_pstPdmMaster || !pdmdev) {
+        pr_err("pdm_template_master_register_device: Invalid input parameters\n");
+        return -EINVAL;
     }
-    return pdm_master_add_device(g_pstPdmMaster, pdmdev);
+
+    ret = pdm_master_add_device(g_pstPdmMaster, pdmdev);
+    if (ret) {
+        pr_err("Failed to add template device, ret=%d.\n", ret);
+        return ret;
+    }
+
+    ret = pdm_device_register(pdmdev);
+    if (ret) {
+        pr_err("Failed to register pdm_device, ret=%d.\n", ret);
+        pdm_master_delete_device(g_pstPdmMaster, pdmdev);
+        return ret;
+    }
+
+    pr_info("Device %s registered with master.\n", dev_name(&pdmdev->dev));
+    return 0;
 }
 
-int pdm_template_master_del_device(struct pdm_device *pdmdev)
+
+void pdm_template_master_unregister_device(struct pdm_device *pdmdev)
 {
-    if (!g_pstPdmMaster) {
-        osa_error("Master is not initialized.\n");
-        return -ENODEV;
+    if (!pdmdev) {
+        pr_err("pdm_template_master_unregister_device: pdmdev is NULL\n");
+        return;
     }
-    return pdm_master_delete_device(g_pstPdmMaster, pdmdev);
+
+    pdm_device_unregister(pdmdev);
+    pdm_master_delete_device(g_pstPdmMaster, pdmdev);
+
+    pr_info("Device %s unregistered from master.\n", dev_name(&pdmdev->dev));
 }
+
 
 int pdm_template_master_init(void)
 {
