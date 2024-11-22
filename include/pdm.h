@@ -8,7 +8,7 @@
 #include <linux/version.h>
 #include <linux/string.h>
 
-#include "pdm_osa.h"
+#include "osa_log.h"
 
 /**
  * @file pdm.h

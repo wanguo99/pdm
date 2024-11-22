@@ -11,32 +11,6 @@ PDM 主要由以下几个部分组成：
 - **PDM Device**: 一个通用的外设抽象模型，提供了统一的外设设备模型。
 - **PDM Template I2C Driver**: 一个使用 I2C 访问的 template 外设的实例。
 
-## 目录结构
-
-```
-.
-├── include
-│   ├── pdm.h
-│   ├── pdm_osa.h
-│   ├── pdm_submodule.h
-│   └── pdm_template.h
-├── Kbuild
-├── LICENSE
-├── Makefile
-├── README.md
-├── src
-│   ├── core
-│   │   ├── pdm_core.c
-│   │   ├── pdm_device.c
-│   │   ├── pdm_master.c
-│   │   └── pdm_submodule.c
-│   └── template
-│       ├── drivers
-│       │   └── pdm_template_i2c_driver.c
-│       └── pdm_template_master.c
-└── test
-    └── test.c
-```
 
 ## 编译
 
