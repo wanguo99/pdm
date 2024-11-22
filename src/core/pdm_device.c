@@ -214,7 +214,7 @@ static void pdm_device_release(struct device *dev)
  */
 void *pdm_device_get_devdata(struct pdm_device *pdmdev)
 {
-    if (pdm_device_verify(pdmdev)) {
+    if (!pdmdev) {
         pr_err("Invalid pdm device.\n");
         return NULL;
     }
@@ -232,7 +232,7 @@ void *pdm_device_get_devdata(struct pdm_device *pdmdev)
  */
 void pdm_device_set_devdata(struct pdm_device *pdmdev, void *data)
 {
-    if (pdm_device_verify(pdmdev)) {
+    if (!pdmdev) {
         pr_err("Invalid pdm device.\n");
         return;
     }
