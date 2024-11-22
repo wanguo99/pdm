@@ -55,7 +55,7 @@ struct pdm_device {
     const char *compatible; // pdm_driver_match使用
     struct device dev;
     struct pdm_master *master;
-    struct list_head node;
+    struct list_head entry;
     void *real_device;
 };
 
@@ -68,8 +68,8 @@ struct pdm_master {
     struct idr device_idr;                  // 给子设备分配ID使用
     struct rw_semaphore rwlock;             // 读写锁, sysfs读写master属性时使用
     unsigned int init_done : 1;             // 初始化标志
-    struct list_head node;                  // bus挂载点
-    struct list_head clients;               // 子设备列表
+    struct list_head entry;                 // bus挂载点
+    struct list_head client_list;           // 子设备列表
     struct mutex client_list_mutex_lock;    // 子设备列表锁
 };
 

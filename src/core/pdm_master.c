@@ -201,7 +201,7 @@ int pdm_master_register(struct pdm_master *master)
     osa_info("DEVICE_REF_COUNT: %d", DEVICE_REF_COUNT(&master->dev));
 
     mutex_lock(&pdm_master_list_mutex_lock);
-    list_for_each_entry(existing_master, &pdm_master_list, node) {
+    list_for_each_entry(existing_master, &pdm_master_list, entry) {
         if (!strcmp(existing_master->name, master->name)) {
             osa_error("Master already exists: %s.\n", master->name);
             mutex_unlock(&pdm_master_list_mutex_lock);
@@ -230,7 +230,7 @@ int pdm_master_register(struct pdm_master *master)
     }
 
     mutex_lock(&pdm_master_list_mutex_lock);
-    list_add_tail(&master->node, &pdm_master_list);
+    list_add_tail(&master->entry, &pdm_master_list);
     mutex_unlock(&pdm_master_list_mutex_lock);
 
     idr_init(&master->device_idr);
@@ -259,13 +259,13 @@ void pdm_master_unregister(struct pdm_master *master)
     osa_info("DEVICE_REF_COUNT: %d", DEVICE_REF_COUNT(&master->dev));
 
     mutex_lock(&master->client_list_mutex_lock);
-    WARN_ONCE(!list_empty(&master->clients), "Not all clients removed.");
+    WARN_ONCE(!list_empty(&master->client_list), "Not all clients removed.");
     mutex_unlock(&master->client_list_mutex_lock);
 
     master->init_done = false;
 
     mutex_lock(&pdm_master_list_mutex_lock);
-    list_del(&master->node);
+    list_del(&master->entry);
     mutex_unlock(&pdm_master_list_mutex_lock);
 
     idr_destroy(&master->device_idr);
@@ -288,7 +288,7 @@ int pdm_master_add_device(struct pdm_master *master, struct pdm_device *pdmdev)
     }
     pdmdev->master = master;
     mutex_lock(&master->client_list_mutex_lock);
-    list_add_tail(&pdmdev->node, &master->clients);
+    list_add_tail(&pdmdev->entry, &master->client_list);
     mutex_unlock(&master->client_list_mutex_lock);
 
     return 0;
@@ -297,7 +297,7 @@ int pdm_master_add_device(struct pdm_master *master, struct pdm_device *pdmdev)
 int pdm_master_delete_device(struct pdm_master *master, struct pdm_device *pdmdev)
 {
     mutex_lock(&master->client_list_mutex_lock);
-    list_del(&pdmdev->node);
+    list_del(&pdmdev->entry);
     mutex_unlock(&master->client_list_mutex_lock);
 
     return 0;
@@ -308,7 +308,7 @@ struct pdm_device *pdm_master_get_pdmdev_of_real_device(struct pdm_master *maste
     struct pdm_device *existing_pdmdev;
 
     mutex_lock(&master->client_list_mutex_lock);
-    list_for_each_entry(existing_pdmdev, &master->clients, node) {
+    list_for_each_entry(existing_pdmdev, &master->client_list, entry) {
         if (existing_pdmdev->real_device == real_device) {
             mutex_unlock(&master->client_list_mutex_lock);
             return existing_pdmdev;

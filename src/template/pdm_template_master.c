@@ -25,7 +25,7 @@ static long pdc_template_ioctl(struct file *filp, unsigned int cmd, unsigned lon
 
     mutex_lock(&g_pstPdmMaster->client_list_mutex_lock);
     osa_info("Device List:\n\n");
-    list_for_each_entry(client, &g_pstPdmMaster->clients, node)
+    list_for_each_entry(client, &g_pstPdmMaster->client_list, entry)
     {
         osa_info("[%d] Client Name: %s.\n", index++, dev_name(&client->dev));
     }
