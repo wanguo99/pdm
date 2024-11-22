@@ -1,10 +1,9 @@
-
 # Peripheral Driver Module
 
 ## 简介
 
 PDM (Peripheral Driver Module) 是一个用于提供通用外设访问框架的驱动模块。
-它通过定义一套统一的接口和模型，使得外设的访问和管理变得更加简单和标准化。
+它通过定义一套统一的接口和模型，简化了外设的访问和管理流程，使其更加标准化。
 
 PDM 主要由以下几个部分组成：
 - **PDM Core**: 驱动的核心入口，负责 PDM 总线的注册、PDM 主设备的初始化、子模块的初始化以及外设驱动的注册。
@@ -59,7 +58,7 @@ PDM 主要由以下几个部分组成：
    cd pdm
    ```
 
-2. **编译模块**：
+2. **本地编译**：
 
    ```sh
    make
@@ -67,17 +66,35 @@ PDM 主要由以下几个部分组成：
 
    这将编译 PDM 模块，并生成 `pdm.ko` 文件。
 
+3. **交叉编译**（针对嵌入式系统）：
+
+   - 设置交叉编译环境变量：
+
+     ```sh
+     export ARCH=arm
+     export CROSS_COMPILE=arm-linux-gnueabi-
+     export KERNELDIR="/path/to/your/kernel/build/directory"
+     ```
+
+   - 执行交叉编译命令：
+
+     ```sh
+     make
+     ```
+
 ## 安装
 
 ### 安装步骤
 
 1. **安装模块**：
 
+   默认情况下，模块将安装到当前目录下的 `_install` 文件夹中。你可以通过设置 `DESTDIR` 环境变量来指定其他安装目录。
+
    ```sh
-   sudo make install
+   sudo make install DESTDIR="/path/to/install/directory"
    ```
 
-   这将把编译好的模块和相关文件安装到指定的目录中。
+   如果不指定 `DESTDIR`，则默认安装到当前目录下的 `_install` 文件夹中。
 
 2. **加载模块**：
 
@@ -106,10 +123,10 @@ PDM 主要由以下几个部分组成：
 2. **清理安装目录**：
 
    ```sh
-   sudo make uninstall
+   sudo make uninstall DESTDIR="/path/to/install/directory"
    ```
 
-   这将删除安装目录中的所有文件。
+   如果不指定 `DESTDIR`，则默认清理当前目录下的 `_install` 文件夹。
 
 ## 调试
 
@@ -177,5 +194,4 @@ PDM 模块遵循 GPL 许可证。更多信息请参见 [LICENSE](LICENSE) 文件
 ## 版本历史
 
 - v1.0.0: 初始版本
-
 
