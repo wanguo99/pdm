@@ -36,16 +36,16 @@ static long pdc_template_ioctl(struct file *filp, unsigned int cmd, unsigned lon
     }
 
     OSA_INFO("-------------------------\n");
-    OSA_INFO("-------------------------\n\n");
-
+    OSA_INFO("Device List:\n");
     mutex_lock(&g_pstPdmMaster->client_list_mutex_lock);
-    OSA_INFO("Device List:\n\n");
     list_for_each_entry(client, &g_pstPdmMaster->client_list, entry) {
-        OSA_INFO("[%d] Client Name: %s.\n", index++, dev_name(&client->dev));
+        OSA_INFO("  [%d] Client Name: %s.\n", index++, dev_name(&client->dev));
     }
     mutex_unlock(&g_pstPdmMaster->client_list_mutex_lock);
 
     OSA_INFO("\n");
+    OSA_INFO("-------------------------\n");
+
     return 0;
 }
 
@@ -75,24 +75,24 @@ int pdm_template_master_register_device(struct pdm_device *pdmdev)
     int ret;
 
     if (!g_pstPdmMaster || !pdmdev) {
-        pr_err("pdm_template_master_register_device: Invalid input parameters\n");
+        OSA_ERROR("pdm_template_master_register_device: Invalid input parameters\n");
         return -EINVAL;
     }
 
     ret = pdm_master_add_device(g_pstPdmMaster, pdmdev);
     if (ret) {
-        pr_err("Failed to add template device, ret=%d.\n", ret);
+        OSA_ERROR("Failed to add template device, ret=%d.\n", ret);
         return ret;
     }
 
     ret = pdm_device_register(pdmdev);
     if (ret) {
-        pr_err("Failed to register pdm_device, ret=%d.\n", ret);
+        OSA_ERROR("Failed to register pdm_device, ret=%d.\n", ret);
         pdm_master_delete_device(g_pstPdmMaster, pdmdev);
         return ret;
     }
 
-    pr_info("Device %s registered with master.\n", dev_name(&pdmdev->dev));
+    OSA_INFO("Device %s registered with master.\n", dev_name(&pdmdev->dev));
     return 0;
 }
 
@@ -106,14 +106,14 @@ int pdm_template_master_register_device(struct pdm_device *pdmdev)
 void pdm_template_master_unregister_device(struct pdm_device *pdmdev)
 {
     if (!pdmdev) {
-        pr_err("pdm_template_master_unregister_device: pdmdev is NULL\n");
+        OSA_ERROR("pdm_template_master_unregister_device: pdmdev is NULL\n");
         return;
     }
 
     pdm_device_unregister(pdmdev);
     pdm_master_delete_device(g_pstPdmMaster, pdmdev);
 
-    pr_info("Device %s unregistered from master.\n", dev_name(&pdmdev->dev));
+    OSA_INFO("Device %s unregistered from master.\n", dev_name(&pdmdev->dev));
 }
 
 /**
@@ -142,12 +142,14 @@ int pdm_template_master_init(void)
     }
 
     strcpy(g_pstPdmMaster->name, "template");
-    g_pstPdmMaster->fops.unlocked_ioctl = pdc_template_ioctl;
     status = pdm_master_register(g_pstPdmMaster);
     if (status < 0) {
         OSA_ERROR("pdm_master_register failed.\n");
         goto err_master_free;
     }
+
+    // 需要在注册master之后对私有数据进行初始化
+    g_pstPdmMaster->fops.unlocked_ioctl = pdc_template_ioctl;
 
     OSA_INFO("Template Master initialized OK.\n");
     return 0;

@@ -322,7 +322,7 @@ int pdm_master_id_alloc(struct pdm_master *master, struct pdm_device *pdmdev)
     int id;
 
     if (!master || !pdmdev) {
-        pr_err("Invalid input parameters (master: %p, pdmdev: %p).\n", master, pdmdev);
+        OSA_ERROR("Invalid input parameters (master: %p, pdmdev: %p).\n", master, pdmdev);
         return -EINVAL;
     }
 
@@ -332,10 +332,10 @@ int pdm_master_id_alloc(struct pdm_master *master, struct pdm_device *pdmdev)
 
     if (id < 0) {
         if (id == -ENOSPC) {
-            pr_err("No available IDs in the range.\n");
+            OSA_ERROR("No available IDs in the range.\n");
             return -EBUSY;
         } else {
-            pr_err("Failed to allocate ID: %d.\n", id);
+            OSA_ERROR("Failed to allocate ID: %d.\n", id);
             return id;
         }
     }
@@ -352,7 +352,7 @@ int pdm_master_id_alloc(struct pdm_master *master, struct pdm_device *pdmdev)
 void pdm_master_id_free(struct pdm_master *master, struct pdm_device *pdmdev)
 {
     if (!master || !pdmdev) {
-        pr_err("Invalid input parameters (master: %p, pdmdev: %p).\n", master, pdmdev);
+        OSA_ERROR("Invalid input parameters (master: %p, pdmdev: %p).\n", master, pdmdev);
         return;
     }
 
