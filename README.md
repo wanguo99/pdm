@@ -189,7 +189,7 @@ PDM 模块遵循 GPL 许可证。更多信息请参见 [LICENSE](LICENSE) 文件
 
 ## 项目地址
 
-- GitHub: [https://github.com/wanguo99/PDM](https://github.com/wanguo99/pdm)
+- GitHub: [https://github.com/wanguo99/PDM](https://github.com/wanguo99/PDM)
 
 ## 版本历史
 
