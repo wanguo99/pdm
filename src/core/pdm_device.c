@@ -348,7 +348,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
     }
 
     pdmdev->dev.parent = &master->dev;
-    dev_set_name(&pdmdev->dev, "pdm_device_%s-%d.0", master->name, pdmdev->id);
+    dev_set_name(&pdmdev->dev, "%s-%d", master->name, pdmdev->id);
     status = device_add(&pdmdev->dev);
     if (status < 0)
     {
@@ -356,7 +356,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
         goto err_free_id;
     }
 
-    OSA_INFO("Device %s registered.\n", dev_name(&pdmdev->dev));
+    OSA_DEBUG("Device %s registered.\n", dev_name(&pdmdev->dev));
     return 0;
 
 err_free_id:
@@ -383,5 +383,5 @@ void pdm_device_unregister(struct pdm_device *pdmdev)
     device_unregister(&pdmdev->dev);
     pdm_master_id_free(pdmdev->master, pdmdev);
     pdm_master_put(pdmdev->master);
-    OSA_INFO("Device %s unregistered.\n", dev_name(&pdmdev->dev));
+    OSA_DEBUG("Device %s unregistered.\n", dev_name(&pdmdev->dev));
 }

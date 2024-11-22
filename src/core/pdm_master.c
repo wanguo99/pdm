@@ -16,7 +16,7 @@ static DEFINE_MUTEX(pdm_master_list_mutex_lock);
  */
 static int pdm_master_fops_open_default(struct inode *inode, struct file *filp)
 {
-    OSA_INFO("Open function called.\n");
+    OSA_INFO("fops_open_default.\n");
     return 0;
 }
 
@@ -30,7 +30,7 @@ static int pdm_master_fops_open_default(struct inode *inode, struct file *filp)
  */
 static int pdm_master_fops_release_default(struct inode *inode, struct file *filp)
 {
-    OSA_INFO("Release function called.\n");
+    OSA_INFO("fops_release_default.\n");
     return 0;
 }
 
@@ -46,7 +46,7 @@ static int pdm_master_fops_release_default(struct inode *inode, struct file *fil
  */
 static ssize_t pdm_master_fops_read_default(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
 {
-    OSA_INFO("Read function called.\n");
+    OSA_INFO("fops_read_default.\n");
     return 0;
 }
 
@@ -62,7 +62,7 @@ static ssize_t pdm_master_fops_read_default(struct file *filp, char __user *buf,
  */
 static ssize_t pdm_master_fops_write_default(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
 {
-    OSA_INFO("Write function called.\n");
+    OSA_INFO("fops_write_default.\n");
     return 0;
 }
 
@@ -77,7 +77,7 @@ static ssize_t pdm_master_fops_write_default(struct file *filp, const char __use
  */
 static long pdm_master_fops_unlocked_ioctl_default(struct file *filp, unsigned int cmd, unsigned long arg)
 {
-    OSA_INFO("Master does not support ioctl operations.\n");
+    OSA_INFO("This master does not support ioctl operations.\n");
     return -ENOTSUPP;
 }
 
@@ -168,7 +168,7 @@ static int pdm_master_add_cdev(struct pdm_master *master)
         goto err_cdev_del;
     }
 
-    OSA_INFO("Add cdev for %s ok.\n", dev_name(&master->dev));
+    OSA_DEBUG("Add cdev for %s ok.\n", dev_name(&master->dev));
 
     return 0;
 
@@ -486,12 +486,9 @@ int pdm_master_add_device(struct pdm_master *master, struct pdm_device *pdmdev)
     }
 
     pdmdev->master = master;
-
     mutex_lock(&master->client_list_mutex_lock);
     list_add_tail(&pdmdev->entry, &master->client_list);
     mutex_unlock(&master->client_list_mutex_lock);
-
-    OSA_INFO("Device %p added to master %p.\n", pdmdev, master);
     return 0;
 }
 
@@ -515,7 +512,7 @@ int pdm_master_delete_device(struct pdm_master *master, struct pdm_device *pdmde
     list_del(&pdmdev->entry);
     mutex_unlock(&master->client_list_mutex_lock);
 
-    OSA_INFO("Device %p removed from master %p.\n", pdmdev, master);
+    OSA_INFO("Device %s removed from %s master.\n", dev_name(&pdmdev->dev), master->name);
     return 0;
 }
 
@@ -540,12 +537,11 @@ struct pdm_device *pdm_master_find_pdmdev(struct pdm_master *master, void *real_
     list_for_each_entry(existing_pdmdev, &master->client_list, entry) {
         if (existing_pdmdev->real_device == real_device) {
             mutex_unlock(&master->client_list_mutex_lock);
-            OSA_INFO("Device found for real_device at %p.\n", real_device);
+            OSA_DEBUG("Device found for real_device at %p.\n", real_device);
             return existing_pdmdev;
         }
     }
     mutex_unlock(&master->client_list_mutex_lock);
-
     OSA_ERROR("Failed to find device for real_device at %p.\n", real_device);
     return NULL;
 }

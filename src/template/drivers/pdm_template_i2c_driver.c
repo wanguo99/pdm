@@ -33,8 +33,6 @@ static int pdm_template_i2c_real_probe(struct i2c_client *client, const struct i
     struct pdm_template_device_priv *pstTemplateDevPriv;
     int ret;
 
-    OSA_INFO("Template I2C Device Probed.\n");
-
     pdmdev = pdm_device_alloc(sizeof(struct pdm_template_device_priv));
     if (!pdmdev) {
         OSA_ERROR("Failed to allocate pdm_device.\n");
@@ -57,6 +55,7 @@ static int pdm_template_i2c_real_probe(struct i2c_client *client, const struct i
     }
     pstTemplateDevPriv->ops = NULL;
 
+    OSA_DEBUG("Template I2C Device Probed.\n");
     return 0;
 
 unregister_pdmdev:
@@ -172,7 +171,6 @@ static struct i2c_driver pdm_template_i2c_driver = {
 int pdm_template_i2c_driver_init(void) {
     int ret;
 
-    OSA_INFO("Template I2C Driver Initializing.\n");
     ret = i2c_add_driver(&pdm_template_i2c_driver);
     if (ret) {
         OSA_ERROR("Failed to register Template I2C Driver.\n");
@@ -188,7 +186,6 @@ int pdm_template_i2c_driver_init(void) {
  * 该函数用于退出 I2C 驱动，注销 I2C 驱动。
  */
 void pdm_template_i2c_driver_exit(void) {
-    OSA_INFO("Template I2C Driver Exiting.\n");
     i2c_del_driver(&pdm_template_i2c_driver);
     OSA_INFO("Template I2C Driver Exited.\n");
 }

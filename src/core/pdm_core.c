@@ -143,34 +143,34 @@ static int __init pdm_init(void)
 {
     int iRet;
 
-    OSA_INFO("Peripheral Driver Module Init.\n");
+    OSA_DEBUG("Peripheral Driver Module Init.\n");
 
     iRet = bus_register(&pdm_bus_type);
     if (iRet < 0) {
         OSA_ERROR("Register PDM Bus Failed.\n");
         return iRet;
     }
-    OSA_INFO("Register PDM Bus OK.\n");
+    OSA_DEBUG("Register PDM Bus OK.\n");
 
     iRet = pdm_master_init();
     if (iRet < 0) {
         OSA_ERROR("Initialize PDM Master Failed.\n");
         goto err_bus_unregister;
     }
-    OSA_INFO("Initialize PDM Master OK.\n");
+    OSA_DEBUG("Initialize PDM Master OK.\n");
 
     iRet = pdm_submodule_register_drivers();
     if (iRet < 0) {
         OSA_ERROR("Register PDM Submodules Failed.\n");
         goto err_master_exit;
     }
-    OSA_INFO("Register PDM Submodules OK.\n");
+    OSA_DEBUG("Register PDM Submodules OK.\n");
 
     pdm_debugfs = debugfs_create_dir("pdm", NULL);
     if (IS_ERR(pdm_debugfs)) {
         OSA_ERROR("Register PDM debugfs Failed.\n");
     } else {
-        OSA_INFO("Register PDM debugfs OK.\n");
+        OSA_DEBUG("Register PDM debugfs OK.\n");
     }
 
     OSA_INFO("Peripheral Driver Module Init OK.\n");
@@ -193,19 +193,12 @@ static void __exit pdm_exit(void)
 {
     if (!IS_ERR(pdm_debugfs)) {
         debugfs_remove_recursive(pdm_debugfs);
-        OSA_INFO("Unregister PDM debugfs OK.\n");
     }
 
     pdm_submodule_unregister_drivers();
-    OSA_INFO("Unregister PDM Submodules OK.\n");
-
     pdm_master_exit();
-    OSA_INFO("Deinitialize PDM Master OK.\n");
-
     bus_unregister(&pdm_bus_type);
-    OSA_INFO("Unregister PDM Bus OK.\n");
-
-    OSA_INFO("Peripheral Driver Module Exit OK.\n");
+    OSA_INFO("Peripheral Driver Module Exited.\n");
 }
 
 module_init(pdm_init);

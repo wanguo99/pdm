@@ -113,8 +113,6 @@ void pdm_template_master_unregister_device(struct pdm_device *pdmdev)
 
     pdm_device_unregister(pdmdev);
     pdm_master_delete_device(g_pstPdmMaster, pdmdev);
-
-    OSA_INFO("Device %s unregistered.\n", dev_name(&pdmdev->dev));
 }
 
 /**
