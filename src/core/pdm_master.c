@@ -163,7 +163,7 @@ static int pdm_master_add_cdev(struct pdm_master *master)
         goto err_unregister_chrdev;
     }
 
-    if (!device_create(&pdm_master_class, NULL, master->devno, NULL, "pdm_master_%s_cdev", master->name)) {
+    if (!device_create(&pdm_master_class, NULL, master->devno, NULL, "%s", dev_name(&master->dev))) {
         OSA_ERROR("Failed to create device for %s.\n", master->name);
         goto err_cdev_del;
     }
@@ -400,7 +400,7 @@ int pdm_master_register(struct pdm_master *master)
     mutex_unlock(&pdm_master_list_mutex_lock);
 
     master->dev.type = &pdm_master_device_type;
-    master->dev.class = &pdm_master_class;
+    // master->dev.class = &pdm_master_class;
     dev_set_name(&master->dev, "pdm_master_%s", master->name);
     ret = device_add(&master->dev);
     if (ret) {

@@ -150,21 +150,21 @@ static int __init pdm_init(void)
         OSA_ERROR("Register PDM Bus Failed.\n");
         return iRet;
     }
-    OSA_DEBUG("Register PDM Bus OK.\n");
+    OSA_INFO("Register PDM BUS OK.\n");
 
     iRet = pdm_master_init();
     if (iRet < 0) {
         OSA_ERROR("Initialize PDM Master Failed.\n");
         goto err_bus_unregister;
     }
-    OSA_DEBUG("Initialize PDM Master OK.\n");
+    OSA_INFO("Initialize PDM Master OK.\n");
 
     iRet = pdm_submodule_register_drivers();
     if (iRet < 0) {
         OSA_ERROR("Register PDM Submodules Failed.\n");
         goto err_master_exit;
     }
-    OSA_DEBUG("Register PDM Submodules OK.\n");
+    OSA_INFO("Register PDM Submodules OK.\n");
 
     pdm_debugfs = debugfs_create_dir("pdm", NULL);
     if (IS_ERR(pdm_debugfs)) {
