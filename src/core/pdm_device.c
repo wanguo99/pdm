@@ -12,7 +12,7 @@
 static int pdm_device_verify(struct pdm_device *pdmdev)
 {
     if (!pdmdev) {
-        OSA_ERROR("pdmdev is invalid\n");
+        OSA_ERROR("pdmdev is null\n");
         goto err_invalid;
     }
 
@@ -29,6 +29,7 @@ static int pdm_device_verify(struct pdm_device *pdmdev)
     return 0;
 
 err_invalid:
+    OSA_ERROR("pdmdev is invalid\n");
     return -EINVAL;
 }
 
@@ -48,20 +49,20 @@ static int pdm_device_uevent(const struct device *dev, struct kobj_uevent_env *e
     struct pdm_device *pdmdev = NULL;
 
     if (!dev) {
-        OSA_ERROR("dev is NULL\n");
+        OSA_ERROR("dev is null\n");
         return -EINVAL;
     }
 
     pdmdev = dev_to_pdm_device(dev);
     if (pdm_device_verify(pdmdev)) {
-        OSA_ERROR("Invalid pdm device.\n");
         return -EINVAL;
     }
 
-    // 生成 MODALIAS 字符串, 例如：[pdm:pdm_master_template:template_i2c:0001]
     OSA_DEBUG("Generating MODALIAS for device %s\n", dev_name(dev));
+
     return add_uevent_var(env, "MODALIAS=pdm:pdm_master_%s:%s-%04X",
-                                pdmdev->master->name, pdmdev->compatible, pdmdev->id);
+                                                pdmdev->master->name,
+                                                pdmdev->compatible, pdmdev->id);
 }
 
 
@@ -79,17 +80,17 @@ static ssize_t id_show(struct device *dev, struct device_attribute *da, char *bu
     struct pdm_device *pdmdev = NULL;
 
     if (!dev) {
-        OSA_ERROR("dev is NULL\n");
+        OSA_ERROR("dev is null\n");
         return -EINVAL;
     }
 
     pdmdev = dev_to_pdm_device(dev);
     if (pdm_device_verify(pdmdev)) {
-        OSA_ERROR("Invalid pdm device.\n");
         return -EINVAL;
     }
 
-    OSA_DEBUG("Showing ID for device %s\n", dev_name(dev));
+    OSA_INFO("Showing ID for device %s\n", dev_name(dev));
+
     return sysfs_emit(buf, "%d\n", pdmdev->id);
 }
 static DEVICE_ATTR_RO(id);
@@ -109,17 +110,17 @@ static ssize_t compatible_show(struct device *dev, struct device_attribute *da, 
     struct pdm_device *pdmdev = NULL;
 
     if (!dev) {
-        OSA_ERROR("dev is NULL\n");
+        OSA_ERROR("dev is null\n");
         return -EINVAL;
     }
 
     pdmdev = dev_to_pdm_device(dev);
     if (pdm_device_verify(pdmdev)) {
-        OSA_ERROR("Invalid pdm device.\n");
         return -EINVAL;
     }
 
-    OSA_DEBUG("Showing compatible string for device %s\n", dev_name(dev));
+    OSA_INFO("Showing compatible string for device %s\n", dev_name(dev));
+
     return sysfs_emit(buf, "%s\n", pdmdev->compatible);
 }
 static DEVICE_ATTR_RO(compatible);
@@ -139,17 +140,17 @@ static ssize_t master_name_show(struct device *dev, struct device_attribute *da,
     struct pdm_device *pdmdev = NULL;
 
     if (!dev) {
-        OSA_ERROR("dev is NULL\n");
+        OSA_ERROR("dev is null\n");
         return -EINVAL;
     }
 
     pdmdev = dev_to_pdm_device(dev);
     if (pdm_device_verify(pdmdev)) {
-        OSA_ERROR("Invalid pdm device.\n");
         return -EINVAL;
     }
 
-    OSA_DEBUG("Showing master name for device %s\n", dev_name(dev));
+    OSA_INFO("Showing master name for device %s\n", dev_name(dev));
+
     return sysfs_emit(buf, "%s\n", pdmdev->master->name);
 }
 static DEVICE_ATTR_RO(master_name);
@@ -174,7 +175,7 @@ ATTRIBUTE_GROUPS(pdm_device);
  * pdm_device_type - PDM设备类型
  */
 const struct device_type pdm_device_type = {
-    .name = "pdm_device",
+    .name   = "pdm_device",
     .groups = pdm_device_groups,
     .uevent = pdm_device_uevent,
 };
@@ -191,13 +192,12 @@ static void pdm_device_release(struct device *dev)
     struct pdm_device *pdmdev = NULL;
 
     if (!dev) {
-        OSA_ERROR("dev is NULL\n");
+        OSA_ERROR("dev is null\n");
         return;
     }
 
     pdmdev = dev_to_pdm_device(dev);
     if (pdm_device_verify(pdmdev)) {
-        OSA_ERROR("Invalid pdm device.\n");
         return;
     }
 
@@ -215,7 +215,7 @@ static void pdm_device_release(struct device *dev)
 void *pdm_device_devdata_get(struct pdm_device *pdmdev)
 {
     if (!pdmdev) {
-        OSA_ERROR("Invalid pdm device.\n");
+        OSA_ERROR("pdmdev is null\n");
         return NULL;
     }
 
@@ -233,7 +233,7 @@ void *pdm_device_devdata_get(struct pdm_device *pdmdev)
 void pdm_device_devdata_set(struct pdm_device *pdmdev, void *data)
 {
     if (!pdmdev) {
-        OSA_ERROR("Invalid pdm device.\n");
+        OSA_ERROR("dev is null\n");
         return;
     }
 
@@ -256,7 +256,10 @@ struct pdm_device *pdm_device_alloc(unsigned int data_size)
 
     pdmdev = kzalloc(pdmdev_size + data_size, GFP_KERNEL);
     if (!pdmdev)
+    {
+        OSA_ERROR("Failed to allocate memory for pdm device.\n");
         return NULL;
+    }
 
     device_initialize(&pdmdev->dev);
     pdmdev->dev.type = &pdm_device_type;
@@ -279,7 +282,6 @@ struct pdm_device *pdm_device_alloc(unsigned int data_size)
 void pdm_device_free(struct pdm_device *pdmdev)
 {
     if (pdm_device_verify(pdmdev)) {
-        OSA_ERROR("Invalid pdm device.\n");
         return;
     }
 
@@ -302,9 +304,9 @@ static int pdm_device_check_exist(struct device *dev, void *data)
 
     if ((new_dev->master == on_bus_dev->master)
         && (new_dev->id == on_bus_dev->id)
-        && strcmp(new_dev->compatible, on_bus_dev->compatible) != 0) // Use strcmp for string comparison
+        && strcmp(new_dev->compatible, on_bus_dev->compatible) != 0)
     {
-        // 根据device master、device id、device compatible唯一确定一个pdm_device
+        OSA_ERROR("Device already exist.\n");
         return -EBUSY;
     }
     return 0;
@@ -323,9 +325,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
     struct pdm_master *master = NULL;
     int status;
 
-    if (pdm_device_verify(pdmdev))
-    {
-        OSA_ERROR("pdm_device_register: pdmdev is invalid\n");
+    if (pdm_device_verify(pdmdev)){
         return -EINVAL;
     }
 
@@ -376,7 +376,7 @@ err_put_master:
 void pdm_device_unregister(struct pdm_device *pdmdev)
 {
     if (!pdmdev) {
-        OSA_ERROR("pdm_device_unregister: pdmdev is NULL\n");
+        OSA_ERROR("pdmdev is null\n");
         return;
     }
 

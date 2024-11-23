@@ -11,23 +11,19 @@
 /**
  * @brief 全局 PDM 主设备指针
  *
- * 该指针用于存储 PDM 主设备的实例，初始化为 NULL。
+ * 该指针用于存储 PDM 主设备的实例。
  */
-static struct pdm_master *g_pstPdmMaster = NULL;  // Initialize to NULL
+static struct pdm_master *g_pstPdmMaster = NULL;
 
 /**
- * @brief PDC 模板设备的 READ 操作
+ * @brief 显示所有已注册的 PDM 设备列表
  *
- * 该函数处理 PDC 模板设备的 READ 请求，主要用于调试和显示设备列表。
+ * 该函数用于显示当前已注册的所有 PDM 设备的名称。
+ * 如果主设备未初始化，则会返回错误。
  *
- * @filp: 文件结构
- * @buf: 用户空间缓冲区
- * @count: 要读取的字节数
- * @ppos: 当前文件位置
  * @return 成功返回 0，失败返回负错误码
  */
-
-static ssize_t pdc_template_read(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
+static int pdm_template_show_client_list(void)
 {
     struct pdm_device *client;
     int index = 1;
@@ -39,23 +35,38 @@ static ssize_t pdc_template_read(struct file *filp, char __user *buf, size_t cou
 
     OSA_INFO("-------------------------\n");
     OSA_INFO("Device List:\n");
+
     mutex_lock(&g_pstPdmMaster->client_list_mutex_lock);
     list_for_each_entry(client, &g_pstPdmMaster->client_list, entry) {
-        OSA_INFO("  [%d] Client Name: %s.\n", index, dev_name(&client->dev));
-		index++;
+        OSA_INFO("  [%d] Client Name: %s.\n", index++, dev_name(&client->dev));
     }
     mutex_unlock(&g_pstPdmMaster->client_list_mutex_lock);
 
-    OSA_INFO("\n");
     OSA_INFO("-------------------------\n");
 
     return 0;
 }
 
 /**
+ * @brief PDC 模板设备的 READ 操作
+ *
+ * 该函数处理 PDC 模板设备的 READ 请求。
+ *
+ * @filp: 文件结构
+ * @buf: 用户空间缓冲区
+ * @count: 要读取的字节数
+ * @ppos: 当前文件位置
+ * @return 成功返回 0，失败返回负错误码
+ */
+static ssize_t pdc_template_read(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
+{
+    return pdm_template_show_client_list();
+}
+
+/**
  * @brief PDC 模板设备的 IOCTL 操作
  *
- * 该函数处理 PDC 模板设备的 IOCTL 请求，主要用于调试和显示设备列表。
+ * 该函数处理 PDC 模板设备的 IOCTL 请求。
  *
  * @param filp 文件指针
  * @param cmd 命令码

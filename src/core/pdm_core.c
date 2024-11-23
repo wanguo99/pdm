@@ -134,9 +134,9 @@ struct bus_type pdm_bus_type = {
 #else
 const struct bus_type pdm_bus_type = {
 #endif
-    .name = "pdm",
-    .match = pdm_bus_device_match,
-    .probe = pdm_bus_device_probe,
+    .name   = "pdm",
+    .match  = pdm_bus_device_match,
+    .probe  = pdm_bus_device_probe,
     .remove = pdm_bus_device_remove,
 };
 
@@ -159,28 +159,24 @@ static int __init pdm_init(void)
 
     iRet = bus_register(&pdm_bus_type);
     if (iRet < 0) {
-        OSA_ERROR("Register PDM Bus Failed.\n");
         return iRet;
     }
     OSA_INFO("Register PDM BUS OK.\n");
 
     iRet = pdm_master_init();
     if (iRet < 0) {
-        OSA_ERROR("Initialize PDM Master Failed.\n");
         goto err_bus_unregister;
     }
     OSA_INFO("Initialize PDM Master OK.\n");
 
     iRet = pdm_submodule_register_drivers();
     if (iRet < 0) {
-        OSA_ERROR("Register PDM Submodules Failed.\n");
         goto err_master_exit;
     }
     OSA_INFO("Register PDM Submodules OK.\n");
 
     pdm_debugfs = debugfs_create_dir("pdm", NULL);
     if (IS_ERR(pdm_debugfs)) {
-        OSA_ERROR("Register PDM debugfs Failed.\n");
     } else {
         OSA_DEBUG("Register PDM debugfs OK.\n");
     }

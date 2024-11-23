@@ -265,7 +265,6 @@ void pdm_master_put(struct pdm_master *master)
 static void pdm_master_dev_release(struct device *dev)
 {
     struct pdm_master *master = dev_to_pdm_master(dev);
-    OSA_INFO("Master %s released.\n", dev_name(&master->dev));
     kfree(master);
 }
 
@@ -517,8 +516,7 @@ int pdm_master_client_delete(struct pdm_master *master, struct pdm_device *pdmde
     mutex_lock(&master->client_list_mutex_lock);
     list_del(&pdmdev->entry);
     mutex_unlock(&master->client_list_mutex_lock);
-
-    OSA_INFO("Device %s removed from %s master.\n", dev_name(&pdmdev->dev), master->name);
+    OSA_DEBUG("Device %s removed from %s master.\n", dev_name(&pdmdev->dev), master->name);
     return 0;
 }
 
