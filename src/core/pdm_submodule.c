@@ -96,5 +96,5 @@ void pdm_submodule_unregister_drivers(void) {
 }
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("wanguo");
+MODULE_AUTHOR("<guohaoprc@163.com>");
 MODULE_DESCRIPTION("PDM Submodule Driver.");

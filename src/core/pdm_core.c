@@ -213,5 +213,5 @@ module_init(pdm_init);
 module_exit(pdm_exit);
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("wanguo");
-MODULE_DESCRIPTION("Peripheral Driver Module Driver");
+MODULE_AUTHOR("<guohaoprc@163.com>");
+MODULE_DESCRIPTION("PDM <Peripheral Driver Module>");

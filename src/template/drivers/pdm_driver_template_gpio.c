@@ -134,4 +134,4 @@ void pdm_template_gpio_driver_exit(void) {
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("<guohaoprc@163.com>");
-MODULE_DESCRIPTION("Template GPIO driver");
+MODULE_DESCRIPTION("PDM Template GPIO Driver");

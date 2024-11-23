@@ -203,5 +203,5 @@ void pdm_template_i2c_driver_exit(void) {
 }
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("wanguo");
+MODULE_AUTHOR("<guohaoprc@163.com>");
 MODULE_DESCRIPTION("PDM Template I2C Driver.");

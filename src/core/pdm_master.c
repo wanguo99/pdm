@@ -637,3 +637,7 @@ void pdm_master_exit(void)
     class_unregister(&pdm_master_class);
     OSA_INFO("PDM Master Class unregistered.\n");
 }
+
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("<guohaoprc@163.com>");
+MODULE_DESCRIPTION("PDM Master Module");

@@ -385,3 +385,7 @@ void pdm_device_unregister(struct pdm_device *pdmdev)
     pdm_master_put(pdmdev->master);
     OSA_DEBUG("Device %s unregistered.\n", dev_name(&pdmdev->dev));
 }
+
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("<guohaoprc@163.com>");
+MODULE_DESCRIPTION("PDM Device Module");

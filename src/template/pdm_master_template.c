@@ -177,5 +177,5 @@ void pdm_template_master_exit(void)
 }
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("wanguo");
-MODULE_DESCRIPTION("PDM TEMPLATE Master Module.");
+MODULE_AUTHOR("<guohaoprc@163.com>");
+MODULE_DESCRIPTION("PDM Template Master Driver");
