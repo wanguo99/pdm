@@ -7,35 +7,35 @@ static LIST_HEAD(pdm_master_list);
 static DEFINE_MUTEX(pdm_master_list_mutex_lock);
 
 /**
- * pdm_master_fops_open_default - 默认打开函数
+ * pdm_master_fops_default_open - 默认打开函数
  * @inode: inode 结构
  * @filp: 文件结构
  *
  * 返回值:
  * 0 - 成功
  */
-static int pdm_master_fops_open_default(struct inode *inode, struct file *filp)
+static int pdm_master_fops_default_open(struct inode *inode, struct file *filp)
 {
-    OSA_INFO("fops_open_default.\n");
+    OSA_INFO("fops_default_open.\n");
     return 0;
 }
 
 /**
- * pdm_master_fops_release_default - 默认释放函数
+ * pdm_master_fops_default_release - 默认释放函数
  * @inode: inode 结构
  * @filp: 文件结构
  *
  * 返回值:
  * 0 - 成功
  */
-static int pdm_master_fops_release_default(struct inode *inode, struct file *filp)
+static int pdm_master_fops_default_release(struct inode *inode, struct file *filp)
 {
-    OSA_INFO("fops_release_default.\n");
+    OSA_INFO("fops_default_release.\n");
     return 0;
 }
 
 /**
- * pdm_master_fops_read_default - 默认读取函数
+ * pdm_master_fops_default_read - 默认读取函数
  * @filp: 文件结构
  * @buf: 用户空间缓冲区
  * @count: 要读取的字节数
@@ -44,14 +44,14 @@ static int pdm_master_fops_release_default(struct inode *inode, struct file *fil
  * 返回值:
  * 0 - 成功
  */
-static ssize_t pdm_master_fops_read_default(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
+static ssize_t pdm_master_fops_default_read(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
 {
-    OSA_INFO("fops_read_default.\n");
+    OSA_INFO("fops_default_read.\n");
     return 0;
 }
 
 /**
- * pdm_master_fops_write_default - 默认写入函数
+ * pdm_master_fops_default_write - 默认写入函数
  * @filp: 文件结构
  * @buf: 用户空间缓冲区
  * @count: 要写入的字节数
@@ -60,14 +60,14 @@ static ssize_t pdm_master_fops_read_default(struct file *filp, char __user *buf,
  * 返回值:
  * 0 - 成功
  */
-static ssize_t pdm_master_fops_write_default(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
+static ssize_t pdm_master_fops_default_write(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
 {
-    OSA_INFO("fops_write_default.\n");
+    OSA_INFO("fops_default_write.\n");
     return 0;
 }
 
 /**
- * pdm_master_fops_unlocked_ioctl_default - 默认ioctl函数
+ * pdm_master_fops_default_unlocked_ioctl - 默认ioctl函数
  * @filp: 文件结构
  * @cmd: ioctl命令
  * @arg: 命令参数
@@ -75,7 +75,7 @@ static ssize_t pdm_master_fops_write_default(struct file *filp, const char __use
  * 返回值:
  * -ENOTSUPP - 不支持的ioctl操作
  */
-static long pdm_master_fops_unlocked_ioctl_default(struct file *filp, unsigned int cmd, unsigned long arg)
+static long pdm_master_fops_default_unlocked_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
     OSA_INFO("This master does not support ioctl operations.\n");
     return -ENOTSUPP;
@@ -149,11 +149,11 @@ static int pdm_master_add_cdev(struct pdm_master *master)
         goto err_out;
     }
 
-    master->fops.open = pdm_master_fops_open_default;
-    master->fops.release = pdm_master_fops_release_default;
-    master->fops.read = pdm_master_fops_read_default;
-    master->fops.write = pdm_master_fops_write_default;
-    master->fops.unlocked_ioctl = pdm_master_fops_unlocked_ioctl_default;
+    master->fops.open = pdm_master_fops_default_open;
+    master->fops.release = pdm_master_fops_default_release;
+    master->fops.read = pdm_master_fops_default_read;
+    master->fops.write = pdm_master_fops_default_write;
+    master->fops.unlocked_ioctl = pdm_master_fops_default_unlocked_ioctl;
 
     cdev_init(&master->cdev, &master->fops);
     master->cdev.owner = THIS_MODULE;
