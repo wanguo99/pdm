@@ -17,19 +17,21 @@ static struct pdm_master *g_pstPdmMaster = NULL;
 
 
 /**
- * @brief PDC 模板设备的 READ 操作
+ * @brief PDC 模板设备的 WRITE 操作
  *
- * 该函数处理 PDC 模板设备的 READ 请求。
+ * 该函数处理 PDC 模板设备的 WRITE 请求。
  *
  * @filp: 文件结构
  * @buf: 用户空间缓冲区
- * @count: 要读取的字节数
+ * @count: 要写入的字节数
  * @ppos: 当前文件位置
  * @return 成功返回 0，失败返回负错误码
  */
-static ssize_t pdc_template_read(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
+static ssize_t pdc_template_write(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
+
 {
-    return pdm_master_client_show(g_pstPdmMaster);
+    OSA_INFO(" Called pdc_template_write \n");
+    return count;
 }
 
 /**
@@ -145,16 +147,16 @@ int pdm_template_master_init(void)
         goto err_master_free;
     }
 
-    // 需要在注册master之后对私有数据进行初始化
+    // TODO: 需要在注册master之后对私有数据进行初始化,否则可能会被初始数据覆盖
     g_pstPdmMaster->fops.unlocked_ioctl = pdc_template_ioctl;
-    g_pstPdmMaster->fops.read = pdc_template_read;
+    g_pstPdmMaster->fops.write = pdc_template_write;
 
     OSA_INFO("Template Master initialized OK.\n");
     return 0;
 
 err_master_free:
     pdm_master_free(g_pstPdmMaster);
-    g_pstPdmMaster = NULL;  // Reset to NULL to avoid dangling pointer
+    g_pstPdmMaster = NULL;
     return status;
 }
 

@@ -40,7 +40,7 @@ static int pdm_template_i2c_real_probe(struct i2c_client *client, const struct i
     }
 
     pdmdev->real_device = client;
-    strcpy(pdmdev->compatible, "pdm_template,i2c");
+    strcpy(pdmdev->compatible, "pdm,template-i2c");
     ret = pdm_template_master_register_device(pdmdev);
     if (ret) {
         OSA_ERROR("Failed to add template device, ret=%d.\n", ret);
@@ -123,6 +123,18 @@ static void pdm_template_i2c_remove(struct i2c_client *client) {
 }
 #endif
 
+
+/**
+ * @ dts节点配置示例
+ *  &i2c3 {
+ *    status = "okay";
+ *    template-i2c-0@b {
+ *        reg = <0xb>;
+ *        compatible = "pdm,template-i2c";
+ *  };
+ };
+*/
+
 /**
  * @brief I2C 设备 ID 表
  *
@@ -140,7 +152,7 @@ MODULE_DEVICE_TABLE(i2c, pdm_template_i2c_id);
  * 该表定义了支持的设备树兼容性字符串。
  */
 static const struct of_device_id pdm_template_i2c_matches[] = {
-    { .compatible = "pdm_template,i2c" },
+    { .compatible = "pdm,template-i2c" },
     { }
 };
 MODULE_DEVICE_TABLE(of, pdm_template_i2c_matches);
@@ -152,7 +164,7 @@ MODULE_DEVICE_TABLE(of, pdm_template_i2c_matches);
  */
 static struct i2c_driver pdm_template_i2c_driver = {
     .driver = {
-        .name = "pdm_template_i2c",
+        .name = "pdm-template-i2c",
         .of_match_table = pdm_template_i2c_matches,
         .owner = THIS_MODULE,
     },

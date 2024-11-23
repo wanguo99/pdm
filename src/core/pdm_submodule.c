@@ -23,6 +23,7 @@ static struct pdm_subdriver sub_drivers[] = {
     { .name = "Template Master", .init = pdm_template_master_init, .exit = pdm_template_master_exit },
     // 可以按照需要添加更多的驱动，需注意驱动之间的依赖关系
     { .name = "Template I2C Driver", .init = pdm_template_i2c_driver_init, .exit = pdm_template_i2c_driver_exit },
+    { .name = "Template GPIO Driver", .init = pdm_template_gpio_driver_init, .exit = pdm_template_gpio_driver_exit },
     { }  // 末尾的空项用于标记数组结束
 };
 

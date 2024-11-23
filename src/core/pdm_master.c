@@ -238,7 +238,19 @@ static void pdm_master_dev_release(struct device *dev)
  */
 static int pdm_master_fops_default_open(struct inode *inode, struct file *filp)
 {
+    struct pdm_master *master;
+
     OSA_INFO("fops_default_open.\n");
+
+    master = container_of(inode->i_cdev, struct pdm_master, cdev);
+    if (!master)
+    {
+        OSA_ERROR("Invalid master.\n");
+        return -EINVAL;
+    }
+
+    filp->private_data = master;
+
     return 0;
 }
 
@@ -268,7 +280,17 @@ static int pdm_master_fops_default_release(struct inode *inode, struct file *fil
  */
 static ssize_t pdm_master_fops_default_read(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
 {
+    struct pdm_master *master;
+
     OSA_INFO("fops_default_read.\n");
+
+    master = filp->private_data;
+    if (!master)
+    {
+        OSA_ERROR("Invalid master.\n");
+        return -EINVAL;
+    }
+    (void)pdm_master_client_show(master);
     return 0;
 }
 
