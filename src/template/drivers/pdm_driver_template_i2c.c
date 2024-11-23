@@ -10,9 +10,9 @@
 /**
  * @brief 兼容旧内核版本的 i2c_device_id 结构体定义
  *
- * 该结构体用于兼容 Linux 内核版本低于 5.16.0 的情况。
+ * 该结构体用于兼容 Linux 内核版本低于 2.6.25 的情况。
  */
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 25)
 struct i2c_device_id {
     char name[I2C_NAME_SIZE];
     kernel_ulong_t driver_data;
@@ -90,13 +90,13 @@ static int pdm_template_i2c_real_remove(struct i2c_client *client) {
 /**
  * @brief 兼容旧内核版本的 I2C 探测函数
  *
- * 该函数用于兼容 Linux 内核版本低于 5.16.0 的情况。
+ * 该函数用于兼容 Linux 内核版本低于 6.3.0 的情况。
  *
  * @param client I2C 客户端指针
  * @param id I2C 设备 ID
  * @return 成功返回 0，失败返回负错误码
  */
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
 static int pdm_template_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id) {
     return pdm_template_i2c_real_probe(client, id);
 }
@@ -109,11 +109,11 @@ static int pdm_template_i2c_probe(struct i2c_client *client) {
 /**
  * @brief 兼容旧内核版本的 I2C 移除函数
  *
- * 该函数用于兼容 Linux 内核版本低于 5.16.0 的情况。
+ * 该函数用于兼容 Linux 内核版本低于 6.0.0 的情况。
  *
  * @param client I2C 客户端指针
  */
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 0, 0)
 static int pdm_template_i2c_remove(struct i2c_client *client) {
     return pdm_template_i2c_real_remove(client);
 }
