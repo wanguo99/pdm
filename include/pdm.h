@@ -52,8 +52,8 @@ struct pdm_device {
 /**
  * @brief 定义PDM主控制器的ID范围
  */
-#define PDM_MASTER_IDR_START 0
-#define PDM_MASTER_IDR_END 1024
+#define PDM_MASTER_CLIENT_IDR_START 0
+#define PDM_MASTER_CLIENT_IDR_END 1024
 
 /**
  * @brief PDM 主控制器结构体
