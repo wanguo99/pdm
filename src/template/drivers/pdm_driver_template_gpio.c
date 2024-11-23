@@ -53,7 +53,7 @@ static int pdm_template_gpio_probe(struct platform_device *pdev)
     }
     pstTemplateDevPriv->ops = NULL;
 
-    OSA_DEBUG("Template GPIO Device Probed.\n");
+    OSA_INFO("Template GPIO Device Probed.\n");
     return 0;
 
 unregister_pdmdev:
@@ -66,17 +66,19 @@ free_pdmdev:
 
 }
 
-static void pdm_template_gpio_remove(struct platform_device *pdev)
+static int pdm_template_gpio_remove(struct platform_device *pdev)
 {
     struct pdm_device *pdmdev = pdm_template_master_find_pdmdev(pdev);
     if (NULL == pdmdev) {
         OSA_ERROR("Failed to find pdm device from master.\n");
-        return;
+        return -EINVAL;
     }
 
     pdm_template_master_unregister_device(pdmdev);
     pdm_device_free(pdmdev);
-    return;
+
+    OSA_INFO("Template GPIO Device Removed.\n");
+    return 0;
 }
 
 /**
@@ -95,7 +97,7 @@ MODULE_DEVICE_TABLE(of, of_gpio_leds_match);
 
 static struct platform_driver pdm_template_gpio_driver = {
 	.probe		= pdm_template_gpio_probe,
-	.shutdown	= pdm_template_gpio_remove,
+	.remove	= pdm_template_gpio_remove,
 	.driver		= {
 		.name	= "pdm-template-gpio",
 		.of_match_table = of_gpio_leds_match,

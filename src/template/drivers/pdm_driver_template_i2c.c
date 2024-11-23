@@ -55,7 +55,7 @@ static int pdm_template_i2c_real_probe(struct i2c_client *client, const struct i
     }
     pstTemplateDevPriv->ops = NULL;
 
-    OSA_DEBUG("Template I2C Device Probed.\n");
+    OSA_INFO("Template I2C Device Probed.\n");
     return 0;
 
 unregister_pdmdev:
@@ -84,6 +84,8 @@ static int pdm_template_i2c_real_remove(struct i2c_client *client) {
 
     pdm_template_master_unregister_device(pdmdev);
     pdm_device_free(pdmdev);
+
+    OSA_INFO("Template I2C Device Removed.\n");
     return 0;
 }
 
