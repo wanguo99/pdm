@@ -9,8 +9,8 @@ $(MODULE_NAME)-objs := 	src/core/pdm_submodule.o \
 						src/core/pdm_device.o
 
 
- $(MODULE_NAME)-objs += 	src/template/pdm_template_master.o \
-						src/template/drivers/pdm_template_i2c_driver.o
+ $(MODULE_NAME)-objs += src/template/pdm_master_template.o \
+						src/template/drivers/pdm_driver_template_i2c.o
 
 
 # 添加头文件路径
