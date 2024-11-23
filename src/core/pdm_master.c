@@ -444,13 +444,20 @@ err_device_put:
  */
 void pdm_master_unregister(struct pdm_master *master)
 {
+    struct pdm_device *client;
+
     if (!master) {
         OSA_ERROR("Invalid input parameters (master: %p).\n", master);
         return;
     }
 
     mutex_lock(&master->client_list_mutex_lock);
-    WARN_ONCE(!list_empty(&master->client_list), "Not all clients removed.");
+    if (!list_empty(&master->client_list)){
+        OSA_WARN("Not all clients removed.");
+        list_for_each_entry(client, &master->client_list, entry) {
+            OSA_INFO("Client Name: %s.\n", dev_name(&client->dev));
+        }
+    }
     mutex_unlock(&master->client_list_mutex_lock);
 
     master->init_done = false;
