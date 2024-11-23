@@ -16,16 +16,18 @@
 static struct pdm_master *g_pstPdmMaster = NULL;  // Initialize to NULL
 
 /**
- * @brief PDC 模板设备的 IOCTL 操作
+ * @brief PDC 模板设备的 READ 操作
  *
- * 该函数处理 PDC 模板设备的 IOCTL 请求，主要用于调试和显示设备列表。
+ * 该函数处理 PDC 模板设备的 READ 请求，主要用于调试和显示设备列表。
  *
- * @param filp 文件指针
- * @param cmd 命令码
- * @param arg 参数
+ * @filp: 文件结构
+ * @buf: 用户空间缓冲区
+ * @count: 要读取的字节数
+ * @ppos: 当前文件位置
  * @return 成功返回 0，失败返回负错误码
  */
-static long pdc_template_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+
+static ssize_t pdc_template_read(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
 {
     struct pdm_device *client;
     int index = 1;
@@ -47,6 +49,22 @@ static long pdc_template_ioctl(struct file *filp, unsigned int cmd, unsigned lon
     OSA_INFO("\n");
     OSA_INFO("-------------------------\n");
 
+    return 0;
+}
+
+/**
+ * @brief PDC 模板设备的 IOCTL 操作
+ *
+ * 该函数处理 PDC 模板设备的 IOCTL 请求，主要用于调试和显示设备列表。
+ *
+ * @param filp 文件指针
+ * @param cmd 命令码
+ * @param arg 参数
+ * @return 成功返回 0，失败返回负错误码
+ */
+static long pdc_template_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+{
+    OSA_INFO(" Called pdc_template_ioctl \n");
     return 0;
 }
 
@@ -149,6 +167,7 @@ int pdm_template_master_init(void)
 
     // 需要在注册master之后对私有数据进行初始化
     g_pstPdmMaster->fops.unlocked_ioctl = pdc_template_ioctl;
+    g_pstPdmMaster->fops.read = pdc_template_read;
 
     OSA_INFO("Template Master initialized OK.\n");
     return 0;
