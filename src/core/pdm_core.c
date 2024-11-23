@@ -66,10 +66,10 @@ static const struct pdm_device_id *pdm_bus_match_id(const struct pdm_device_id *
  * @param drv 驱动指针
  * @return 匹配成功返回 1，失败返回 0
  */
-#if LINUX_VERSION_CODE <= KERNEL_VERSION(5, 15, 0)
-static int pdm_bus_device_match(struct device *dev, const struct device_driver *drv) {
-#else
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 10, 0)
 static int pdm_bus_device_match(struct device *dev, struct device_driver *drv) {
+#else
+static int pdm_bus_device_match(struct device *dev, const struct device_driver *drv) {
 #endif
     struct pdm_device *pdmdev;
     struct pdm_driver *pdmdrv;
@@ -129,7 +129,7 @@ static void pdm_bus_device_remove(struct device *dev)
  *
  * 该结构体定义了 PDM 总线的基本信息和操作函数。
  */
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 2, 0)
 struct bus_type pdm_bus_type = {
 #else
 const struct bus_type pdm_bus_type = {

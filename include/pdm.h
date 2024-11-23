@@ -335,7 +335,7 @@ void pdm_master_exit(void);
  * 全局变量声明
  */
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 2, 0)
 extern struct bus_type pdm_bus_type;
 #else
 extern const struct bus_type pdm_bus_type;
