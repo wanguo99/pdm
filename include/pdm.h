@@ -196,6 +196,27 @@ int pdm_master_client_id_alloc(struct pdm_master *master, struct pdm_device *pdm
 void pdm_master_client_id_free(struct pdm_master *master, struct pdm_device *pdmdev);
 
 /**
+ * @brief 显示所有已注册的 PDM 设备列表
+ *
+ * 该函数用于显示当前已注册的所有 PDM 设备的名称。
+ * 如果主设备未初始化，则会返回错误。
+ *
+ * @return 成功返回 0，失败返回负错误码
+ */
+int pdm_master_client_show(struct pdm_master *master);
+
+/**
+ * @brief 查找 PDM 设备
+ *
+ * 该函数用于查找 PDM 设备。
+ *
+ * @param master PDM 主控制器结构体指针
+ * @param real_device 实际的设备结构体指针
+ * @return 成功返回 PDM 设备结构体指针，失败返回 NULL
+ */
+struct pdm_device *pdm_master_client_find(struct pdm_master *master, void *real_device);
+
+/**
  * @brief 添加 PDM 设备
  *
  * 该函数用于添加 PDM 设备。
@@ -216,17 +237,6 @@ int pdm_master_client_add(struct pdm_master *master, struct pdm_device *pdmdev);
  * @return 成功返回 0，失败返回负错误码
  */
 int pdm_master_client_delete(struct pdm_master *master, struct pdm_device *pdmdev);
-
-/**
- * @brief 查找 PDM 设备
- *
- * 该函数用于查找 PDM 设备。
- *
- * @param master PDM 主控制器结构体指针
- * @param real_device 实际的设备结构体指针
- * @return 成功返回 PDM 设备结构体指针，失败返回 NULL
- */
-struct pdm_device *pdm_master_client_find(struct pdm_master *master, void *real_device);
 
 /**
  * @brief 将 device 转换为 pdm_master
@@ -259,6 +269,25 @@ void *pdm_master_devdata_get(struct pdm_master *master);
 void pdm_master_devdata_set(struct pdm_master *master, void *data);
 
 /**
+ * @brief 获取 PDM 主控制器的引用
+ *
+ * 该函数用于获取 PDM 主控制器的引用。
+ *
+ * @param master PDM 主控制器结构体指针
+ * @return 成功返回 PDM 主控制器结构体指针，失败返回 NULL
+ */
+struct pdm_master *pdm_master_get(struct pdm_master *master);
+
+/**
+ * @brief 释放 PDM 主控制器的引用
+ *
+ * 该函数用于释放 PDM 主控制器的引用。
+ *
+ * @param master PDM 主控制器结构体指针
+ */
+void pdm_master_put(struct pdm_master *master);
+
+/**
  * @brief 分配 PDM 主控制器结构体
  *
  * 该函数用于分配新的 PDM 主控制器结构体。
@@ -277,24 +306,6 @@ struct pdm_master *pdm_master_alloc(unsigned int size);
  */
 void pdm_master_free(struct pdm_master *master);
 
-/**
- * @brief 获取 PDM 主控制器的引用
- *
- * 该函数用于获取 PDM 主控制器的引用。
- *
- * @param master PDM 主控制器结构体指针
- * @return 成功返回 PDM 主控制器结构体指针，失败返回 NULL
- */
-struct pdm_master *pdm_master_get(struct pdm_master *master);
-
-/**
- * @brief 释放 PDM 主控制器的引用
- *
- * 该函数用于释放 PDM 主控制器的引用。
- *
- * @param master PDM 主控制器结构体指针
- */
-void pdm_master_put(struct pdm_master *master);
 
 /**
  * @brief 注册 PDM 主控制器

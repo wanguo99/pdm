@@ -63,6 +63,68 @@ void pdm_master_client_id_free(struct pdm_master *master, struct pdm_device *pdm
 }
 
 /**
+ * @brief 显示所有已注册的 PDM 设备列表
+ *
+ * 该函数用于显示当前已注册的所有 PDM 设备的名称。
+ * 如果主设备未初始化，则会返回错误。
+ *
+ * @return 成功返回 0，失败返回负错误码
+ */
+int pdm_master_client_show(struct pdm_master *master)
+{
+    struct pdm_device *client;
+    int index = 1;
+
+    if (!master) {
+        OSA_ERROR("Master is not initialized.\n");
+        return -ENODEV;
+    }
+
+    OSA_INFO("-------------------------\n");
+    OSA_INFO("Device List:\n");
+
+    mutex_lock(&master->client_list_mutex_lock);
+    list_for_each_entry(client, &master->client_list, entry) {
+        OSA_INFO("  [%d] Client Name: %s.\n", index++, dev_name(&client->dev));
+    }
+    mutex_unlock(&master->client_list_mutex_lock);
+
+    OSA_INFO("-------------------------\n");
+
+    return 0;
+}
+
+/**
+ * pdm_master_client_find - 查找与给定实际设备关联的PDM设备
+ * @master: PDM主控制器
+ * @real_device: 实际设备指针
+ *
+ * 返回值:
+ * 指向找到的PDM设备的指针，或NULL（未找到）
+ */
+struct pdm_device *pdm_master_client_find(struct pdm_master *master, void *real_device)
+{
+    struct pdm_device *existing_pdmdev;
+
+    if (!master) {
+        OSA_ERROR("Invalid input parameter (master: %p).\n", master);
+        return NULL;
+    }
+
+    mutex_lock(&master->client_list_mutex_lock);
+    list_for_each_entry(existing_pdmdev, &master->client_list, entry) {
+        if (existing_pdmdev->real_device == real_device) {
+            mutex_unlock(&master->client_list_mutex_lock);
+            OSA_DEBUG("Device found for real_device at %p.\n", real_device);
+            return existing_pdmdev;
+        }
+    }
+    mutex_unlock(&master->client_list_mutex_lock);
+    OSA_ERROR("Failed to find device for real_device at %p.\n", real_device);
+    return NULL;
+}
+
+/**
  * pdm_master_client_add - 向PDM主控制器添加设备
  * @master: PDM主控制器
  * @pdmdev: 要添加的PDM设备
@@ -108,35 +170,6 @@ int pdm_master_client_delete(struct pdm_master *master, struct pdm_device *pdmde
     return 0;
 }
 
-/**
- * pdm_master_client_find - 查找与给定实际设备关联的PDM设备
- * @master: PDM主控制器
- * @real_device: 实际设备指针
- *
- * 返回值:
- * 指向找到的PDM设备的指针，或NULL（未找到）
- */
-struct pdm_device *pdm_master_client_find(struct pdm_master *master, void *real_device)
-{
-    struct pdm_device *existing_pdmdev;
-
-    if (!master) {
-        OSA_ERROR("Invalid input parameter (master: %p).\n", master);
-        return NULL;
-    }
-
-    mutex_lock(&master->client_list_mutex_lock);
-    list_for_each_entry(existing_pdmdev, &master->client_list, entry) {
-        if (existing_pdmdev->real_device == real_device) {
-            mutex_unlock(&master->client_list_mutex_lock);
-            OSA_DEBUG("Device found for real_device at %p.\n", real_device);
-            return existing_pdmdev;
-        }
-    }
-    mutex_unlock(&master->client_list_mutex_lock);
-    OSA_ERROR("Failed to find device for real_device at %p.\n", real_device);
-    return NULL;
-}
 
 
 /**
@@ -183,6 +216,16 @@ ATTRIBUTE_GROUPS(pdm_master_device);
 static const struct device_type pdm_master_device_type = {
     .groups = pdm_master_device_groups,
 };
+
+/**
+ * pdm_master_dev_release - 释放PDM主控制器设备
+ * @dev: 设备结构
+ */
+static void pdm_master_dev_release(struct device *dev)
+{
+    struct pdm_master *master = dev_to_pdm_master(dev);
+    kfree(master);
+}
 
 
 /**
@@ -393,15 +436,6 @@ void pdm_master_put(struct pdm_master *master)
     }
 }
 
-/**
- * pdm_master_dev_release - 释放PDM主控制器设备
- * @dev: 设备结构
- */
-static void pdm_master_dev_release(struct device *dev)
-{
-    struct pdm_master *master = dev_to_pdm_master(dev);
-    kfree(master);
-}
 
 /**
  * pdm_master_alloc - 分配PDM主控制器结构
