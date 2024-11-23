@@ -60,7 +60,7 @@ static long pdc_template_ioctl(struct file *filp, unsigned int cmd, unsigned lon
  */
 struct pdm_device *pdm_template_master_find_pdmdev(void *real_device)
 {
-    return pdm_master_find_pdmdev(g_pstPdmMaster, real_device);
+    return pdm_master_client_find(g_pstPdmMaster, real_device);
 }
 
 /**
@@ -80,7 +80,7 @@ int pdm_template_master_register_device(struct pdm_device *pdmdev)
         return -EINVAL;
     }
 
-    ret = pdm_master_add_device(g_pstPdmMaster, pdmdev);
+    ret = pdm_master_client_add(g_pstPdmMaster, pdmdev);
     if (ret) {
         OSA_ERROR("Failed to add template device, ret=%d.\n", ret);
         return ret;
@@ -89,7 +89,7 @@ int pdm_template_master_register_device(struct pdm_device *pdmdev)
     ret = pdm_device_register(pdmdev);
     if (ret) {
         OSA_ERROR("Failed to register pdm_device, ret=%d.\n", ret);
-        pdm_master_delete_device(g_pstPdmMaster, pdmdev);
+        pdm_master_client_delete(g_pstPdmMaster, pdmdev);
         return ret;
     }
 
@@ -112,7 +112,7 @@ void pdm_template_master_unregister_device(struct pdm_device *pdmdev)
     }
 
     pdm_device_unregister(pdmdev);
-    pdm_master_delete_device(g_pstPdmMaster, pdmdev);
+    pdm_master_client_delete(g_pstPdmMaster, pdmdev);
 }
 
 /**
@@ -133,9 +133,9 @@ int pdm_template_master_init(void)
         return -ENOMEM;
     }
 
-    pstTemplateMasterPriv = pdm_master_get_devdata(g_pstPdmMaster);
+    pstTemplateMasterPriv = pdm_master_devdata_get(g_pstPdmMaster);
     if (!pstTemplateMasterPriv) {
-        OSA_ERROR("pdm_master_get_devdata failed.\n");
+        OSA_ERROR("pdm_master_devdata_get failed.\n");
         status = -ENODATA;
         goto err_master_free;
     }

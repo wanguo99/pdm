@@ -95,36 +95,9 @@ struct pdm_driver {
  * 函数声明
  */
 
-/*
- * 常用函数
- */
-
-/**
- * @brief 将 device_driver 转换为 pdm_driver
- *
- * 该函数用于将 device_driver 转换为 pdm_driver。
- *
- * @param drv device_driver 结构体指针
- * @return pdm_driver 结构体指针
- */
-static inline struct pdm_driver *drv_to_pdmdrv(struct device_driver *drv)
-{
-    return container_of(drv, struct pdm_driver, driver);
-}
-
-/**
- * @brief 匹配设备ID
- *
- * 该函数用于匹配设备ID。
- *
- * @param id 设备ID表
- * @param pdmdev PDM 设备结构体指针
- * @return 匹配的设备ID条目，如果没有匹配项则返回 NULL
- */
-const struct pdm_device_id *pdm_match_id(const struct pdm_device_id *id, struct pdm_device *pdmdev);
 
 /*
- * PDM 设备相关函数
+ * PDM device 相关函数
  */
 
 /**
@@ -135,7 +108,7 @@ const struct pdm_device_id *pdm_match_id(const struct pdm_device_id *id, struct 
  * @param __dev device 结构体指针
  * @return pdm_device 结构体指针
  */
-#define dev_to_pdmdev(__dev) container_of(__dev, struct pdm_device, dev)
+#define dev_to_pdm_device(__dev) container_of(__dev, struct pdm_device, dev)
 
 /**
  * @brief 获取 PDM 设备的私有数据
@@ -145,7 +118,7 @@ const struct pdm_device_id *pdm_match_id(const struct pdm_device_id *id, struct 
  * @param pdmdev PDM 设备结构体指针
  * @return 私有数据指针
  */
-void *pdm_device_get_devdata(struct pdm_device *pdmdev);
+void *pdm_device_devdata_get(struct pdm_device *pdmdev);
 
 /**
  * @brief 设置 PDM 设备的私有数据
@@ -155,7 +128,7 @@ void *pdm_device_get_devdata(struct pdm_device *pdmdev);
  * @param pdmdev PDM 设备结构体指针
  * @param data 私有数据指针
  */
-void pdm_device_set_devdata(struct pdm_device *pdmdev, void *data);
+void pdm_device_devdata_set(struct pdm_device *pdmdev, void *data);
 
 /**
  * @brief 分配 PDM 设备结构体
@@ -195,9 +168,65 @@ int pdm_device_register(struct pdm_device *pdmdev);
  */
 void pdm_device_unregister(struct pdm_device *pdmdev);
 
+
 /*
- * PDM 主控制器相关函数
+ * PDM master 相关函数
  */
+
+
+/**
+ * @brief 分配 PDM 设备ID
+ *
+ * 该函数用于分配 PDM 设备ID。
+ *
+ * @param master PDM 主控制器结构体指针
+ * @param pdmdev PDM 设备结构体指针
+ * @return 成功返回 0，失败返回负错误码
+ */
+int pdm_master_client_id_alloc(struct pdm_master *master, struct pdm_device *pdmdev);
+
+/**
+ * @brief 释放 PDM 设备ID
+ *
+ * 该函数用于释放 PDM 设备ID。
+ *
+ * @param master PDM 主控制器结构体指针
+ * @param pdmdev PDM 设备结构体指针
+ */
+void pdm_master_client_id_free(struct pdm_master *master, struct pdm_device *pdmdev);
+
+/**
+ * @brief 添加 PDM 设备
+ *
+ * 该函数用于添加 PDM 设备。
+ *
+ * @param master PDM 主控制器结构体指针
+ * @param pdmdev PDM 设备结构体指针
+ * @return 成功返回 0，失败返回负错误码
+ */
+int pdm_master_client_add(struct pdm_master *master, struct pdm_device *pdmdev);
+
+/**
+ * @brief 删除 PDM 设备
+ *
+ * 该函数用于删除 PDM 设备。
+ *
+ * @param master PDM 主控制器结构体指针
+ * @param pdmdev PDM 设备结构体指针
+ * @return 成功返回 0，失败返回负错误码
+ */
+int pdm_master_client_delete(struct pdm_master *master, struct pdm_device *pdmdev);
+
+/**
+ * @brief 查找 PDM 设备
+ *
+ * 该函数用于查找 PDM 设备。
+ *
+ * @param master PDM 主控制器结构体指针
+ * @param real_device 实际的设备结构体指针
+ * @return 成功返回 PDM 设备结构体指针，失败返回 NULL
+ */
+struct pdm_device *pdm_master_client_find(struct pdm_master *master, void *real_device);
 
 /**
  * @brief 将 device 转换为 pdm_master
@@ -217,7 +246,7 @@ void pdm_device_unregister(struct pdm_device *pdmdev);
  * @param master PDM 主控制器结构体指针
  * @return 私有数据指针
  */
-void *pdm_master_get_devdata(struct pdm_master *master);
+void *pdm_master_devdata_get(struct pdm_master *master);
 
 /**
  * @brief 设置 PDM 主控制器的私有数据
@@ -227,7 +256,7 @@ void *pdm_master_get_devdata(struct pdm_master *master);
  * @param master PDM 主控制器结构体指针
  * @param data 私有数据指针
  */
-void pdm_master_set_devdata(struct pdm_master *master, void *data);
+void pdm_master_devdata_set(struct pdm_master *master, void *data);
 
 /**
  * @brief 分配 PDM 主控制器结构体
@@ -301,60 +330,6 @@ int pdm_master_init(void);
  * 该函数用于退出 PDM 主控制器。
  */
 void pdm_master_exit(void);
-
-/**
- * @brief 查找 PDM 设备
- *
- * 该函数用于查找 PDM 设备。
- *
- * @param master PDM 主控制器结构体指针
- * @param real_device 实际的设备结构体指针
- * @return 成功返回 PDM 设备结构体指针，失败返回 NULL
- */
-struct pdm_device *pdm_master_find_pdmdev(struct pdm_master *master, void *real_device);
-
-/**
- * @brief 分配 PDM 设备ID
- *
- * 该函数用于分配 PDM 设备ID。
- *
- * @param master PDM 主控制器结构体指针
- * @param pdmdev PDM 设备结构体指针
- * @return 成功返回 0，失败返回负错误码
- */
-int pdm_master_id_alloc(struct pdm_master *master, struct pdm_device *pdmdev);
-
-/**
- * @brief 释放 PDM 设备ID
- *
- * 该函数用于释放 PDM 设备ID。
- *
- * @param master PDM 主控制器结构体指针
- * @param pdmdev PDM 设备结构体指针
- */
-void pdm_master_id_free(struct pdm_master *master, struct pdm_device *pdmdev);
-
-/**
- * @brief 添加 PDM 设备
- *
- * 该函数用于添加 PDM 设备。
- *
- * @param master PDM 主控制器结构体指针
- * @param pdmdev PDM 设备结构体指针
- * @return 成功返回 0，失败返回负错误码
- */
-int pdm_master_add_device(struct pdm_master *master, struct pdm_device *pdmdev);
-
-/**
- * @brief 删除 PDM 设备
- *
- * 该函数用于删除 PDM 设备。
- *
- * @param master PDM 主控制器结构体指针
- * @param pdmdev PDM 设备结构体指针
- * @return 成功返回 0，失败返回负错误码
- */
-int pdm_master_delete_device(struct pdm_master *master, struct pdm_device *pdmdev);
 
 /*
  * 全局变量声明

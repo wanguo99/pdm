@@ -163,7 +163,7 @@ static int pdm_master_add_cdev(struct pdm_master *master)
         goto err_unregister_chrdev;
     }
 
-    if (!device_create(&pdm_master_class, NULL, master->devno, NULL, "%s", dev_name(&master->dev))) {
+    if (!device_create(&pdm_master_class, NULL, master->devno, NULL, "pdm_master_%s", master->name)) {
         OSA_ERROR("Failed to create device for %s.\n", master->name);
         goto err_cdev_del;
     }
@@ -199,13 +199,13 @@ static void pdm_master_delete_cdev(struct pdm_master *master)
 
 
 /**
- * pdm_master_get_devdata - 获取PDM主控制器的私有数据
+ * pdm_master_devdata_get - 获取PDM主控制器的私有数据
  * @master: PDM主控制器
  *
  * 返回值:
  * 指向私有数据的指针
  */
-void *pdm_master_get_devdata(struct pdm_master *master)
+void *pdm_master_devdata_get(struct pdm_master *master)
 {
     if (!master) {
         OSA_ERROR("Invalid input parameter (master: %p).\n", master);
@@ -216,11 +216,11 @@ void *pdm_master_get_devdata(struct pdm_master *master)
 }
 
 /**
- * pdm_master_set_devdata - 设置PDM主控制器的私有数据
+ * pdm_master_devdata_set - 设置PDM主控制器的私有数据
  * @master: PDM主控制器
  * @data: 私有数据指针
  */
-void pdm_master_set_devdata(struct pdm_master *master, void *data)
+void pdm_master_devdata_set(struct pdm_master *master, void *data)
 {
     if (!master) {
         OSA_ERROR("Invalid input parameter (master: %p).\n", master);
@@ -289,7 +289,7 @@ struct pdm_master *pdm_master_alloc(unsigned int data_size)
 
     device_initialize(&master->dev);
     master->dev.release = pdm_master_dev_release;
-    pdm_master_set_devdata(master, (void *)master + master_size);
+    pdm_master_devdata_set(master, (void *)master + master_size);
 
     return master;
 }
@@ -307,7 +307,7 @@ void pdm_master_free(struct pdm_master *master)
 }
 
 /**
- * pdm_master_id_alloc - 为PDM设备分配ID
+ * pdm_master_client_id_alloc - 为PDM设备分配ID
  * @master: PDM主控制器
  * @pdmdev: PDM设备
  *
@@ -317,7 +317,7 @@ void pdm_master_free(struct pdm_master *master)
  * -EBUSY - 没有可用的ID
  * 其他负值 - 其他错误码
  */
-int pdm_master_id_alloc(struct pdm_master *master, struct pdm_device *pdmdev)
+int pdm_master_client_id_alloc(struct pdm_master *master, struct pdm_device *pdmdev)
 {
     int id;
 
@@ -345,11 +345,11 @@ int pdm_master_id_alloc(struct pdm_master *master, struct pdm_device *pdmdev)
 }
 
 /**
- * pdm_master_id_free - 释放PDM设备的ID
+ * pdm_master_client_id_free - 释放PDM设备的ID
  * @master: PDM主控制器
  * @pdmdev: PDM设备
  */
-void pdm_master_id_free(struct pdm_master *master, struct pdm_device *pdmdev)
+void pdm_master_client_id_free(struct pdm_master *master, struct pdm_device *pdmdev)
 {
     if (!master || !pdmdev) {
         OSA_ERROR("Invalid input parameters (master: %p, pdmdev: %p).\n", master, pdmdev);
@@ -400,8 +400,7 @@ int pdm_master_register(struct pdm_master *master)
     mutex_unlock(&pdm_master_list_mutex_lock);
 
     master->dev.type = &pdm_master_device_type;
-    // master->dev.class = &pdm_master_class;
-    dev_set_name(&master->dev, "pdm_master_%s", master->name);
+    dev_set_name(&master->dev, "pdm_master_device_%s", master->name);
     ret = device_add(&master->dev);
     if (ret) {
         OSA_ERROR("Failed to add device: %s, error: %d.\n", dev_name(&master->dev), ret);
@@ -470,7 +469,7 @@ void pdm_master_unregister(struct pdm_master *master)
 }
 
 /**
- * pdm_master_add_device - 向PDM主控制器添加设备
+ * pdm_master_client_add - 向PDM主控制器添加设备
  * @master: PDM主控制器
  * @pdmdev: 要添加的PDM设备
  *
@@ -478,7 +477,7 @@ void pdm_master_unregister(struct pdm_master *master)
  * 0 - 成功
  * -EINVAL - 参数无效
  */
-int pdm_master_add_device(struct pdm_master *master, struct pdm_device *pdmdev)
+int pdm_master_client_add(struct pdm_master *master, struct pdm_device *pdmdev)
 {
     if (!master || !pdmdev) {
         OSA_ERROR("Invalid input parameters (master: %p, pdmdev: %p).\n", master, pdmdev);
@@ -493,7 +492,7 @@ int pdm_master_add_device(struct pdm_master *master, struct pdm_device *pdmdev)
 }
 
 /**
- * pdm_master_delete_device - 从PDM主控制器删除设备
+ * pdm_master_client_delete - 从PDM主控制器删除设备
  * @master: PDM主控制器
  * @pdmdev: 要删除的PDM设备
  *
@@ -501,7 +500,7 @@ int pdm_master_add_device(struct pdm_master *master, struct pdm_device *pdmdev)
  * 0 - 成功
  * -EINVAL - 参数无效
  */
-int pdm_master_delete_device(struct pdm_master *master, struct pdm_device *pdmdev)
+int pdm_master_client_delete(struct pdm_master *master, struct pdm_device *pdmdev)
 {
     if (!master || !pdmdev) {
         OSA_ERROR("Invalid input parameters (master: %p, pdmdev: %p).\n", master, pdmdev);
@@ -517,14 +516,14 @@ int pdm_master_delete_device(struct pdm_master *master, struct pdm_device *pdmde
 }
 
 /**
- * pdm_master_find_pdmdev - 查找与给定实际设备关联的PDM设备
+ * pdm_master_client_find - 查找与给定实际设备关联的PDM设备
  * @master: PDM主控制器
  * @real_device: 实际设备指针
  *
  * 返回值:
  * 指向找到的PDM设备的指针，或NULL（未找到）
  */
-struct pdm_device *pdm_master_find_pdmdev(struct pdm_master *master, void *real_device)
+struct pdm_device *pdm_master_client_find(struct pdm_master *master, void *real_device)
 {
     struct pdm_device *existing_pdmdev;
 

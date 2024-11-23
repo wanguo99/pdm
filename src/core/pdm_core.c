@@ -21,6 +21,18 @@ static struct dentry *pdm_debugfs;
 /*                                                                              */
 /*                            pdm_bus_type                                      */
 /*                                                                              */
+/**
+ * @brief 将 device_driver 转换为 pdm_driver
+ *
+ * 该函数用于将 device_driver 转换为 pdm_driver。
+ *
+ * @param drv device_driver 结构体指针
+ * @return pdm_driver 结构体指针
+ */
+static inline struct pdm_driver *drv_to_pdmdrv(struct device_driver *drv)
+{
+    return container_of(drv, struct pdm_driver, driver);
+}
 
 /**
  * @brief 匹配 PDM 设备 ID
@@ -31,7 +43,7 @@ static struct dentry *pdm_debugfs;
  * @param pdmdev PDM 设备指针
  * @return 匹配成功返回相应的 ID，失败返回 NULL
  */
-const struct pdm_device_id *pdm_match_id(const struct pdm_device_id *id, struct pdm_device *pdmdev)
+static const struct pdm_device_id *pdm_bus_match_id(const struct pdm_device_id *id, struct pdm_device *pdmdev)
 {
     if (!(id && pdmdev))
         return NULL;
@@ -43,7 +55,7 @@ const struct pdm_device_id *pdm_match_id(const struct pdm_device_id *id, struct 
     }
     return NULL;
 }
-EXPORT_SYMBOL_GPL(pdm_match_id);
+
 
 /**
  * @brief 匹配 PDM 设备和驱动
@@ -55,9 +67,9 @@ EXPORT_SYMBOL_GPL(pdm_match_id);
  * @return 匹配成功返回 1，失败返回 0
  */
 #if LINUX_VERSION_CODE <= KERNEL_VERSION(5, 15, 0)
-static int pdm_device_match(struct device *dev, const struct device_driver *drv) {
+static int pdm_bus_device_match(struct device *dev, const struct device_driver *drv) {
 #else
-static int pdm_device_match(struct device *dev, struct device_driver *drv) {
+static int pdm_bus_device_match(struct device *dev, struct device_driver *drv) {
 #endif
     struct pdm_device *pdmdev;
     struct pdm_driver *pdmdrv;
@@ -65,9 +77,9 @@ static int pdm_device_match(struct device *dev, struct device_driver *drv) {
     if (dev->type != &pdm_device_type)
         return 0;
 
-    pdmdev = dev_to_pdmdev(dev);
+    pdmdev = dev_to_pdm_device(dev);
     pdmdrv = drv_to_pdmdrv(drv);
-    if (pdm_match_id(&pdmdrv->id_table, pdmdev))
+    if (pdm_bus_match_id(&pdmdrv->id_table, pdmdev))
         return 1;
 
     return 0;
@@ -81,9 +93,9 @@ static int pdm_device_match(struct device *dev, struct device_driver *drv) {
  * @param dev 设备指针
  * @return 成功返回 0，失败返回负错误码
  */
-static int pdm_device_probe(struct device *dev)
+static int pdm_bus_device_probe(struct device *dev)
 {
-    struct pdm_device *pdmdev = dev_to_pdmdev(dev);
+    struct pdm_device *pdmdev = dev_to_pdm_device(dev);
     struct pdm_driver *driver = drv_to_pdmdrv(dev->driver);
 
     return driver->probe(pdmdev);
@@ -96,13 +108,13 @@ static int pdm_device_probe(struct device *dev)
  *
  * @param dev 设备指针
  */
-static void pdm_device_remove(struct device *dev)
+static void pdm_bus_device_remove(struct device *dev)
 {
     if (NULL == dev) {
         return;
     }
 
-    struct pdm_device *pdmdev = dev_to_pdmdev(dev);
+    struct pdm_device *pdmdev = dev_to_pdm_device(dev);
     struct pdm_driver *driver = drv_to_pdmdrv(dev->driver);
 
     if ((NULL == driver) || (NULL == pdmdev) || (NULL == driver->remove)) {
@@ -123,9 +135,9 @@ struct bus_type pdm_bus_type = {
 const struct bus_type pdm_bus_type = {
 #endif
     .name = "pdm",
-    .match = pdm_device_match,
-    .probe = pdm_device_probe,
-    .remove = pdm_device_remove,
+    .match = pdm_bus_device_match,
+    .probe = pdm_bus_device_probe,
+    .remove = pdm_bus_device_remove,
 };
 
 /*                                                                              */

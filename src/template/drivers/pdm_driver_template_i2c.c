@@ -47,7 +47,7 @@ static int pdm_template_i2c_real_probe(struct i2c_client *client, const struct i
         goto free_pdmdev;
     }
 
-    pstTemplateDevPriv = pdm_device_get_devdata(pdmdev);
+    pstTemplateDevPriv = pdm_device_devdata_get(pdmdev);
     if (!pstTemplateDevPriv) {
         OSA_ERROR("Failed to get device private data.\n");
         ret = -EFAULT;
