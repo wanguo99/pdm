@@ -1,11 +1,4 @@
-#include <linux/container_of.h>
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/mod_devicetable.h>
-#include <linux/module.h>
 #include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/types.h>
 
 #include "pdm.h"
 #include "pdm_template.h"
@@ -67,15 +60,27 @@ static int pdm_template_platform_remove(struct platform_device *pdev)
     return 0;
 }
 
+
 /**
- * @ dts节点配置示例
- *  template-platform-0 {
- *      compatible = "pdm,template-platform";
- *      status = "okay";
+  * @ dts节点配置示例
+
+ *  / {
+ *      model = "Freescale i.MX6 UltraLiteLite 14x14 EVK Board";
+ *      compatible = "fsl,imx6ull-14x14-evk", "fsl,imx6ull";
+
+ *      template-platform-0 {
+ *          compatible = "pdm,template-platform";
+ *          status = "okay";
+ *      };
  *  };
 */
 static const struct of_device_id of_platform_leds_match[] = {
 	{ .compatible = "pdm,template-platform", },
+	{ .compatible = "pdm,template-gpio", },
+	{ .compatible = "pdm,template-pwm", },
+	{ .compatible = "pdm,template-uart", },
+	{ .compatible = "pdm,template-adc", },
+	{ .compatible = "pdm,template-dac", },
 	{},
 };
 

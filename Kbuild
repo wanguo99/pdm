@@ -11,6 +11,7 @@ $(MODULE_NAME)-objs := 	src/core/pdm_submodule.o \
 
  $(MODULE_NAME)-objs += src/template/pdm_master_template.o \
 						src/template/drivers/pdm_driver_template_platform.o \
+						src/template/drivers/pdm_driver_template_spi.o \
 						src/template/drivers/pdm_driver_template_i2c.o
 
 

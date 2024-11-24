@@ -50,3 +50,6 @@
 **/Module.symvers
 **/Mkfile.old
 **/dkms.conf
+
+# for build test
+nk.sh

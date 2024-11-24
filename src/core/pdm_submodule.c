@@ -22,6 +22,7 @@ static LIST_HEAD(pdm_submodule_driver_list);
 static struct pdm_subdriver sub_drivers[] = {
     { .name = "Template Master", .init = pdm_template_master_init, .exit = pdm_template_master_exit },
     // 可以按照需要添加更多的驱动，需注意驱动之间的依赖关系
+    { .name = "Template SPI Driver", .init = pdm_template_spi_driver_init, .exit = pdm_template_spi_driver_exit },
     { .name = "Template I2C Driver", .init = pdm_template_i2c_driver_init, .exit = pdm_template_i2c_driver_exit },
     { .name = "Template PLATFORM Driver", .init = pdm_template_platform_driver_init, .exit = pdm_template_platform_driver_exit },
     { }  // 末尾的空项用于标记数组结束
