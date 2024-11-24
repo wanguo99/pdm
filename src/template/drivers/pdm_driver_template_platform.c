@@ -6,8 +6,9 @@
 
 static int pdm_template_platform_probe(struct platform_device *pdev)
 {
-    struct pdm_device *pdmdev;
     struct pdm_template_device_priv *pstTemplateDevPriv;
+    struct pdm_device *pdmdev;
+    const char *compatible;
     int ret;
 
     pdmdev = pdm_device_alloc(sizeof(struct pdm_template_device_priv));
@@ -16,8 +17,14 @@ static int pdm_template_platform_probe(struct platform_device *pdev)
         return -ENOMEM;
     }
 
+    ret = of_property_read_string(pdev->dev.of_node, "compatible", &compatible);
+    if (ret) {
+        pr_err("Failed to read compatible property: %d\n", ret);
+        goto unregister_pdmdev;
+    }
+
+    strcpy(pdmdev->compatible, compatible);
     pdmdev->real_device = pdev;
-    strcpy(pdmdev->compatible, "pdm,template-platform");
     ret = pdm_template_master_register_device(pdmdev);
     if (ret) {
         OSA_ERROR("Failed to add template device, ret=%d.\n", ret);
@@ -74,7 +81,7 @@ static int pdm_template_platform_remove(struct platform_device *pdev)
  *      };
  *  };
 */
-static const struct of_device_id of_platform_leds_match[] = {
+static const struct of_device_id of_platform_platform_match[] = {
 	{ .compatible = "pdm,template-platform", },
 	{ .compatible = "pdm,template-gpio", },
 	{ .compatible = "pdm,template-pwm", },
@@ -83,15 +90,14 @@ static const struct of_device_id of_platform_leds_match[] = {
 	{ .compatible = "pdm,template-dac", },
 	{},
 };
-
-MODULE_DEVICE_TABLE(of, of_platform_leds_match);
+MODULE_DEVICE_TABLE(of, of_platform_platform_match);
 
 static struct platform_driver pdm_template_platform_driver = {
 	.probe		= pdm_template_platform_probe,
 	.remove	= pdm_template_platform_remove,
 	.driver		= {
 		.name	= "pdm-template-platform",
-		.of_match_table = of_platform_leds_match,
+		.of_match_table = of_platform_platform_match,
 	},
 };
 

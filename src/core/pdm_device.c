@@ -348,7 +348,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
     }
 
     pdmdev->dev.parent = &master->dev;
-    dev_set_name(&pdmdev->dev, "%s-%s-%d", master->name, pdmdev->compatible, pdmdev->id);
+    dev_set_name(&pdmdev->dev, "%s-%d-%s", master->name, pdmdev->id, pdmdev->compatible);
     status = device_add(&pdmdev->dev);
     if (status < 0)
     {

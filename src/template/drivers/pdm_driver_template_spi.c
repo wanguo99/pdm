@@ -11,10 +11,11 @@
 #include "pdm_template.h"
 
 
-static int pdm_template_spi_probe(struct spi_device *pdev)
+static int pdm_template_spi_probe(struct spi_device *spi)
 {
-    struct pdm_device *pdmdev;
     struct pdm_template_device_priv *pstTemplateDevPriv;
+    struct pdm_device *pdmdev;
+    const char *compatible;
     int ret;
 
     pdmdev = pdm_device_alloc(sizeof(struct pdm_template_device_priv));
@@ -23,8 +24,14 @@ static int pdm_template_spi_probe(struct spi_device *pdev)
         return -ENOMEM;
     }
 
-    pdmdev->real_device = pdev;
-    strcpy(pdmdev->compatible, "pdm,template-spi");
+    ret = of_property_read_string(spi->dev.of_node, "compatible", &compatible);
+    if (ret) {
+        pr_err("Failed to read compatible property: %d\n", ret);
+        goto unregister_pdmdev;
+    }
+
+    strcpy(pdmdev->compatible, compatible);
+    pdmdev->real_device = spi;
     ret = pdm_template_master_register_device(pdmdev);
     if (ret) {
         OSA_ERROR("Failed to add template device, ret=%d.\n", ret);
@@ -52,9 +59,9 @@ free_pdmdev:
 
 }
 
-static void pdm_template_spi_remove(struct spi_device *pdev)
+static void pdm_template_spi_remove(struct spi_device *spi)
 {
-    struct pdm_device *pdmdev = pdm_template_master_find_pdmdev(pdev);
+    struct pdm_device *pdmdev = pdm_template_master_find_pdmdev(spi);
     if (NULL == pdmdev) {
         OSA_ERROR("Failed to find pdm device from master.\n");
         return;

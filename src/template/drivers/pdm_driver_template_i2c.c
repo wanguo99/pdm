@@ -29,8 +29,9 @@ struct i2c_device_id {
  * @return 成功返回 0，失败返回负错误码
  */
 static int pdm_template_i2c_real_probe(struct i2c_client *client, const struct i2c_device_id *id) {
-    struct pdm_device *pdmdev;
     struct pdm_template_device_priv *pstTemplateDevPriv;
+    struct pdm_device *pdmdev;
+    const char *compatible;
     int ret;
 
     pdmdev = pdm_device_alloc(sizeof(struct pdm_template_device_priv));
@@ -39,8 +40,14 @@ static int pdm_template_i2c_real_probe(struct i2c_client *client, const struct i
         return -ENOMEM;
     }
 
+    ret = of_property_read_string(client->dev.of_node, "compatible", &compatible);
+    if (ret) {
+        pr_err("Failed to read compatible property: %d\n", ret);
+        goto unregister_pdmdev;
+    }
+
+    strcpy(pdmdev->compatible, compatible);
     pdmdev->real_device = client;
-    strcpy(pdmdev->compatible, "pdm,template-i2c");
     ret = pdm_template_master_register_device(pdmdev);
     if (ret) {
         OSA_ERROR("Failed to add template device, ret=%d.\n", ret);
