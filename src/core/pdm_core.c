@@ -146,6 +146,9 @@ static int pdm_bus_device_probe(struct device *dev)
  */
 static void pdm_bus_device_remove(struct device *dev)
 {
+#if 1
+    return;
+#else
     if (!dev) {
         OSA_WARN("Device pointer is NULL\n");
         return;
@@ -157,6 +160,7 @@ static void pdm_bus_device_remove(struct device *dev)
     if (driver && pdmdev && driver->remove) {
         driver->remove(pdmdev);
     }
+#endif
 }
 
 /**
