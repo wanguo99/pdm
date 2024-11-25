@@ -1,9 +1,8 @@
 #include <linux/platform_device.h>
-
 #include "pdm.h"
 
 struct pdm_device_platform_data {
-	PDM_DEVICE_INTERFACE_TYPE type;
+    PDM_DEVICE_INTERFACE_TYPE type;
 };
 
 static struct pdm_device_platform_data pdm_device_platform_data_gpio = {
@@ -16,7 +15,6 @@ static struct pdm_device_platform_data pdm_device_platform_data_tty = {
     .type = PDM_DEVICE_INTERFACE_TYPE_TTY,
 };
 
-
 /**
  * @brief PLATFORM 设备探测函数
  *
@@ -25,11 +23,11 @@ static struct pdm_device_platform_data pdm_device_platform_data_tty = {
  * @param pdev 指向 PLATFORM 设备的指针
  * @return 成功返回 0，失败返回负错误码
  */
-static int pdm_device_platform_probe(struct platform_device *pdev)
-{
+static int pdm_device_platform_probe(struct platform_device *pdev) {
     struct pdm_device *pdmdev;
     const char *compatible;
     int status;
+    struct pdm_device_platform_data *pdata = dev_get_platdata(&pdev->dev);
 
     pdmdev = pdm_device_alloc(sizeof(void*));
     if (!pdmdev) {
@@ -44,7 +42,8 @@ static int pdm_device_platform_probe(struct platform_device *pdev)
     }
 
     strcpy(pdmdev->compatible, compatible);
-    // pdmdev->real_device = pdev;
+    pdmdev->interface = pdata ? pdata->type : PDM_DEVICE_INTERFACE_TYPE_UNDEFINED;
+    pdmdev->real_device.pdev = pdev;
     status = pdm_device_register(pdmdev);
     if (status) {
         OSA_ERROR("Failed to register pdm device, status=%d.\n", status);
@@ -67,41 +66,39 @@ free_pdmdev:
  * @param pdev 指向 PLATFORM 设备的指针
  * @return 成功返回 0，失败返回负错误码
  */
-static int pdm_device_platform_remove(struct platform_device *pdev)
-{
+static int pdm_device_platform_remove(struct platform_device *pdev) {
 #if 0
-
-    struct pdm_device *pdmdev = pdm_device_master_find_pdmdev(pdev);
+    struct pdm_device *pdmdev = pdm_master_client_find(pdev);
     if (NULL == pdmdev) {
         OSA_ERROR("Failed to find pdm device from master.\n");
-        return -EINVAL;
+        return -ENODEV;
     }
 
-    pdm_device_master_unregister_device(pdmdev);
+    pdm_device_unregister(pdmdev);
     pdm_device_free(pdmdev);
 #endif
+
     OSA_INFO("PDM Device PLATFORM Device Removed.\n");
     return 0;
 }
 
 static const struct platform_device_id pdm_device_platform_ids[] = {
-	{ .name = "pdm-device-platform",  },
-	{ .name = "pdm-device-gpio", .driver_data = (kernel_ulong_t)&pdm_device_platform_data_gpio, },
-	{ .name = "pdm-device-pwm",  .driver_data = (kernel_ulong_t)&pdm_device_platform_data_pwm, },
-	{ .name = "pdm-device-tty",  .driver_data = (kernel_ulong_t)&pdm_device_platform_data_tty, },
-	{},
+    { .name = "pdm-device-platform", },
+    { .name = "pdm-device-gpio", .driver_data = (kernel_ulong_t)&pdm_device_platform_data_gpio, },
+    { .name = "pdm-device-pwm", .driver_data = (kernel_ulong_t)&pdm_device_platform_data_pwm, },
+    { .name = "pdm-device-tty", .driver_data = (kernel_ulong_t)&pdm_device_platform_data_tty, },
+    {},
 };
 MODULE_DEVICE_TABLE(platform, pdm_device_platform_ids);
 
 static struct platform_driver pdm_device_platform_driver = {
-	.probe		= pdm_device_platform_probe,
-	.remove	= pdm_device_platform_remove,
-	.driver		= {
-		.name	= "pdm-platform-device",
-	},
-	.id_table   = pdm_device_platform_ids,
+    .probe = pdm_device_platform_probe,
+    .remove = pdm_device_platform_remove,
+    .driver = {
+        .name = "pdm-platform-device",
+    },
+    .id_table = pdm_device_platform_ids,
 };
-
 
 /**
  * @brief 初始化 PLATFORM 驱动
@@ -115,7 +112,7 @@ int pdm_device_platform_driver_init(void) {
 
     status = platform_driver_register(&pdm_device_platform_driver);
     if (status) {
-        OSA_ERROR("Failed to register PDM Device PLATFORM Driver.\n");
+        OSA_ERROR("Failed to register PDM Device PLATFORM Driver, status=%d.\n", status);
         return status;
     }
     OSA_INFO("PDM Device PLATFORM Driver Initialized.\n");

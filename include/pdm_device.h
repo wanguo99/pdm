@@ -16,7 +16,8 @@ typedef enum tagPDM_DEVICE_INTERFACE_TYPE
     PDM_DEVICE_INTERFACE_TYPE_GPIO        = 0x05,
     PDM_DEVICE_INTERFACE_TYPE_PWM         = 0x06,
     PDM_DEVICE_INTERFACE_TYPE_TTY         = 0x07,
-    PDM_DEVICE_INTERFACE_TYPE_INVALIED    = 0xFF,
+    PDM_DEVICE_INTERFACE_TYPE_PLATFORM    = 0x08,
+    PDM_DEVICE_INTERFACE_TYPE_UNDEFINED    = 0xFF,
 }PDM_DEVICE_INTERFACE_TYPE;
 
 /**
@@ -36,6 +37,7 @@ struct pdm_device {
         struct gpio_descs *gpio;
         struct pwm_device *pwm;
         struct tty_struct *tty;
+        struct platform_device *pdev;
     }real_device;                               /**< 指向实际的设备结构体 */
 };
 

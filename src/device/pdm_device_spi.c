@@ -10,8 +10,7 @@
  * @param spi 指向 SPI 设备的指针
  * @return 成功返回 0，失败返回负错误码
  */
-static int pdm_device_spi_probe(struct spi_device *spi)
-{
+static int pdm_device_spi_probe(struct spi_device *spi) {
     struct pdm_device *pdmdev;
     int status;
 
@@ -35,7 +34,6 @@ static int pdm_device_spi_probe(struct spi_device *spi)
 free_pdmdev:
     pdm_device_free(pdmdev);
     return status;
-
 }
 
 /**
@@ -45,10 +43,8 @@ free_pdmdev:
  *
  * @param spi 指向 SPI 设备的指针
  */
-static void pdm_device_spi_remove(struct spi_device *spi)
-{
+static void pdm_device_spi_remove(struct spi_device *spi) {
 #if 0
-    // TODO：获取master的操作待实现
     struct pdm_device *pdmdev = pdm_master_client_find(spi);
     if (NULL == pdmdev) {
         OSA_ERROR("Failed to find pdm device from master.\n");
@@ -57,28 +53,26 @@ static void pdm_device_spi_remove(struct spi_device *spi)
 
     pdm_device_unregister(pdmdev);
     pdm_device_free(pdmdev);
-    OSA_INFO("PDM SPI Device Removed.\n");
 #endif
+
+    OSA_INFO("PDM SPI Device Removed.\n");
     return;
 }
 
-
 static const struct spi_device_id pdm_device_spi_ids[] = {
-	{ .name = "pdm-device-spi" },
-	{ }
+    { .name = "pdm-device-spi" },
+    { }
 };
 MODULE_DEVICE_TABLE(spi, pdm_device_spi_ids);
 
-
 static struct spi_driver pdm_device_spi_driver = {
-	.probe		= pdm_device_spi_probe,
-	.remove	= pdm_device_spi_remove,
-	.driver		= {
-		.name	= "pdm-device-spi",
-	},
-	.id_table   = pdm_device_spi_ids,
+    .probe = pdm_device_spi_probe,
+    .remove = pdm_device_spi_remove,
+    .driver = {
+        .name = "pdm-device-spi",
+    },
+    .id_table = pdm_device_spi_ids,
 };
-
 
 /**
  * @brief 初始化 SPI 驱动
@@ -92,7 +86,7 @@ int pdm_device_spi_driver_init(void) {
 
     status = spi_register_driver(&pdm_device_spi_driver);
     if (status) {
-        OSA_ERROR("Failed to register PDM Device SPI Driver.\n");
+        OSA_ERROR("Failed to register PDM Device SPI Driver, status=%d.\n", status);
         return status;
     }
     OSA_INFO("PDM Device SPI Driver Initialized.\n");

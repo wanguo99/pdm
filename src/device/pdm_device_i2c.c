@@ -1,5 +1,4 @@
 #include <linux/i2c.h>
-
 #include "pdm.h"
 
 /**
@@ -67,7 +66,7 @@ free_pdmdev:
  */
 static int pdm_device_i2c_real_remove(struct i2c_client *client) {
 #if 0
-    struct pdm_device *pdmdev = pdm_device_master_find_pdmdev(client);
+    struct pdm_device *pdmdev = pdm_master_client_find(client);
     if (NULL == pdmdev) {
         OSA_ERROR("Failed to find pdm device from master.\n");
         return -ENODEV;
@@ -76,6 +75,7 @@ static int pdm_device_i2c_real_remove(struct i2c_client *client) {
     pdm_device_unregister(pdmdev);
     pdm_device_free(pdmdev);
 #endif
+
     OSA_INFO("PDM I2C Device Removed.\n");
     return 0;
 }
@@ -116,7 +116,6 @@ static void pdm_device_i2c_remove(struct i2c_client *client) {
 }
 #endif
 
-
 /**
  * @brief I2C 设备 ID 表
  *
@@ -127,7 +126,6 @@ static const struct i2c_device_id pdm_device_i2c_id[] = {
     { }
 };
 MODULE_DEVICE_TABLE(i2c, pdm_device_i2c_id);
-
 
 /**
  * @brief I2C 驱动结构体
@@ -156,7 +154,7 @@ int pdm_device_i2c_driver_init(void) {
 
     status = i2c_add_driver(&pdm_device_i2c_driver);
     if (status) {
-        OSA_ERROR("Failed to register PDM Device I2C Driver.\n");
+        OSA_ERROR("Failed to register PDM Device I2C Driver, status=%d.\n", status);
         return status;
     }
     OSA_INFO("PDM Device I2C Driver Initialized.\n");
@@ -175,4 +173,4 @@ void pdm_device_i2c_driver_exit(void) {
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("<guohaoprc@163.com>");
-MODULE_DESCRIPTION("PDM PDM Device I2C Driver.");
+MODULE_DESCRIPTION("PDM Device I2C Driver.");
