@@ -29,13 +29,13 @@ struct pdm_subdriver {
  *
  * @return 成功返回 0，失败返回负错误码
  */
-int pdm_submodule_register_drivers(void);
+int pdm_driver_init(void);
 
 /**
  * @brief 注销所有 PDM 子驱动
  *
  * 该函数用于注销所有 PDM 子驱动，调用每个子驱动的退出函数。
  */
-void pdm_submodule_unregister_drivers(void);
+void pdm_driver_exit(void);
 
 #endif /* _PDM_SUBMODULE_H_ */

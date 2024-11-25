@@ -623,6 +623,7 @@ int pdm_master_init(void)
     }
 
     OSA_INFO("PDM Master Class registered.\n");
+    OSA_INFO("Initialize PDM Master OK.\n");
     return 0;
 }
 

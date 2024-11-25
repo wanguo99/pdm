@@ -134,7 +134,7 @@ const struct bus_type pdm_bus_type = {
     .remove = pdm_bus_device_remove,
 };
 
-static void pdm_debug_fs_init(void)
+static int pdm_debug_fs_init(void)
 {
     pdm_debugfs_dir = debugfs_create_dir(PDM_DEBUG_FS_DIR_NAME, NULL);
     if (IS_ERR(pdm_debugfs_dir)) {
@@ -149,6 +149,7 @@ static void pdm_debug_fs_init(void)
     } else {
         OSA_DEBUG("Register PDM procfs OK.\n");
     }
+    return 0;
 }
 
 static void pdm_debug_fs_exit(void)
@@ -159,6 +160,23 @@ static void pdm_debug_fs_exit(void)
     if (!pdm_procfs_dir) {
         remove_proc_entry(PDM_DEBUG_FS_DIR_NAME, NULL);
     }
+}
+
+static int pdm_bus_init(void)
+{
+    int iRet;
+    iRet = bus_register(&pdm_bus_type);
+    if (iRet < 0) {
+        OSA_INFO("Register PDM BUS Failed.\n");
+        return iRet;
+    }
+    OSA_INFO("Initialize PDM Bus OK.\n");
+    return 0;
+}
+
+static void pdm_bus_exit(void)
+{
+    bus_unregister(&pdm_bus_type);
 }
 
 /*                                                                              */
@@ -178,33 +196,36 @@ static int __init pdm_init(void)
 
     OSA_DEBUG("Peripheral Driver Module Init.\n");
 
-    iRet = bus_register(&pdm_bus_type);
+    iRet = pdm_bus_init();
     if (iRet < 0) {
+        OSA_INFO("Initialize PDM Bus Failed.\n");
         return iRet;
     }
-    OSA_INFO("Register PDM BUS OK.\n");
 
     iRet = pdm_master_init();
     if (iRet < 0) {
-        goto err_bus_unregister;
+        OSA_INFO("Initialize PDM Bus Failed.\n");
+        goto err_bus_exit;
     }
-    OSA_INFO("Initialize PDM Master OK.\n");
 
-    iRet = pdm_submodule_register_drivers();
+    iRet = pdm_driver_init();
     if (iRet < 0) {
+        OSA_INFO("Initialize PDM driver Failed.\n");
         goto err_master_exit;
     }
-    OSA_INFO("Register PDM Submodules OK.\n");
 
-    pdm_debug_fs_init();
+    iRet = pdm_debug_fs_init();
+    if (iRet < 0) {
+        OSA_INFO("Initialize PDM Debug Fs Failed.\n");
+    }
 
-    OSA_INFO("Peripheral Driver Module Init OK.\n");
+    OSA_INFO("PDM Init OK.\n");
     return 0;
 
 err_master_exit:
     pdm_master_exit();
-err_bus_unregister:
-    bus_unregister(&pdm_bus_type);
+err_bus_exit:
+    pdm_bus_exit();
 
     return iRet;
 }
@@ -217,10 +238,10 @@ err_bus_unregister:
 static void __exit pdm_exit(void)
 {
     pdm_debug_fs_exit();
-    pdm_submodule_unregister_drivers();
+    pdm_driver_exit();
     pdm_master_exit();
-    bus_unregister(&pdm_bus_type);
-    OSA_INFO("Peripheral Driver Module Exited.\n");
+    pdm_bus_exit();
+    OSA_INFO("PDM Exited.\n");
 }
 
 module_init(pdm_init);

@@ -59,13 +59,25 @@ static void pdm_submodule_unregister_driver(struct pdm_subdriver *driver) {
 }
 
 /**
+ * @brief 注销所有 PDM 子驱动
+ *
+ * 该函数用于注销所有 PDM 子驱动，依次调用每个子驱动的退出函数。
+ */
+static void pdm_submodule_unregister_drivers(void) {
+    struct pdm_subdriver *driver, *tmp;
+    list_for_each_entry_safe_reverse(driver, tmp, &pdm_submodule_driver_list, list) {
+        pdm_submodule_unregister_driver(driver);
+    }
+}
+
+/**
  * @brief 注册所有 PDM 子驱动
  *
  * 该函数用于注册所有 PDM 子驱动，依次调用每个子驱动的初始化函数。
  *
  * @return 成功返回 0，失败返回负错误码
  */
-int pdm_submodule_register_drivers(void) {
+static int pdm_submodule_register_drivers(void) {
     int i, ret = 0;
 
     for (i = 0; sub_drivers[i].name; i++) {
@@ -76,19 +88,27 @@ int pdm_submodule_register_drivers(void) {
             return ret;
         }
     }
+    OSA_INFO("Register PDM Submodules OK.\n");
     return 0;
 }
 
-/**
- * @brief 注销所有 PDM 子驱动
- *
- * 该函数用于注销所有 PDM 子驱动，依次调用每个子驱动的退出函数。
- */
-void pdm_submodule_unregister_drivers(void) {
-    struct pdm_subdriver *driver, *tmp;
-    list_for_each_entry_safe_reverse(driver, tmp, &pdm_submodule_driver_list, list) {
-        pdm_submodule_unregister_driver(driver);
+
+
+int pdm_driver_init(void)
+{
+    int iRet;
+    iRet = pdm_submodule_register_drivers();
+    if (iRet < 0) {
+        OSA_ERROR("Register PDM submodule drivers Failed.\n");
+        return iRet;
     }
+    return 0;
+}
+
+
+void pdm_driver_exit(void)
+{
+    pdm_submodule_unregister_drivers();
 }
 
 MODULE_LICENSE("GPL");
