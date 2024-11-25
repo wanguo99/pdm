@@ -21,7 +21,8 @@ static int pdm_device_spi_probe(struct spi_device *spi)
         return -ENOMEM;
     }
 
-    pdmdev->real_device = spi;
+    pdmdev->interface = PDM_DEVICE_INTERFACE_TYPE_SPI;
+    pdmdev->real_device.spi = spi;
     status = pdm_device_register(pdmdev);
     if (status) {
         OSA_ERROR("Failed to register pdm device, status=%d.\n", status);

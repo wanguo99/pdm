@@ -1,5 +1,6 @@
 #include <linux/debugfs.h>
 #include <linux/proc_fs.h>
+#include <linux/of_device.h>
 
 #include "pdm.h"
 
@@ -30,28 +31,6 @@ static inline struct pdm_driver *drv_to_pdmdrv(struct device_driver *drv)
     return container_of(drv, struct pdm_driver, driver);
 }
 
-/**
- * @brief 匹配 PDM 设备 ID
- *
- * 该函数用于匹配 PDM 设备的 ID。
- *
- * @param id PDM 设备 ID 表
- * @param pdmdev PDM 设备指针
- * @return 匹配成功返回相应的 ID，失败返回 NULL
- */
-static const struct pdm_device_id *pdm_bus_match_compatible(const struct pdm_device_id *id, struct pdm_device *pdmdev)
-{
-    if (!(id && pdmdev))
-        return NULL;
-
-    while (id->compatible[0]) {
-        if (strcmp(pdmdev->compatible, id->compatible) == 0)
-            return id;
-        id++;
-    }
-    return NULL;
-}
-
 
 /**
  * @brief 匹配 PDM 设备和驱动
@@ -75,8 +54,10 @@ static int pdm_bus_device_match(struct device *dev, const struct device_driver *
 
     pdmdev = dev_to_pdm_device(dev);
     pdmdrv = drv_to_pdmdrv(drv);
-    if (pdm_bus_match_compatible(&pdmdrv->id_table, pdmdev))
-        return 1;
+
+	/* Attempt an OF style match */
+	if (of_driver_match_device(pdm_device_to_dev(pdmdev), drv))
+		return 1;
 
     return 0;
 }

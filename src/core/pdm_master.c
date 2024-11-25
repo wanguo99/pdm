@@ -124,35 +124,70 @@ int pdm_master_client_show(struct pdm_master *master)
     return 0;
 }
 
-/**
- * pdm_master_client_find - 查找与给定实际设备关联的PDM设备
- * @master: PDM主控制器
- * @real_device: 实际设备指针
- *
- * 返回值:
- * 指向找到的PDM设备的指针，或NULL（未找到）
- */
-struct pdm_device *pdm_master_client_find(struct pdm_master *master, void *real_device)
-{
-    struct pdm_device *existing_pdmdev;
 
-    if (!master) {
-        OSA_ERROR("Invalid input parameter (master: %p).\n", master);
-        return NULL;
-    }
+/**
+ * @brief 根据 real_device 和 interface 查找 PDM 设备
+ *
+ * 该函数遍历 PDM 主控制器的客户设备链表，根据指定的 real_device 和 interface 找到对应的 PDM 设备。
+ *
+ * @param master 指向 PDM 主控制器的指针
+ * @param real_device 指向实际设备结构体的指针
+ * @param interface 设备物理接口类型
+ * @return 成功返回找到的 PDM 设备指针，失败返回 NULL
+ */
+struct pdm_device *pdm_master_client_find(struct pdm_master *master, void *real_device, int interface)
+{
+    struct pdm_device *pdmdev;
 
     mutex_lock(&master->client_list_mutex_lock);
-    list_for_each_entry(existing_pdmdev, &master->client_list, entry) {
-        if (existing_pdmdev->real_device == real_device) {
-            mutex_unlock(&master->client_list_mutex_lock);
-            OSA_DEBUG("Device found for real_device at %p.\n", real_device);
-            return existing_pdmdev;
+
+    list_for_each_entry(pdmdev, &master->client_list, entry) {
+        if (pdmdev->interface == interface) {
+            switch (pdmdev->interface) {
+                case PDM_DEVICE_INTERFACE_TYPE_I2C:
+                    if (pdmdev->real_device.i2c == real_device) {
+                        goto unlock;
+                    }
+                    break;
+                case PDM_DEVICE_INTERFACE_TYPE_I3C:
+                    if (pdmdev->real_device.i3c == real_device) {
+                        goto unlock;
+                    }
+                    break;
+                case PDM_DEVICE_INTERFACE_TYPE_SPI:
+                    if (pdmdev->real_device.spi == real_device) {
+                        goto unlock;
+                    }
+                    break;
+                case PDM_DEVICE_INTERFACE_TYPE_GPIO:
+                    if (pdmdev->real_device.gpio == real_device) {
+                        goto unlock;
+                    }
+                    break;
+                case PDM_DEVICE_INTERFACE_TYPE_PWM:
+                    if (pdmdev->real_device.pwm == real_device) {
+                        goto unlock;
+                    }
+                    break;
+                case PDM_DEVICE_INTERFACE_TYPE_TTY:
+                    if (pdmdev->real_device.tty == real_device) {
+                        goto unlock;
+                    }
+                    break;
+                default:
+                    break;
+            }
         }
     }
+
+    pr_warn("Cannot Find Real Device.\n");
+    pdmdev = NULL;
+
+unlock:
     mutex_unlock(&master->client_list_mutex_lock);
-    OSA_ERROR("Failed to find device for real_device at %p.\n", real_device);
-    return NULL;
+    return pdmdev;
 }
+
 
 /**
  * pdm_master_client_add - 向PDM主控制器添加设备

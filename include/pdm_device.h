@@ -1,7 +1,23 @@
 #ifndef _PDM_TEMPLATE_DRIVER_H_
 #define _PDM_TEMPLATE_DRIVER_H_
 
+#include <linux/i2c.h>
+#include <linux/i3c/master.h>
+#include <linux/spi/spi.h>
+
 #define PDM_DEVICE_NAME_SIZE        (64)        // 定义设备名称的最大长度
+
+typedef enum tagPDM_DEVICE_INTERFACE_TYPE
+{
+    PDM_DEVICE_INTERFACE_TYPE_NULL        = 0x00,
+    PDM_DEVICE_INTERFACE_TYPE_I2C         = 0x02,
+    PDM_DEVICE_INTERFACE_TYPE_I3C         = 0x03,
+    PDM_DEVICE_INTERFACE_TYPE_SPI         = 0x04,
+    PDM_DEVICE_INTERFACE_TYPE_GPIO        = 0x05,
+    PDM_DEVICE_INTERFACE_TYPE_PWM         = 0x06,
+    PDM_DEVICE_INTERFACE_TYPE_TTY         = 0x07,
+    PDM_DEVICE_INTERFACE_TYPE_INVALIED    = 0xFF,
+}PDM_DEVICE_INTERFACE_TYPE;
 
 /**
  * @brief PDM 设备结构体
@@ -12,7 +28,15 @@ struct pdm_device {
     struct device dev;                          /**< 设备结构体 */
     struct pdm_master *master;                  /**< 指向所属的PDM主控制器 */
     struct list_head entry;                     /**< 设备链表节点 */
-    void *real_device;                          /**< 指向实际的设备结构体 */
+    int interface;                              /**< 设备物理接口类型, PDM_DEVICE_INTERFACE_TYPE */
+    union {
+        struct i2c_client *i2c;
+        struct i3c_device *i3c;
+        struct spi_device *spi;
+        struct gpio_descs *gpio;
+        struct pwm_device *pwm;
+        struct tty_struct *tty;
+    }real_device;                               /**< 指向实际的设备结构体 */
 };
 
 
@@ -20,6 +44,16 @@ struct pdm_device {
 /*
  * PDM device 相关函数
  */
+
+/**
+ * @brief 将 PDM 设备转换为实际的设备指针
+ *
+ * 该函数根据 PDM 设备的接口类型，返回相应的实际设备指针。
+ *
+ * @param pdmdev 指向 PDM 设备的指针
+ * @return 成功返回实际的设备指针，失败返回 NULL
+ */
+struct device *pdm_device_to_dev(struct pdm_device* pdmdev);
 
 /**
  * @brief 将 device 转换为 pdm_device

@@ -41,7 +41,8 @@ static int pdm_device_i2c_real_probe(struct i2c_client *client, const struct i2c
     }
 
     strcpy(pdmdev->compatible, compatible);
-    pdmdev->real_device = client;
+    pdmdev->interface = PDM_DEVICE_INTERFACE_TYPE_I2C;
+    pdmdev->real_device.i2c = client;
     status = pdm_device_register(pdmdev);
     if (status) {
         OSA_ERROR("Failed to register pdm device, status=%d.\n", status);

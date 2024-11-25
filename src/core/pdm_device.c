@@ -1,4 +1,5 @@
 #include "pdm.h"
+#include "pdm_device.h"
 #include "pdm_driver_manager.h"
 
 
@@ -208,6 +209,38 @@ const struct device_type pdm_device_type = {
     .groups = pdm_device_groups,
     .uevent = pdm_device_uevent,
 };
+
+
+/**
+ * @brief 将 PDM 设备转换为实际的设备指针
+ *
+ * 该函数根据 PDM 设备的接口类型，返回相应的实际设备指针。
+ *
+ * @param pdmdev 指向 PDM 设备的指针
+ * @return 成功返回实际的设备指针，失败返回 NULL
+ */
+struct device *pdm_device_to_dev(struct pdm_device *pdmdev)
+{
+    struct device *dev = NULL;
+
+    switch (pdmdev->interface) {
+        case PDM_DEVICE_INTERFACE_TYPE_I2C:
+            dev = &pdmdev->real_device.i2c->dev;
+            break;
+        case PDM_DEVICE_INTERFACE_TYPE_I3C:
+            dev = &pdmdev->real_device.i3c->dev;
+            break;
+        case PDM_DEVICE_INTERFACE_TYPE_SPI:
+            dev = &pdmdev->real_device.spi->dev;
+            break;
+        default:
+            dev = NULL;
+            break;
+    }
+
+    return dev;
+}
+
 
 /**
  * @brief 释放 PDM 设备资源

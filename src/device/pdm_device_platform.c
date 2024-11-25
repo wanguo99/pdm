@@ -2,6 +2,20 @@
 
 #include "pdm.h"
 
+struct pdm_device_platform_data {
+	PDM_DEVICE_INTERFACE_TYPE type;
+};
+
+struct pdm_device_platform_data pdm_device_platform_data_gpio = {
+    .type = PDM_DEVICE_INTERFACE_TYPE_GPIO,
+};
+struct pdm_device_platform_data pdm_device_platform_data_pwm = {
+    .type = PDM_DEVICE_INTERFACE_TYPE_PWM,
+};
+struct pdm_device_platform_data pdm_device_platform_data_tty = {
+    .type = PDM_DEVICE_INTERFACE_TYPE_TTY,
+};
+
 
 /**
  * @brief PLATFORM 设备探测函数
@@ -30,7 +44,7 @@ static int pdm_device_platform_probe(struct platform_device *pdev)
     }
 
     strcpy(pdmdev->compatible, compatible);
-    pdmdev->real_device = pdev;
+    // pdmdev->real_device = pdev;
     status = pdm_device_register(pdmdev);
     if (status) {
         OSA_ERROR("Failed to register pdm device, status=%d.\n", status);
@@ -72,11 +86,9 @@ static int pdm_device_platform_remove(struct platform_device *pdev)
 
 static const struct platform_device_id pdm_device_platform_ids[] = {
 	{ .name = "pdm-device-platform",  },
-	{ .name = "pdm-device-gpio", },
-	{ .name = "pdm-device-pwm",  },
-	{ .name = "pdm-device-uart", },
-	{ .name = "pdm-device-adc",  },
-	{ .name = "pdm-device-dac",  },
+	{ .name = "pdm-device-gpio", .driver_data = (kernel_ulong_t)&pdm_device_platform_data_gpio, },
+	{ .name = "pdm-device-pwm",  .driver_data = (kernel_ulong_t)&pdm_device_platform_data_pwm, },
+	{ .name = "pdm-device-tty",  .driver_data = (kernel_ulong_t)&pdm_device_platform_data_tty, },
 	{},
 };
 MODULE_DEVICE_TABLE(platform, pdm_device_platform_ids);
