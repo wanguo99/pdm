@@ -93,6 +93,7 @@ int pdm_master_template_driver_init(void)
         return -ENOMEM;
     }
 
+    strncpy(template_master->name, PDM_MASTER_TEMPLATE_NAME, strlen(PDM_MASTER_TEMPLATE_NAME));
     status = pdm_master_register(template_master);
     if (status) {
         OSA_ERROR("Failed to register Template PDM Master, status=%d.\n", status);

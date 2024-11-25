@@ -4,7 +4,6 @@
 
 #include "pdm.h"
 
-static bool pdm_bus_registered;
 static struct pdm_bus pdm_bus_instance;
 
 /**
@@ -177,9 +176,6 @@ int pdm_register_driver(struct module *owner, struct pdm_driver *driver)
 {
     int status;
 
-    if (WARN_ON(!pdm_bus_registered))
-        return -EAGAIN;
-
     driver->driver.owner = owner;
     driver->driver.bus = &pdm_bus_type;
     status = driver_register(&driver->driver);
@@ -315,8 +311,6 @@ static int __init pdm_init(void)
     }
 
     pdm_debug_fs_init();
-
-    pdm_bus_registered = true;
 
     OSA_INFO("PDM initialized successfully\n");
     return 0;

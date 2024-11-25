@@ -168,7 +168,7 @@ static ssize_t pdm_master_fops_default_read(struct file *filp, char __user *buf,
 static ssize_t pdm_master_fops_default_write(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
 {
     OSA_INFO("fops_default_write.\n");
-    return 0;
+    return count;
 }
 
 /**

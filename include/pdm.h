@@ -71,7 +71,11 @@ struct pdm_driver {
  * @return 如果已经初始化，返回 true；否则返回 false
  */
 static inline bool is_list_valid(const struct list_head *head) {
-    return (head->next == head) && (head->prev == head);
+    if (head == NULL)
+    {
+        return false;
+    }
+    return true;
 }
 
 /**

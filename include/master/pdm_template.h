@@ -8,6 +8,8 @@
  * 本文件定义了 PDM 模板驱动的结构体和相关函数，用于管理和操作 PDM 模板设备。
  */
 
+#define PDM_MASTER_TEMPLATE_NAME        "template"      /* 控制器名字 */
+
 /**
  * @struct pdm_template_operations
  * @brief PDM 模板操作结构体

@@ -98,7 +98,7 @@ static struct platform_driver pdm_device_platform_driver = {
     .probe = pdm_device_platform_probe,
     .remove = pdm_device_platform_remove,
     .driver = {
-        .name = "pdm-platform-device",
+        .name = "pdm-device-platform",
     },
     .id_table = pdm_device_platform_ids,
 };
