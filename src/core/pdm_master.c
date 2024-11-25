@@ -1,6 +1,6 @@
 #include "pdm.h"
 #include "pdm_driver_manager.h"
-#include "pdm_template.h"
+#include "master/pdm_template.h"
 
 /**
  * @brief PDM 主设备列表
@@ -36,9 +36,158 @@ static struct pdm_subdriver pdm_master_drivers[] = {
     },
 };
 
+/**
+ * @brief PDM 主控制器类
+ */
+static struct class pdm_master_class = {
+    .name = "pdm_master",
+};
 
 /**
- * pdm_master_client_id_alloc - 为PDM设备分配ID
+ * name_show - 显示设备名称
+ * @dev: 设备结构
+ * @da: 设备属性结构
+ * @buf: 输出缓冲区
+ *
+ * 返回值:
+ * 实际写入的字节数
+ */
+static ssize_t name_show(struct device *dev, struct device_attribute *da, char *buf)
+{
+    struct pdm_master *master = dev_to_pdm_master(dev);
+    ssize_t status;
+
+    down_read(&master->rwlock);
+    status = sysfs_emit(buf, "%s\n", master->name);
+    up_read(&master->rwlock);
+
+    OSA_INFO("Device name: %s.\n", master->name);
+    return status;
+}
+
+static DEVICE_ATTR_RO(name);
+
+static struct attribute *pdm_master_device_attrs[] = {
+    &dev_attr_name.attr,
+    NULL,
+};
+ATTRIBUTE_GROUPS(pdm_master_device);
+
+/**
+ * @brief PDM 主控制器设备类型
+ */
+static const struct device_type pdm_master_device_type = {
+    .groups = pdm_master_device_groups,
+};
+
+/**
+ * @brief 释放 PDM 主控制器设备
+ * @dev: 设备结构
+ */
+static void pdm_master_dev_release(struct device *dev)
+{
+    struct pdm_master *master = dev_to_pdm_master(dev);
+    kfree(master);
+}
+
+/**
+ * @brief 默认打开函数
+ * @inode: inode 结构
+ * @filp: 文件结构
+ *
+ * 返回值:
+ * 0 - 成功
+ */
+static int pdm_master_fops_default_open(struct inode *inode, struct file *filp)
+{
+    struct pdm_master *master;
+
+    OSA_INFO("fops_default_open.\n");
+
+    master = container_of(inode->i_cdev, struct pdm_master, cdev);
+    if (!master) {
+        OSA_ERROR("Invalid master.\n");
+        return -EINVAL;
+    }
+
+    filp->private_data = master;
+
+    return 0;
+}
+
+/**
+ * @brief 默认释放函数
+ * @inode: inode 结构
+ * @filp: 文件结构
+ *
+ * 返回值:
+ * 0 - 成功
+ */
+static int pdm_master_fops_default_release(struct inode *inode, struct file *filp)
+{
+    OSA_INFO("fops_default_release.\n");
+    return 0;
+}
+
+/**
+ * @brief 默认读取函数
+ * @filp: 文件结构
+ * @buf: 用户空间缓冲区
+ * @count: 要读取的字节数
+ * @ppos: 当前文件位置
+ *
+ * 返回值:
+ * 0 - 成功
+ */
+static ssize_t pdm_master_fops_default_read(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
+{
+    struct pdm_master *master;
+
+    OSA_INFO("fops_default_read.\n");
+
+    master = filp->private_data;
+    if (!master) {
+        OSA_ERROR("Invalid master.\n");
+        return -EINVAL;
+    }
+
+    (void)pdm_master_client_show(master);
+    return 0;
+}
+
+/**
+ * @brief 默认写入函数
+ * @filp: 文件结构
+ * @buf: 用户空间缓冲区
+ * @count: 要写入的字节数
+ * @ppos: 当前文件位置
+ *
+ * 返回值:
+ * 0 - 成功
+ */
+static ssize_t pdm_master_fops_default_write(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
+{
+    OSA_INFO("fops_default_write.\n");
+    return 0;
+}
+
+/**
+ * @brief 默认ioctl函数
+ * @filp: 文件结构
+ * @cmd: ioctl命令
+ * @arg: 命令参数
+ *
+ * 返回值:
+ * -ENOTSUPP - 不支持的ioctl操作
+ */
+static long pdm_master_fops_default_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+{
+    OSA_INFO("This master does not support ioctl operations.\n");
+    return -ENOTSUPP;
+}
+
+/**
+ * @brief 为PDM设备分配ID
  * @master: PDM主控制器
  * @pdmdev: PDM设备
  *
@@ -76,7 +225,7 @@ int pdm_master_client_id_alloc(struct pdm_master *master, struct pdm_device *pdm
 }
 
 /**
- * pdm_master_client_id_free - 释放PDM设备的ID
+ * @brief 释放PDM设备的ID
  * @master: PDM主控制器
  * @pdmdev: PDM设备
  */
@@ -123,7 +272,6 @@ int pdm_master_client_show(struct pdm_master *master)
 
     return 0;
 }
-
 
 /**
  * @brief 根据 real_device 和 interface 查找 PDM 设备
@@ -188,9 +336,8 @@ unlock:
     return pdmdev;
 }
 
-
 /**
- * pdm_master_client_add - 向PDM主控制器添加设备
+ * @brief 向PDM主控制器添加设备
  * @master: PDM主控制器
  * @pdmdev: 要添加的PDM设备
  *
@@ -213,7 +360,7 @@ int pdm_master_client_add(struct pdm_master *master, struct pdm_device *pdmdev)
 }
 
 /**
- * pdm_master_client_delete - 从PDM主控制器删除设备
+ * @brief 从PDM主控制器删除设备
  * @master: PDM主控制器
  * @pdmdev: 要删除的PDM设备
  *
@@ -235,164 +382,8 @@ int pdm_master_client_delete(struct pdm_master *master, struct pdm_device *pdmde
     return 0;
 }
 
-
-
 /**
- * pdm_master_class - PDM主控制器类
- */
-static struct class pdm_master_class = {
-    .name = "pdm_master",
-};
-
-
-/**
- * name_show - 显示设备名称
- * @dev: 设备结构
- * @da: 设备属性结构
- * @buf: 输出缓冲区
- *
- * 返回值:
- * 实际写入的字节数
- */
-static ssize_t name_show(struct device *dev, struct device_attribute *da, char *buf)
-{
-    struct pdm_master *master = dev_to_pdm_master(dev);
-    ssize_t status;
-
-    down_read(&master->rwlock);
-    status = sysfs_emit(buf, "%s\n", master->name);
-    up_read(&master->rwlock);
-
-    OSA_INFO("Device name: %s.\n", master->name);
-    return status;
-}
-
-static DEVICE_ATTR_RO(name);
-
-static struct attribute *pdm_master_device_attrs[] = {
-    &dev_attr_name.attr,
-    NULL,
-};
-ATTRIBUTE_GROUPS(pdm_master_device);
-
-/**
- * pdm_master_device_type - PDM主控制器设备类型
- */
-static const struct device_type pdm_master_device_type = {
-    .groups = pdm_master_device_groups,
-};
-
-/**
- * pdm_master_dev_release - 释放PDM主控制器设备
- * @dev: 设备结构
- */
-static void pdm_master_dev_release(struct device *dev)
-{
-    struct pdm_master *master = dev_to_pdm_master(dev);
-    kfree(master);
-}
-
-
-/**
- * pdm_master_fops_default_open - 默认打开函数
- * @inode: inode 结构
- * @filp: 文件结构
- *
- * 返回值:
- * 0 - 成功
- */
-static int pdm_master_fops_default_open(struct inode *inode, struct file *filp)
-{
-    struct pdm_master *master;
-
-    OSA_INFO("fops_default_open.\n");
-
-    master = container_of(inode->i_cdev, struct pdm_master, cdev);
-    if (!master)
-    {
-        OSA_ERROR("Invalid master.\n");
-        return -EINVAL;
-    }
-
-    filp->private_data = master;
-
-    return 0;
-}
-
-/**
- * pdm_master_fops_default_release - 默认释放函数
- * @inode: inode 结构
- * @filp: 文件结构
- *
- * 返回值:
- * 0 - 成功
- */
-static int pdm_master_fops_default_release(struct inode *inode, struct file *filp)
-{
-    OSA_INFO("fops_default_release.\n");
-    return 0;
-}
-
-/**
- * pdm_master_fops_default_read - 默认读取函数
- * @filp: 文件结构
- * @buf: 用户空间缓冲区
- * @count: 要读取的字节数
- * @ppos: 当前文件位置
- *
- * 返回值:
- * 0 - 成功
- */
-static ssize_t pdm_master_fops_default_read(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
-{
-    struct pdm_master *master;
-
-    OSA_INFO("fops_default_read.\n");
-
-    master = filp->private_data;
-    if (!master)
-    {
-        OSA_ERROR("Invalid master.\n");
-        return -EINVAL;
-    }
-    (void)pdm_master_client_show(master);
-    return 0;
-}
-
-/**
- * pdm_master_fops_default_write - 默认写入函数
- * @filp: 文件结构
- * @buf: 用户空间缓冲区
- * @count: 要写入的字节数
- * @ppos: 当前文件位置
- *
- * 返回值:
- * 0 - 成功
- */
-static ssize_t pdm_master_fops_default_write(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
-{
-    OSA_INFO("fops_default_write.\n");
-    return 0;
-}
-
-/**
- * pdm_master_fops_default_unlocked_ioctl - 默认ioctl函数
- * @filp: 文件结构
- * @cmd: ioctl命令
- * @arg: 命令参数
- *
- * 返回值:
- * -ENOTSUPP - 不支持的ioctl操作
- */
-static long pdm_master_fops_default_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
-{
-    OSA_INFO("This master does not support ioctl operations.\n");
-    return -ENOTSUPP;
-}
-
-
-/**
- * pdm_master_cdev_add - 添加PDM主控制器字符设备
+ * @brief 添加PDM主控制器字符设备
  * @master: PDM主控制器
  *
  * 返回值:
@@ -445,9 +436,8 @@ err_out:
     return status;
 }
 
-
 /**
- * pdm_master_cdev_delete - 删除PDM主控制器字符设备
+ * @brief 删除PDM主控制器字符设备
  * @master: PDM主控制器
  */
 static void pdm_master_cdev_delete(struct pdm_master *master)
@@ -462,9 +452,8 @@ static void pdm_master_cdev_delete(struct pdm_master *master)
     unregister_chrdev_region(master->devno, 1);
 }
 
-
 /**
- * pdm_master_devdata_get - 获取PDM主控制器的私有数据
+ * @brief 获取PDM主控制器的私有数据
  * @master: PDM主控制器
  *
  * 返回值:
@@ -481,7 +470,7 @@ void *pdm_master_devdata_get(struct pdm_master *master)
 }
 
 /**
- * pdm_master_devdata_set - 设置PDM主控制器的私有数据
+ * @brief 设置PDM主控制器的私有数据
  * @master: PDM主控制器
  * @data: 私有数据指针
  */
@@ -496,7 +485,7 @@ void pdm_master_devdata_set(struct pdm_master *master, void *data)
 }
 
 /**
- * pdm_master_get - 获取PDM主控制器的引用
+ * @brief 获取PDM主控制器的引用
  * @master: PDM主控制器
  *
  * 返回值:
@@ -513,7 +502,7 @@ struct pdm_master *pdm_master_get(struct pdm_master *master)
 }
 
 /**
- * pdm_master_put - 释放PDM主控制器的引用
+ * @brief 释放PDM主控制器的引用
  * @master: PDM主控制器
  */
 void pdm_master_put(struct pdm_master *master)
@@ -523,9 +512,8 @@ void pdm_master_put(struct pdm_master *master)
     }
 }
 
-
 /**
- * pdm_master_alloc - 分配PDM主控制器结构
+ * @brief 分配PDM主控制器结构
  * @data_size: 私有数据的大小
  *
  * 返回值:
@@ -554,9 +542,8 @@ struct pdm_master *pdm_master_alloc(unsigned int data_size)
     return master;
 }
 
-
 /**
- * pdm_master_free - 释放PDM主控制器结构
+ * @brief 释放PDM主控制器结构
  * @master: PDM主控制器
  */
 void pdm_master_free(struct pdm_master *master)
@@ -566,9 +553,8 @@ void pdm_master_free(struct pdm_master *master)
     }
 }
 
-
 /**
- * pdm_master_register - 注册PDM主控制器
+ * @brief 注册PDM主控制器
  * @master: PDM主控制器
  *
  * 返回值:
@@ -636,7 +622,7 @@ err_device_put:
 }
 
 /**
- * pdm_master_unregister - 注销PDM主控制器
+ * @brief 注销PDM主控制器
  * @master: PDM主控制器
  */
 void pdm_master_unregister(struct pdm_master *master)
@@ -649,7 +635,7 @@ void pdm_master_unregister(struct pdm_master *master)
     }
 
     mutex_lock(&master->client_list_mutex_lock);
-    if (!list_empty(&master->client_list)){
+    if (!list_empty(&master->client_list)) {
         OSA_WARN("Not all clients removed.");
         list_for_each_entry(client, &master->client_list, entry) {
             OSA_INFO("Client Name: %s.\n", dev_name(&client->dev));
@@ -673,7 +659,7 @@ void pdm_master_unregister(struct pdm_master *master)
 }
 
 /**
- * pdm_master_init - 初始化PDM主控制器模块
+ * @brief 初始化PDM主控制器模块
  *
  * 返回值:
  * 0 - 成功
@@ -710,7 +696,7 @@ int pdm_master_init(void)
 }
 
 /**
- * pdm_master_exit - 卸载PDM主控制器模块
+ * @brief 卸载PDM主控制器模块
  */
 void pdm_master_exit(void)
 {

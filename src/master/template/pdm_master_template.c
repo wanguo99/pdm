@@ -1,7 +1,7 @@
 #include <linux/spi/spi.h>
 
 #include "pdm.h"
-#include "pdm_template.h"
+#include "master/pdm_template.h"
 
 
 static struct pdm_master *template_master = NULL;

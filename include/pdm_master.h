@@ -10,7 +10,6 @@
 #include <linux/of.h>
 #include <linux/mod_devicetable.h>
 
-#include "osa_log.h"
 #include "pdm_device.h"
 
 /**
