@@ -12,12 +12,12 @@
  * @return 成功返回 0，失败返回负错误码
  */
 static int pdm_subdriver_register_single(struct pdm_subdriver *driver, struct list_head *list) {
-    int ret = 0;
+    int status = 0;
     if (driver->init) {
-        ret = driver->init();
-        if (ret) {
-            OSA_ERROR("Failed to register driver %s, ret = %d.\n", driver->name ? driver->name : "Unknown", ret);
-            return ret;
+        status = driver->init();
+        if (status) {
+            OSA_ERROR("Failed to register driver %s, status = %d.\n", driver->name ? driver->name : "Unknown", status);
+            return status;
         }
     }
     list_add_tail(&driver->list, list);
@@ -70,18 +70,18 @@ void pdm_subdriver_unregister(struct list_head *list)
  * @return 成功返回 0，失败返回负错误码
  */
 int pdm_subdriver_register(struct pdm_subdriver_register_params *params) {
-    int i, ret = 0;
+    int i, status = 0;
 
     if (!is_list_valid(params->list))
         return -EINVAL;
 
     for (i = 0; i < params->count; i++) {
-        ret = pdm_subdriver_register_single(&params->drivers[i], params->list);
-        if (ret) {
+        status = pdm_subdriver_register_single(&params->drivers[i], params->list);
+        if (status) {
             OSA_ERROR("Failed to register driver %s at index %d\n", params->drivers[i].name, i);
             if (!params->ignore_failures) {
                 pdm_subdriver_unregister(params->list);
-                return ret;
+                return status;
             }
         }
     }

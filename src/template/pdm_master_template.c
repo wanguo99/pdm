@@ -98,24 +98,24 @@ struct pdm_device *pdm_template_master_find_pdmdev(void *real_device)
  */
 int pdm_template_master_register_device(struct pdm_device *pdmdev)
 {
-    int ret;
+    int status;
 
     if (!g_pstPdmMaster || !pdmdev) {
         OSA_ERROR("Invalid input parameters\n");
         return -EINVAL;
     }
 
-    ret = pdm_master_client_add(g_pstPdmMaster, pdmdev);
-    if (ret) {
-        OSA_ERROR("Failed to add template device, ret=%d.\n", ret);
-        return ret;
+    status = pdm_master_client_add(g_pstPdmMaster, pdmdev);
+    if (status) {
+        OSA_ERROR("Failed to add template device, status=%d.\n", status);
+        return status;
     }
 
-    ret = pdm_device_register(pdmdev);
-    if (ret) {
-        OSA_ERROR("Failed to register pdm_device, ret=%d.\n", ret);
+    status = pdm_device_register(pdmdev);
+    if (status) {
+        OSA_ERROR("Failed to register pdm_device, status=%d.\n", status);
         pdm_master_client_delete(g_pstPdmMaster, pdmdev);
-        return ret;
+        return status;
     }
 
     OSA_INFO("Device %s registered.\n", dev_name(&pdmdev->dev));

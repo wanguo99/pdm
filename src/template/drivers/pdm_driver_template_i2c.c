@@ -29,7 +29,7 @@ static int pdm_template_i2c_real_probe(struct i2c_client *client, const struct i
     const struct pdm_template_device_priv *data;
     struct pdm_device *pdmdev;
     const char *compatible;
-    int ret;
+    int status;
 
     pdmdev = pdm_device_alloc(sizeof(struct pdm_template_device_priv));
     if (!pdmdev) {
@@ -37,24 +37,24 @@ static int pdm_template_i2c_real_probe(struct i2c_client *client, const struct i
         return -ENOMEM;
     }
 
-    ret = of_property_read_string(client->dev.of_node, "compatible", &compatible);
-    if (ret) {
-        pr_err("Failed to read compatible property: %d\n", ret);
+    status = of_property_read_string(client->dev.of_node, "compatible", &compatible);
+    if (status) {
+        pr_err("Failed to read compatible property: %d\n", status);
         goto unregister_pdmdev;
     }
 
     strcpy(pdmdev->compatible, compatible);
     pdmdev->real_device = client;
-    ret = pdm_template_master_register_device(pdmdev);
-    if (ret) {
-        OSA_ERROR("Failed to add template device, ret=%d.\n", ret);
+    status = pdm_template_master_register_device(pdmdev);
+    if (status) {
+        OSA_ERROR("Failed to add template device, status=%d.\n", status);
         goto free_pdmdev;
     }
 
 	data = of_device_get_match_data(&client->dev);
 	if (!data)
 	{
-        OSA_ERROR("Failed to get match data, ret=%d.\n", ret);
+        OSA_ERROR("Failed to get match data, status=%d.\n", status);
 		goto unregister_pdmdev;
     }
     pdm_device_devdata_set(pdmdev, (void *)data);
@@ -68,7 +68,7 @@ unregister_pdmdev:
 free_pdmdev:
     pdm_device_free(pdmdev);
 
-    return ret;
+    return status;
 }
 
 /**
@@ -187,12 +187,12 @@ static struct i2c_driver pdm_template_i2c_driver = {
  * @return 成功返回 0，失败返回负错误码
  */
 int pdm_template_i2c_driver_init(void) {
-    int ret;
+    int status;
 
-    ret = i2c_add_driver(&pdm_template_i2c_driver);
-    if (ret) {
+    status = i2c_add_driver(&pdm_template_i2c_driver);
+    if (status) {
         OSA_ERROR("Failed to register Template I2C Driver.\n");
-        return ret;
+        return status;
     }
     OSA_INFO("Template I2C Driver Initialized.\n");
     return 0;

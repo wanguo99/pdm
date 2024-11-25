@@ -185,11 +185,11 @@ static void pdm_debug_fs_exit(void)
  */
 static int pdm_bus_init(void)
 {
-    int iRet;
-    iRet = bus_register(&pdm_bus_type);
-    if (iRet < 0) {
+    int status;
+    status = bus_register(&pdm_bus_type);
+    if (status < 0) {
         OSA_INFO("Register PDM BUS Failed.\n");
-        return iRet;
+        return status;
     }
     OSA_INFO("Initialize PDM Bus OK.\n");
     return 0;
@@ -218,24 +218,24 @@ static void pdm_bus_exit(void)
  */
 static int __init pdm_init(void)
 {
-    int iRet;
+    int status;
 
     OSA_DEBUG("PDM Init.\n");
 
-    iRet = pdm_bus_init();
-    if (iRet < 0) {
+    status = pdm_bus_init();
+    if (status < 0) {
         OSA_INFO("Initialize PDM Bus Failed.\n");
-        return iRet;
+        return status;
     }
 
-    iRet = pdm_master_init();
-    if (iRet < 0) {
+    status = pdm_master_init();
+    if (status < 0) {
         OSA_INFO("Initialize PDM Bus Failed.\n");
         goto err_bus_exit;
     }
 
-    iRet = pdm_debug_fs_init();
-    if (iRet < 0) {
+    status = pdm_debug_fs_init();
+    if (status < 0) {
         OSA_INFO("Initialize PDM Debug Fs Failed.\n");
     }
 
@@ -245,7 +245,7 @@ static int __init pdm_init(void)
 err_bus_exit:
     pdm_bus_exit();
 
-    return iRet;
+    return status;
 }
 
 /**

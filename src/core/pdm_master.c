@@ -222,14 +222,14 @@ static struct class pdm_master_class = {
 static ssize_t name_show(struct device *dev, struct device_attribute *da, char *buf)
 {
     struct pdm_master *master = dev_to_pdm_master(dev);
-    ssize_t ret;
+    ssize_t status;
 
     down_read(&master->rwlock);
-    ret = sysfs_emit(buf, "%s\n", master->name);
+    status = sysfs_emit(buf, "%s\n", master->name);
     up_read(&master->rwlock);
 
     OSA_INFO("Device name: %s.\n", master->name);
-    return ret;
+    return status;
 }
 
 static DEVICE_ATTR_RO(name);
@@ -366,16 +366,16 @@ static long pdm_master_fops_default_ioctl(struct file *filp, unsigned int cmd, u
  */
 static int pdm_master_cdev_add(struct pdm_master *master)
 {
-    int ret;
+    int status;
 
     if (!master) {
         OSA_ERROR("Invalid input parameter (master: %p).\n", master);
         return -EINVAL;
     }
 
-    ret = alloc_chrdev_region(&master->devno, 0, 1, dev_name(&master->dev));
-    if (ret < 0) {
-        OSA_ERROR("Failed to allocate char device region for %s, error: %d.\n", dev_name(&master->dev), ret);
+    status = alloc_chrdev_region(&master->devno, 0, 1, dev_name(&master->dev));
+    if (status < 0) {
+        OSA_ERROR("Failed to allocate char device region for %s, error: %d.\n", dev_name(&master->dev), status);
         goto err_out;
     }
 
@@ -387,9 +387,9 @@ static int pdm_master_cdev_add(struct pdm_master *master)
 
     cdev_init(&master->cdev, &master->fops);
     master->cdev.owner = THIS_MODULE;
-    ret = cdev_add(&master->cdev, master->devno, 1);
-    if (ret < 0) {
-        OSA_ERROR("Failed to add char device for %s, error: %d.\n", dev_name(&master->dev), ret);
+    status = cdev_add(&master->cdev, master->devno, 1);
+    if (status < 0) {
+        OSA_ERROR("Failed to add char device for %s, error: %d.\n", dev_name(&master->dev), status);
         goto err_unregister_chrdev;
     }
 
@@ -407,7 +407,7 @@ err_cdev_del:
 err_unregister_chrdev:
     unregister_chrdev_region(master->devno, 1);
 err_out:
-    return ret;
+    return status;
 }
 
 
@@ -541,7 +541,7 @@ void pdm_master_free(struct pdm_master *master)
 int pdm_master_register(struct pdm_master *master)
 {
     struct pdm_master *existing_master;
-    int ret;
+    int status;
 
     if (!master || !strlen(master->name)) {
         OSA_ERROR("Invalid input parameters (master: %p, name: %s).\n", master, master ? master->name : "NULL");
@@ -566,15 +566,15 @@ int pdm_master_register(struct pdm_master *master)
 
     master->dev.type = &pdm_master_device_type;
     dev_set_name(&master->dev, "pdm_master_device_%s", master->name);
-    ret = device_add(&master->dev);
-    if (ret) {
-        OSA_ERROR("Failed to add device: %s, error: %d.\n", dev_name(&master->dev), ret);
+    status = device_add(&master->dev);
+    if (status) {
+        OSA_ERROR("Failed to add device: %s, error: %d.\n", dev_name(&master->dev), status);
         goto err_device_put;
     }
 
-    ret = pdm_master_cdev_add(master);
-    if (ret) {
-        OSA_ERROR("Failed to add cdev, error: %d.\n", ret);
+    status = pdm_master_cdev_add(master);
+    if (status) {
+        OSA_ERROR("Failed to add cdev, error: %d.\n", status);
         goto err_device_unregister;
     }
 
@@ -600,7 +600,7 @@ err_device_unregister:
 
 err_device_put:
     pdm_master_put(master);
-    return ret;
+    return status;
 }
 
 /**
@@ -649,13 +649,13 @@ void pdm_master_unregister(struct pdm_master *master)
  */
 int pdm_master_init(void)
 {
-    int ret;
+    int status;
     struct pdm_subdriver_register_params params;
 
-    ret = class_register(&pdm_master_class);
-    if (ret < 0) {
-        OSA_ERROR("Failed to register PDM Master Class, error: %d.\n", ret);
-        return ret;
+    status = class_register(&pdm_master_class);
+    if (status < 0) {
+        OSA_ERROR("Failed to register PDM Master Class, error: %d.\n", status);
+        return status;
     }
     OSA_INFO("PDM Master Class registered.\n");
 
@@ -664,10 +664,10 @@ int pdm_master_init(void)
     params.count = ARRAY_SIZE(pdm_master_drivers);
     params.ignore_failures = true;
     params.list = &pdm_master_driver_list;
-    ret = pdm_subdriver_register(&params);
-    if (ret < 0) {
-        OSA_ERROR("Failed to register PDM Master Drivers, error: %d.\n", ret);
-        return ret;
+    status = pdm_subdriver_register(&params);
+    if (status < 0) {
+        OSA_ERROR("Failed to register PDM Master Drivers, error: %d.\n", status);
+        return status;
     }
 
     OSA_INFO("Initialize PDM Master OK.\n");
