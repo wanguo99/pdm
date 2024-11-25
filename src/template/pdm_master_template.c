@@ -1,5 +1,7 @@
 #include "pdm.h"
+#include "pdm_subdriver.h"
 #include "pdm_template.h"
+#include "pdm_template_driver.h"
 
 /**
  * @brief 全局 PDM 主设备指针
@@ -8,6 +10,24 @@
  */
 static struct pdm_master *g_pstPdmMaster = NULL;
 
+static LIST_HEAD(pdm_master_template_driver_list);
+static struct pdm_subdriver pdm_master_template_drivers[] = {
+    {
+        .name = "Template SPI",
+        .init = pdm_template_spi_driver_init,
+        .exit = pdm_template_spi_driver_exit
+    },
+    {
+        .name = "Template I2C",
+        .init = pdm_template_i2c_driver_init,
+        .exit = pdm_template_i2c_driver_exit
+    },
+    {
+        .name = "Template PLATFORM",
+        .init = pdm_template_platform_driver_init,
+        .exit = pdm_template_platform_driver_exit
+    },
+};
 
 /**
  * @brief PDC 模板设备的 WRITE 操作
@@ -144,8 +164,18 @@ int pdm_template_master_init(void)
     g_pstPdmMaster->fops.unlocked_ioctl = pdc_template_ioctl;
     g_pstPdmMaster->fops.write = pdc_template_write;
 
+    // 初始化设备驱动
+    status = pdm_subdriver_register(pdm_master_template_drivers, ARRAY_SIZE(pdm_master_template_drivers), &pdm_master_template_driver_list);
+    if (status < 0) {
+        OSA_ERROR("Failed to register PDM Master Template Drivers, error: %d.\n", status);
+        goto err_master_unregister;
+    }
+
     OSA_INFO("Template Master initialized OK.\n");
     return 0;
+
+err_master_unregister:
+    pdm_master_unregister(g_pstPdmMaster);
 
 err_master_free:
     pdm_master_free(g_pstPdmMaster);
@@ -161,6 +191,7 @@ err_master_free:
 void pdm_template_master_exit(void)
 {
     if (g_pstPdmMaster) {
+        pdm_subdriver_unregister(&pdm_master_template_driver_list);
         pdm_master_unregister(g_pstPdmMaster);
         pdm_master_free(g_pstPdmMaster);
         g_pstPdmMaster = NULL;  // Ensure no dangling pointer

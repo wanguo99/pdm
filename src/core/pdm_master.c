@@ -1,8 +1,14 @@
 #include "pdm.h"
+#include "pdm_subdriver.h"
+#include "pdm_template.h"
 
 static LIST_HEAD(pdm_master_list);
 static DEFINE_MUTEX(pdm_master_list_mutex_lock);
 
+static LIST_HEAD(pdm_master_driver_list);
+static struct pdm_subdriver pdm_master_drivers[] = {
+    { .name = "Template Master", .init = pdm_template_master_init, .exit = pdm_template_master_exit },
+};
 
 /**
  * pdm_master_client_id_alloc - 为PDM设备分配ID
@@ -616,13 +622,22 @@ void pdm_master_unregister(struct pdm_master *master)
  */
 int pdm_master_init(void)
 {
-    int ret = class_register(&pdm_master_class);
+    int ret;
+
+    ret = class_register(&pdm_master_class);
     if (ret < 0) {
         OSA_ERROR("Failed to register PDM Master Class, error: %d.\n", ret);
         return ret;
     }
-
     OSA_INFO("PDM Master Class registered.\n");
+
+    // 初始化master驱动
+    ret = pdm_subdriver_register(pdm_master_drivers, ARRAY_SIZE(pdm_master_drivers), &pdm_master_driver_list);
+    if (ret < 0) {
+        OSA_ERROR("Failed to register PDM Master Drivers, error: %d.\n", ret);
+        return ret;
+    }
+
     OSA_INFO("Initialize PDM Master OK.\n");
     return 0;
 }
@@ -632,6 +647,7 @@ int pdm_master_init(void)
  */
 void pdm_master_exit(void)
 {
+    pdm_subdriver_unregister(&pdm_master_driver_list);
     class_unregister(&pdm_master_class);
     OSA_INFO("PDM Master Class unregistered.\n");
 }

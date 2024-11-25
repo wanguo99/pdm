@@ -99,6 +99,18 @@ struct pdm_driver {
  * 函数声明
  */
 
+/**
+ * @brief 判断 list_head 是否已经初始化
+ *
+ * 该函数检查 list_head 的 next 和 prev 指针是否都指向自身。
+ *
+ * @param head 要检查的 list_head 结构体指针
+ * @return 如果已经初始化，返回 true；否则返回 false
+ */
+static inline bool is_list_valid(const struct list_head *head) {
+    return (head->next == head) && (head->prev == head);
+}
+
 
 /*
  * PDM device 相关函数

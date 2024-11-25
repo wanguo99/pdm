@@ -6,7 +6,7 @@ obj-m := $(MODULE_NAME).o
 $(MODULE_NAME)-objs := 	src/core/pdm_core.o \
 						src/core/pdm_master.o \
 						src/core/pdm_device.o \
-						src/core/pdm_driver.o
+						src/core/pdm_subdriver.o
 
 
  $(MODULE_NAME)-objs += src/template/pdm_master_template.o \

@@ -2,7 +2,7 @@
 #include <linux/proc_fs.h>
 
 #include "pdm.h"
-#include "pdm_driver.h"
+
 
 /**
  * @brief 调试文件系统目录
@@ -208,12 +208,6 @@ static int __init pdm_init(void)
         goto err_bus_exit;
     }
 
-    iRet = pdm_driver_init();
-    if (iRet < 0) {
-        OSA_INFO("Initialize PDM driver Failed.\n");
-        goto err_master_exit;
-    }
-
     iRet = pdm_debug_fs_init();
     if (iRet < 0) {
         OSA_INFO("Initialize PDM Debug Fs Failed.\n");
@@ -222,8 +216,6 @@ static int __init pdm_init(void)
     OSA_INFO("PDM Init OK.\n");
     return 0;
 
-err_master_exit:
-    pdm_master_exit();
 err_bus_exit:
     pdm_bus_exit();
 
@@ -238,7 +230,6 @@ err_bus_exit:
 static void __exit pdm_exit(void)
 {
     pdm_debug_fs_exit();
-    pdm_driver_exit();
     pdm_master_exit();
     pdm_bus_exit();
     OSA_INFO("PDM Exited.\n");
