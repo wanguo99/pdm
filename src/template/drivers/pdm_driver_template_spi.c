@@ -44,7 +44,6 @@ static int pdm_template_spi_probe(struct spi_device *spi)
         ret = -EFAULT;
         goto unregister_pdmdev;
     }
-    pstTemplateDevPriv->ops = NULL;
 
     OSA_INFO("Template SPI Device Probed.\n");
     return 0;

@@ -60,7 +60,6 @@ static int pdm_template_i2c_real_probe(struct i2c_client *client, const struct i
         ret = -EFAULT;
         goto unregister_pdmdev;
     }
-    pstTemplateDevPriv->ops = NULL;
 
     OSA_INFO("Template I2C Device Probed.\n");
     return 0;

@@ -4,6 +4,52 @@
 #include "pdm_template.h"
 
 
+static int pdm_template_gpio_read(int addr, int *value)
+{
+    return 0;
+}
+
+static int pdm_template_pwm_read(int addr, int *value)
+{
+    return 0;
+}
+
+static int pdm_template_uart_read(int addr, int *value)
+{
+    return 0;
+}
+
+static int pdm_template_adc_read(int addr, int *value)
+{
+    return 0;
+}
+
+static int pdm_template_dac_read(int addr, int *value)
+{
+    return 0;
+}
+
+static struct pdm_template_device_priv pdm_device_template_gpio_data = {
+    .ops.read_reg = pdm_template_gpio_read,
+};
+
+static struct pdm_template_device_priv pdm_device_template_pwm_data = {
+    .ops.read_reg = pdm_template_pwm_read,
+};
+
+static struct pdm_template_device_priv pdm_device_template_uart_data = {
+    .ops.read_reg = pdm_template_uart_read,
+};
+
+static struct pdm_template_device_priv pdm_device_template_adc_data = {
+    .ops.read_reg = pdm_template_adc_read,
+};
+
+static struct pdm_template_device_priv pdm_device_template_dac_data = {
+    .ops.read_reg = pdm_template_dac_read,
+};
+
+
 static int pdm_template_platform_probe(struct platform_device *pdev)
 {
     struct pdm_template_device_priv *pstTemplateDevPriv;
@@ -37,7 +83,6 @@ static int pdm_template_platform_probe(struct platform_device *pdev)
         ret = -EFAULT;
         goto unregister_pdmdev;
     }
-    pstTemplateDevPriv->ops = NULL;
 
     OSA_INFO("Template PLATFORM Device Probed.\n");
     return 0;
@@ -82,12 +127,11 @@ static int pdm_template_platform_remove(struct platform_device *pdev)
  *  };
 */
 static const struct of_device_id of_platform_platform_match[] = {
-	{ .compatible = "pdm,template-platform", },
-	{ .compatible = "pdm,template-gpio", },
-	{ .compatible = "pdm,template-pwm", },
-	{ .compatible = "pdm,template-uart", },
-	{ .compatible = "pdm,template-adc", },
-	{ .compatible = "pdm,template-dac", },
+	{ .compatible = "pdm,template-gpio", .data = &pdm_device_template_gpio_data, },
+	{ .compatible = "pdm,template-pwm",  .data = &pdm_device_template_pwm_data, },
+	{ .compatible = "pdm,template-uart", .data = &pdm_device_template_uart_data, },
+	{ .compatible = "pdm,template-adc",  .data = &pdm_device_template_adc_data, },
+	{ .compatible = "pdm,template-dac",  .data = &pdm_device_template_dac_data, },
 	{},
 };
 MODULE_DEVICE_TABLE(of, of_platform_platform_match);
