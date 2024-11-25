@@ -52,7 +52,7 @@ static struct pdm_template_device_priv pdm_device_template_dac_data = {
 
 static int pdm_template_platform_probe(struct platform_device *pdev)
 {
-    struct pdm_template_device_priv *pstTemplateDevPriv;
+    const struct pdm_template_device_priv *data;
     struct pdm_device *pdmdev;
     const char *compatible;
     int ret;
@@ -62,6 +62,7 @@ static int pdm_template_platform_probe(struct platform_device *pdev)
         OSA_ERROR("Failed to allocate pdm_device.\n");
         return -ENOMEM;
     }
+
 
     ret = of_property_read_string(pdev->dev.of_node, "compatible", &compatible);
     if (ret) {
@@ -77,12 +78,13 @@ static int pdm_template_platform_probe(struct platform_device *pdev)
         goto free_pdmdev;
     }
 
-    pstTemplateDevPriv = pdm_device_devdata_get(pdmdev);
-    if (!pstTemplateDevPriv) {
-        OSA_ERROR("Failed to get device private data.\n");
-        ret = -EFAULT;
-        goto unregister_pdmdev;
+	data = of_device_get_match_data(&pdev->dev);
+	if (!data)
+	{
+        OSA_ERROR("Failed to get match data, ret=%d.\n", ret);
+		goto unregister_pdmdev;
     }
+    pdm_device_devdata_set(pdmdev, (void *)data);
 
     OSA_INFO("Template PLATFORM Device Probed.\n");
     return 0;

@@ -1,8 +1,4 @@
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/device.h>
 #include <linux/i2c.h>
-#include <linux/version.h>
 
 #include "pdm.h"
 #include "pdm_template.h"
@@ -29,7 +25,7 @@ struct i2c_device_id {
  * @return 成功返回 0，失败返回负错误码
  */
 static int pdm_template_i2c_real_probe(struct i2c_client *client, const struct i2c_device_id *id) {
-    struct pdm_template_device_priv *pstTemplateDevPriv;
+    const struct pdm_template_device_priv *data;
     struct pdm_device *pdmdev;
     const char *compatible;
     int ret;
@@ -54,12 +50,13 @@ static int pdm_template_i2c_real_probe(struct i2c_client *client, const struct i
         goto free_pdmdev;
     }
 
-    pstTemplateDevPriv = pdm_device_devdata_get(pdmdev);
-    if (!pstTemplateDevPriv) {
-        OSA_ERROR("Failed to get device private data.\n");
-        ret = -EFAULT;
-        goto unregister_pdmdev;
+	data = of_device_get_match_data(&client->dev);
+	if (!data)
+	{
+        OSA_ERROR("Failed to get match data, ret=%d.\n", ret);
+		goto unregister_pdmdev;
     }
+    pdm_device_devdata_set(pdmdev, (void *)data);
 
     OSA_INFO("Template I2C Device Probed.\n");
     return 0;

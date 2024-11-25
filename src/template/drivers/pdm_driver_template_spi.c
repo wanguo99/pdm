@@ -1,11 +1,4 @@
-#include <linux/container_of.h>
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/mod_devicetable.h>
-#include <linux/module.h>
 #include <linux/spi/spi.h>
-#include <linux/slab.h>
-#include <linux/types.h>
 
 #include "pdm.h"
 #include "pdm_template.h"
@@ -13,7 +6,7 @@
 
 static int pdm_template_spi_probe(struct spi_device *spi)
 {
-    struct pdm_template_device_priv *pstTemplateDevPriv;
+    const struct pdm_template_device_priv *data;
     struct pdm_device *pdmdev;
     const char *compatible;
     int ret;
@@ -38,12 +31,13 @@ static int pdm_template_spi_probe(struct spi_device *spi)
         goto free_pdmdev;
     }
 
-    pstTemplateDevPriv = pdm_device_devdata_get(pdmdev);
-    if (!pstTemplateDevPriv) {
-        OSA_ERROR("Failed to get device private data.\n");
-        ret = -EFAULT;
-        goto unregister_pdmdev;
+	data = of_device_get_match_data(&spi->dev);
+	if (!data)
+	{
+        OSA_ERROR("Failed to get match data, ret=%d.\n", ret);
+		goto unregister_pdmdev;
     }
+    pdm_device_devdata_set(pdmdev, (void *)data);
 
     OSA_INFO("Template SPI Device Probed.\n");
     return 0;
