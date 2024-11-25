@@ -3,18 +3,23 @@
 #include "pdm.h"
 #include "master/pdm_template.h"
 
-
 static struct pdm_master *template_master = NULL;
 
-
+/**
+ * @brief 模板 PDM 设备探测函数
+ *
+ * 该函数在 PDM 设备被探测到时调用，负责将设备添加到模板主设备中。
+ *
+ * @param pdmdev PDM 设备指针
+ * @return 成功返回 0，失败返回负错误码
+ */
 static int pdm_master_template_probe(struct pdm_device *pdmdev)
 {
     int status;
 
     status = pdm_master_client_add(template_master, pdmdev);
-    if (status)
-    {
-        OSA_INFO("Template Master Add Device Failed.\n");
+    if (status) {
+        OSA_ERROR("Template Master Add Device Failed, status=%d.\n", status);
         return status;
     }
 
@@ -22,23 +27,31 @@ static int pdm_master_template_probe(struct pdm_device *pdmdev)
     return 0;
 }
 
+/**
+ * @brief 模板 PDM 设备移除函数
+ *
+ * 该函数在 PDM 设备被移除时调用，负责将设备从模板主设备中删除。
+ *
+ * @param pdmdev PDM 设备指针
+ */
 static void pdm_master_template_remove(struct pdm_device *pdmdev)
 {
     int status;
 
     status = pdm_master_client_delete(template_master, pdmdev);
-    if (status)
-    {
-        OSA_INFO("Template Master Delete Device Failed.\n");
+    if (status) {
+        OSA_ERROR("Template Master Delete Device Failed, status=%d.\n", status);
         return;
     }
 
     OSA_INFO("Template PDM Device Removed.\n");
-    return;
-
 }
 
-
+/**
+ * @brief 设备树匹配表
+ *
+ * 该表定义了支持的设备树兼容属性。
+ */
 static const struct of_device_id of_pdm_master_template_match[] = {
     { .compatible = "template,pdm-device-spi", },
     { .compatible = "template,pdm-device-i2c", },
@@ -49,38 +62,46 @@ static const struct of_device_id of_pdm_master_template_match[] = {
 };
 MODULE_DEVICE_TABLE(of, of_pdm_master_template_match);
 
-
+/**
+ * @brief 模板 PDM 驱动结构体
+ *
+ * 该结构体定义了模板 PDM 驱动的基本信息和操作函数。
+ */
 static struct pdm_driver pdm_master_template_driver = {
-    .probe      = pdm_master_template_probe,
-    .remove     = pdm_master_template_remove,
-    .driver     = {
-        .name   = "pdm-device-spi",
+    .probe = pdm_master_template_probe,
+    .remove = pdm_master_template_remove,
+    .driver = {
+        .name = "pdm-device-template",
         .of_match_table = of_pdm_master_template_match,
     },
 };
 
-
+/**
+ * @brief 初始化模板 PDM 主设备驱动
+ *
+ * 该函数用于初始化模板 PDM 主设备驱动，分配和注册主设备及驱动。
+ *
+ * @return 成功返回 0，失败返回负错误码
+ */
 int pdm_master_template_driver_init(void)
 {
     int status;
 
     template_master = pdm_master_alloc(sizeof(void*));
-    if (!template_master)
-    {
+    if (!template_master) {
         OSA_ERROR("Failed to allocate pdm_master.\n");
         return -ENOMEM;
     }
 
-
     status = pdm_master_register(template_master);
     if (status) {
-        OSA_ERROR("Failed to register Template PDM Master.\n");
+        OSA_ERROR("Failed to register Template PDM Master, status=%d.\n", status);
         goto err_master_free;
     }
 
     status = pdm_register_driver(THIS_MODULE, &pdm_master_template_driver);
     if (status) {
-        OSA_ERROR("Failed to register Template PDM Master Driver.\n");
+        OSA_ERROR("Failed to register Template PDM Master Driver, status=%d.\n", status);
         goto err_master_unregister;
     }
 
@@ -94,7 +115,11 @@ err_master_free:
     return status;
 }
 
-
+/**
+ * @brief 退出模板 PDM 主设备驱动
+ *
+ * 该函数用于退出模板 PDM 主设备驱动，注销驱动和主设备，释放相关资源。
+ */
 void pdm_master_template_driver_exit(void)
 {
     pdm_unregister_driver(&pdm_master_template_driver);

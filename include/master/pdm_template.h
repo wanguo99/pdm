@@ -77,13 +77,11 @@ void pdm_template_master_unregister_device(struct pdm_device *pdmdev);
  */
 int pdm_master_template_driver_init(void);
 
-
 /**
  * @brief 退出 PDM 模板主设备
  *
  * 该函数用于退出 PDM 模板主设备，释放相关资源。
  */
 void pdm_master_template_driver_exit(void);
-
 
 #endif /* _PDM_TEMPLATE_H_ */
