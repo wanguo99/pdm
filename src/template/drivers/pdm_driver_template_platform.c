@@ -2,28 +2,73 @@
 
 #include "pdm.h"
 #include "pdm_template.h"
+#include "pdm_driver_template.h"
 
-
+/**
+ * @brief 读取 GPIO 寄存器
+ *
+ * 该函数用于读取指定地址的 GPIO 寄存器值。
+ *
+ * @param addr 寄存器地址
+ * @param value 存储读取结果的指针
+ * @return 成功返回 0，失败返回负错误码
+ */
 static int pdm_template_gpio_read(int addr, int *value)
 {
     return 0;
 }
 
+/**
+ * @brief 读取 PWM 寄存器
+ *
+ * 该函数用于读取指定地址的 PWM 寄存器值。
+ *
+ * @param addr 寄存器地址
+ * @param value 存储读取结果的指针
+ * @return 成功返回 0，失败返回负错误码
+ */
 static int pdm_template_pwm_read(int addr, int *value)
 {
     return 0;
 }
 
+/**
+ * @brief 读取 UART 寄存器
+ *
+ * 该函数用于读取指定地址的 UART 寄存器值。
+ *
+ * @param addr 寄存器地址
+ * @param value 存储读取结果的指针
+ * @return 成功返回 0，失败返回负错误码
+ */
 static int pdm_template_uart_read(int addr, int *value)
 {
     return 0;
 }
 
+/**
+ * @brief 读取 ADC 寄存器
+ *
+ * 该函数用于读取指定地址的 ADC 寄存器值。
+ *
+ * @param addr 寄存器地址
+ * @param value 存储读取结果的指针
+ * @return 成功返回 0，失败返回负错误码
+ */
 static int pdm_template_adc_read(int addr, int *value)
 {
     return 0;
 }
 
+/**
+ * @brief 读取 DAC 寄存器
+ *
+ * 该函数用于读取指定地址的 DAC 寄存器值。
+ *
+ * @param addr 寄存器地址
+ * @param value 存储读取结果的指针
+ * @return 成功返回 0，失败返回负错误码
+ */
 static int pdm_template_dac_read(int addr, int *value)
 {
     return 0;
@@ -50,6 +95,14 @@ static struct pdm_template_device_priv pdm_device_template_dac_data = {
 };
 
 
+/**
+ * @brief PLATFORM 设备探测函数
+ *
+ * 该函数在 PLATFORM 设备被探测到时调用，负责初始化和注册 PDM 设备。
+ *
+ * @param pdev 指向 PLATFORM 设备的指针
+ * @return 成功返回 0，失败返回负错误码
+ */
 static int pdm_template_platform_probe(struct platform_device *pdev)
 {
     const struct pdm_template_device_priv *data;
@@ -99,6 +152,14 @@ free_pdmdev:
 
 }
 
+/**
+ * @brief PLATFORM 设备移除函数
+ *
+ * 该函数在 PLATFORM 设备被移除时调用，负责注销和释放 PDM 设备。
+ *
+ * @param pdev 指向 PLATFORM 设备的指针
+ * @return 成功返回 0，失败返回负错误码
+ */
 static int pdm_template_platform_remove(struct platform_device *pdev)
 {
     struct pdm_device *pdmdev = pdm_template_master_find_pdmdev(pdev);

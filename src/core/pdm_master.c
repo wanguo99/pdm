@@ -2,13 +2,40 @@
 #include "pdm_subdriver.h"
 #include "pdm_template.h"
 
+/**
+ * @brief PDM 主设备列表
+ *
+ * 该列表用于存储所有注册的 PDM 主设备。
+ */
 static LIST_HEAD(pdm_master_list);
+
+/**
+ * @brief 保护 PDM 主设备列表的互斥锁
+ *
+ * 该互斥锁用于同步对 PDM 主设备列表的访问，防止并发访问导致的数据竞争。
+ */
 static DEFINE_MUTEX(pdm_master_list_mutex_lock);
 
+/**
+ * @brief PDM 主驱动程序列表
+ *
+ * 该列表用于存储所有注册的 PDM 主驱动程序。
+ */
 static LIST_HEAD(pdm_master_driver_list);
+
+/**
+ * @brief PDM 主驱动程序数组
+ *
+ * 该数组包含所有需要注册的 PDM 主驱动程序。
+ */
 static struct pdm_subdriver pdm_master_drivers[] = {
-    { .name = "Template Master", .init = pdm_template_master_init, .exit = pdm_template_master_exit },
+    {
+        .name = "Template Master",
+        .init = pdm_template_master_init,
+        .exit = pdm_template_master_exit
+    },
 };
+
 
 /**
  * pdm_master_client_id_alloc - 为PDM设备分配ID

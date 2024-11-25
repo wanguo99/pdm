@@ -2,8 +2,16 @@
 
 #include "pdm.h"
 #include "pdm_template.h"
+#include "pdm_driver_template.h"
 
-
+/**
+ * @brief SPI 设备探测函数
+ *
+ * 该函数在 SPI 设备被探测到时调用，负责初始化和注册 PDM 设备。
+ *
+ * @param spi 指向 SPI 设备的指针
+ * @return 成功返回 0，失败返回负错误码
+ */
 static int pdm_template_spi_probe(struct spi_device *spi)
 {
     const struct pdm_template_device_priv *data;
@@ -52,6 +60,13 @@ free_pdmdev:
 
 }
 
+/**
+ * @brief SPI 设备移除函数
+ *
+ * 该函数在 SPI 设备被移除时调用，负责注销和释放 PDM 设备。
+ *
+ * @param spi 指向 SPI 设备的指针
+ */
 static void pdm_template_spi_remove(struct spi_device *spi)
 {
     struct pdm_device *pdmdev = pdm_template_master_find_pdmdev(spi);

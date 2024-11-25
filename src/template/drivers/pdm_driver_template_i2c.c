@@ -2,6 +2,7 @@
 
 #include "pdm.h"
 #include "pdm_template.h"
+#include "pdm_driver_template.h"
 
 /**
  * @brief 兼容旧内核版本的 i2c_device_id 结构体定义

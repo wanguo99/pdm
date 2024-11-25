@@ -15,6 +15,7 @@ static struct proc_dir_entry *pdm_procfs_dir;
 /*                                                                              */
 /*                            pdm_bus_type                                      */
 /*                                                                              */
+
 /**
  * @brief 将 device_driver 转换为 pdm_driver
  *
@@ -135,6 +136,13 @@ const struct bus_type pdm_bus_type = {
     .remove = pdm_bus_device_remove,
 };
 
+/**
+ * @brief 初始化 PDM 调试文件系统
+ *
+ * 该函数用于在 debugfs 和 procfs 中创建 PDM 相关的目录。
+ *
+ * @return 成功返回 0，失败返回负错误码
+ */
 static int pdm_debug_fs_init(void)
 {
     pdm_debugfs_dir = debugfs_create_dir(PDM_DEBUG_FS_DIR_NAME, NULL);
@@ -153,6 +161,11 @@ static int pdm_debug_fs_init(void)
     return 0;
 }
 
+/**
+ * @brief 卸载 PDM 调试文件系统
+ *
+ * 该函数用于删除在 debugfs 和 procfs 中创建的 PDM 相关目录。
+ */
 static void pdm_debug_fs_exit(void)
 {
     if (!IS_ERR(pdm_debugfs_dir)) {
@@ -163,6 +176,13 @@ static void pdm_debug_fs_exit(void)
     }
 }
 
+/**
+ * @brief 初始化 PDM 总线
+ *
+ * 该函数用于注册 PDM 总线类型，使其可以在内核中使用。
+ *
+ * @return 成功返回 0，失败返回负错误码
+ */
 static int pdm_bus_init(void)
 {
     int iRet;
@@ -175,6 +195,11 @@ static int pdm_bus_init(void)
     return 0;
 }
 
+/**
+ * @brief 卸载 PDM 总线
+ *
+ * 该函数用于注销 PDM 总线类型，使其不再在内核中使用。
+ */
 static void pdm_bus_exit(void)
 {
     bus_unregister(&pdm_bus_type);

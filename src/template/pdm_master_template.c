@@ -1,16 +1,27 @@
 #include "pdm.h"
 #include "pdm_subdriver.h"
 #include "pdm_template.h"
-#include "pdm_driver_template.h"
+#include "drivers/pdm_driver_template.h"
 
 /**
  * @brief 全局 PDM 主设备指针
  *
- * 该指针用于存储 PDM 主设备的实例。
+ * 该指针用于存储 PDM 主设备的实例。在整个模块中，可以通过该指针访问 PDM 主设备。
  */
 static struct pdm_master *g_pstPdmMaster = NULL;
 
+/**
+ * @brief PDM 主模板驱动程序列表
+ *
+ * 该列表用于存储所有注册的 PDM 主模板驱动程序。
+ */
 static LIST_HEAD(pdm_master_template_driver_list);
+
+/**
+ * @brief PDM 主模板驱动程序数组
+ *
+ * 该数组包含所有需要注册的 PDM 主模板驱动程序。每个 `pdm_subdriver` 结构体包含驱动程序的名称、初始化函数和退出函数。
+ */
 static struct pdm_subdriver pdm_master_template_drivers[] = {
     {
         .name = "Template SPI",
@@ -28,6 +39,7 @@ static struct pdm_subdriver pdm_master_template_drivers[] = {
         .exit = pdm_template_platform_driver_exit
     },
 };
+
 
 /**
  * @brief PDC 模板设备的 WRITE 操作
