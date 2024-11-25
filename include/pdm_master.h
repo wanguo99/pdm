@@ -75,18 +75,6 @@ void pdm_master_client_id_free(struct pdm_master *master, struct pdm_device *pdm
 int pdm_master_client_show(struct pdm_master *master);
 
 /**
- * @brief 根据 real_device 和 interface 查找 PDM 设备
- *
- * 该函数遍历 PDM 主控制器的客户设备链表，根据指定的 real_device 和 interface 找到对应的 PDM 设备。
- *
- * @param master 指向 PDM 主控制器的指针
- * @param real_device 指向实际设备结构体的指针
- * @param interface 设备物理接口类型
- * @return 成功返回找到的 PDM 设备指针，失败返回 NULL
- */
-struct pdm_device *pdm_master_client_find(struct pdm_master *master, void *real_device, int interface);
-
-/**
  * @brief 添加 PDM 设备
  *
  * 该函数用于添加 PDM 设备。

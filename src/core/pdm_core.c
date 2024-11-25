@@ -5,6 +5,7 @@
 #include "pdm.h"
 
 static bool pdm_bus_registered;
+static struct pdm_bus pdm_bus_instance;
 
 /**
  * @brief 调试文件系统目录
@@ -55,7 +56,7 @@ static int pdm_bus_device_match(struct device *dev, const struct device_driver *
     pdmdrv = drv_to_pdmdrv(drv);
 
     /* Attempt an OF style match */
-    if (of_driver_match_device(pdm_device_to_dev(pdmdev), drv))
+    if (of_driver_match_device(pdm_device_to_physical_dev(pdmdev), drv))
         return 1;
 
     return 0;
@@ -103,6 +104,58 @@ static void pdm_bus_device_remove(struct device *dev)
         driver->remove(pdmdev);
     }
 }
+
+/**
+ * @brief 遍历 pdm_bus_type 总线上的所有设备
+ *
+ * 该函数用于遍历 `pdm_bus_type` 总线上的所有设备，并对每个设备调用指定的回调函数。
+ *
+ * @param data 传递给回调函数的数据
+ * @param fn 回调函数指针，用于处理每个设备
+ * @return 返回遍历结果，0 表示成功，非零值表示失败
+ */
+int pdm_bus_for_each_dev(void *data, int (*fn)(struct device *dev, void *data))
+{
+	int res;
+
+	mutex_lock(&pdm_bus_instance.devices_mutex_lock);
+	res = bus_for_each_dev(&pdm_bus_type, NULL, data, fn);
+	mutex_unlock(&pdm_bus_instance.devices_mutex_lock);
+
+	return res;
+}
+
+/**
+ * @brief 查找与给定物理信息匹配的 PDM 设备
+ *
+ * 该函数用于查找与给定物理信息匹配的 PDM 设备。
+ *
+ * @param physical_info 要匹配的物理设备信息
+ * @return 返回匹配的设备指针，如果没有找到则返回 NULL
+ */
+struct pdm_device *pdm_bus_physical_info_match_pdm_device(struct pdm_device_physical_info *physical_info)
+{
+    struct pdm_device *existing_pdmdev = NULL;
+    struct pdm_device *target_pdmdev = NULL;
+    if (!physical_info)
+    {
+        OSA_ERROR("Invalid physical info.\n");
+        return NULL;
+    }
+	mutex_lock(&pdm_bus_instance.devices_mutex_lock);
+    list_for_each_entry(existing_pdmdev, &pdm_bus_instance.devices, entry) {
+        if ((existing_pdmdev->physical_info.type == physical_info->type)
+            && (existing_pdmdev->physical_info.device == physical_info->device))
+        {
+            target_pdmdev = existing_pdmdev;
+            break;
+        }
+    }
+	mutex_unlock(&pdm_bus_instance.devices_mutex_lock);
+
+	return target_pdmdev;
+}
+
 
 /**
  * @brief PDM 总线类型
@@ -206,6 +259,11 @@ static int pdm_bus_init(void)
         OSA_ERROR("Failed to register PDM bus, error %d\n", status);
         return status;
     }
+
+    memset(&pdm_bus_instance, 0, sizeof(struct pdm_bus));
+    INIT_LIST_HEAD(&pdm_bus_instance.devices);
+    mutex_init(&pdm_bus_instance.devices_mutex_lock);
+
     OSA_INFO("PDM bus initialized\n");
     return 0;
 }

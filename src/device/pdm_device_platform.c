@@ -42,8 +42,8 @@ static int pdm_device_platform_probe(struct platform_device *pdev) {
     }
 
     strcpy(pdmdev->compatible, compatible);
-    pdmdev->interface = pdata ? pdata->type : PDM_DEVICE_INTERFACE_TYPE_UNDEFINED;
-    pdmdev->real_device.pdev = pdev;
+    pdmdev->physical_info.type = pdata ? pdata->type : PDM_DEVICE_INTERFACE_TYPE_UNDEFINED;
+    pdmdev->physical_info.device = pdev;
     status = pdm_device_register(pdmdev);
     if (status) {
         OSA_ERROR("Failed to register pdm device, status=%d.\n", status);
@@ -67,16 +67,19 @@ free_pdmdev:
  * @return 成功返回 0，失败返回负错误码
  */
 static int pdm_device_platform_remove(struct platform_device *pdev) {
-#if 0
-    struct pdm_device *pdmdev = pdm_master_client_find(pdev);
-    if (NULL == pdmdev) {
-        OSA_ERROR("Failed to find pdm device from master.\n");
+    struct pdm_device_physical_info physical_info;
+    struct pdm_device *pdmdev;
+
+    physical_info.type = PDM_DEVICE_INTERFACE_TYPE_PLATFORM;
+    physical_info.device= pdev;
+    pdmdev = pdm_bus_physical_info_match_pdm_device(&physical_info);
+    if (!pdmdev) {
+        OSA_ERROR("Failed to find pdm device from bus.\n");
         return -ENODEV;
     }
 
     pdm_device_unregister(pdmdev);
     pdm_device_free(pdmdev);
-#endif
 
     OSA_INFO("PDM Device PLATFORM Device Removed.\n");
     return 0;

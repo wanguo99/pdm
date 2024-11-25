@@ -29,6 +29,16 @@
 extern const struct device_type pdm_device_type;
 
 /**
+ * @brief PDM BUS结构体
+ *
+ * 保存PDM BUS私有数据。
+ */
+struct pdm_bus {
+    struct list_head devices;                   /**< 设备列表 */
+    struct mutex devices_mutex_lock;            /**< 用于保护设备列表的互斥锁 */
+};
+
+/**
  * @brief DebugFS 和 ProcFS 目录名称
  */
 #define PDM_DEBUG_FS_DIR_NAME       "pdm"       /**< debugfs和procfs目录名 */
@@ -51,6 +61,7 @@ struct pdm_driver {
     void (*remove)(struct pdm_device *dev);     /**< 移除函数 */
 };
 
+
 /**
  * @brief 判断 list_head 是否已经初始化
  *
@@ -62,6 +73,27 @@ struct pdm_driver {
 static inline bool is_list_valid(const struct list_head *head) {
     return (head->next == head) && (head->prev == head);
 }
+
+/**
+ * @brief 遍历 pdm_bus_type 总线上的所有设备
+ *
+ * 该函数用于遍历 `pdm_bus_type` 总线上的所有设备，并对每个设备调用指定的回调函数。
+ *
+ * @param data 传递给回调函数的数据
+ * @param fn 回调函数指针，用于处理每个设备
+ * @return 返回遍历结果，0 表示成功，非零值表示失败
+ */
+int pdm_bus_for_each_dev(void *data, int (*fn)(struct device *dev, void *data));
+
+/**
+ * @brief 查找与给定物理信息匹配的 PDM 设备
+ *
+ * 该函数用于查找与给定物理信息匹配的 PDM 设备。
+ *
+ * @param physical_info 要匹配的物理设备信息
+ * @return 返回匹配的设备指针，如果没有找到则返回 NULL
+ */
+struct pdm_device *pdm_bus_physical_info_match_pdm_device(struct pdm_device_physical_info *physical_info);
 
 /**
  * @brief 注册 PDM 驱动

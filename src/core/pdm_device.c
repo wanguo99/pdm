@@ -46,17 +46,28 @@ static int pdm_device_verify(struct pdm_device *pdmdev)
     }
 
     if (!strlen(pdmdev->compatible)) {
-        OSA_ERROR("pdmdev->compatible is invalid\n");
+        OSA_ERROR("compatible is invalid\n");
         return -EINVAL;
     }
 
     if ((!pdmdev->master) || (!strlen(pdmdev->master->name))) {
-        OSA_ERROR("pdmdev->master is invalid\n");
+        OSA_ERROR("master is invalid\n");
         return -EINVAL;
     }
 
     if (pdmdev->id < 0) {
-        OSA_ERROR("pdmdev->id is invalid\n");
+        OSA_ERROR("id is invalid\n");
+        return -EINVAL;
+    }
+
+    if ((pdmdev->physical_info.type <= PDM_DEVICE_INTERFACE_TYPE_UNDEFINED)
+        || (pdmdev->physical_info.type >= PDM_DEVICE_INTERFACE_TYPE_INVALID)) {
+        OSA_ERROR("interface is invalid\n");
+        return -EINVAL;
+    }
+
+    if (!pdmdev->physical_info.device) {
+        OSA_ERROR("physical_device is invalid\n");
         return -EINVAL;
     }
 
@@ -214,7 +225,7 @@ const struct device_type pdm_device_type = {
  * @param pdmdev 指向 PDM 设备的指针
  * @return 成功返回实际的设备指针，失败返回 NULL
  */
-struct device *pdm_device_to_dev(struct pdm_device *pdmdev)
+struct device *pdm_device_to_physical_dev(struct pdm_device *pdmdev)
 {
     struct device *dev = NULL;
 
@@ -222,25 +233,19 @@ struct device *pdm_device_to_dev(struct pdm_device *pdmdev)
         return NULL;
     }
 
-    switch (pdmdev->interface) {
+    switch (pdmdev->physical_info.type) {
         case PDM_DEVICE_INTERFACE_TYPE_I2C:
-            if (pdmdev->real_device.i2c) {
-                dev = &pdmdev->real_device.i2c->dev;
-            }
+            dev = &((struct i2c_client *)pdmdev->physical_info.device)->dev;
             break;
         case PDM_DEVICE_INTERFACE_TYPE_I3C:
-            if (pdmdev->real_device.i3c) {
-                dev = &pdmdev->real_device.i3c->dev;
-            }
+            dev = &((struct i3c_device *)pdmdev->physical_info.device)->dev;
             break;
         case PDM_DEVICE_INTERFACE_TYPE_SPI:
-            if (pdmdev->real_device.spi) {
-                dev = &pdmdev->real_device.spi->dev;
-            }
+            dev = &((struct spi_device *)pdmdev->physical_info.device)->dev;
             break;
         default:
-            dev = NULL;
-            break;
+            pr_err("Unsupported interface type %d\n", pdmdev->physical_info.type);
+            return NULL;
     }
 
     return dev;
@@ -353,29 +358,6 @@ void pdm_device_free(struct pdm_device *pdmdev)
     put_device(&pdmdev->dev);
 }
 
-/**
- * @brief 检查 PDM 设备是否已存在
- *
- * 该函数用于检查总线上是否存在与新设备具有相同 master、id 和 compatible 的设备。
- *
- * @param dev 当前遍历的设备
- * @param data 新设备的指针
- * @return 成功返回 0，如果设备已存在返回 -EBUSY
- */
-static int pdm_device_check_exist(struct device *dev, void *data)
-{
-    struct pdm_device *new_dev = dev_to_pdm_device(dev);
-    struct pdm_device *on_bus_dev = data;
-
-    if ((new_dev->master == on_bus_dev->master)
-        && (new_dev->id == on_bus_dev->id)
-        && strcmp(new_dev->compatible, on_bus_dev->compatible) == 0)
-    {
-        OSA_ERROR("Device already exist.\n");
-        return -EBUSY;
-    }
-    return 0;
-}
 
 /**
  * @brief 注册 PDM 设备
@@ -406,8 +388,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
         goto err_put_master;
     }
 
-    status = bus_for_each_dev(&pdm_bus_type, NULL, pdmdev, pdm_device_check_exist);
-    if (status) {
+    if (pdm_bus_physical_info_match_pdm_device(&pdmdev->physical_info)) {
         OSA_ERROR("Device %s already exists\n", dev_name(&pdmdev->dev));
         goto err_free_id;
     }

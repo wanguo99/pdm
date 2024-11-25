@@ -20,8 +20,8 @@ static int pdm_device_spi_probe(struct spi_device *spi) {
         return -ENOMEM;
     }
 
-    pdmdev->interface = PDM_DEVICE_INTERFACE_TYPE_SPI;
-    pdmdev->real_device.spi = spi;
+    pdmdev->physical_info.type = PDM_DEVICE_INTERFACE_TYPE_SPI;
+    pdmdev->physical_info.device = spi;
     status = pdm_device_register(pdmdev);
     if (status) {
         OSA_ERROR("Failed to register pdm device, status=%d.\n", status);
@@ -44,16 +44,19 @@ free_pdmdev:
  * @param spi 指向 SPI 设备的指针
  */
 static void pdm_device_spi_remove(struct spi_device *spi) {
-#if 0
-    struct pdm_device *pdmdev = pdm_master_client_find(spi);
-    if (NULL == pdmdev) {
-        OSA_ERROR("Failed to find pdm device from master.\n");
+    struct pdm_device_physical_info physical_info;
+    struct pdm_device *pdmdev;
+
+    physical_info.type = PDM_DEVICE_INTERFACE_TYPE_SPI;
+    physical_info.device= spi;
+    pdmdev = pdm_bus_physical_info_match_pdm_device(&physical_info);
+    if (!pdmdev) {
+        OSA_ERROR("Failed to find pdm device from bus.\n");
         return;
     }
 
     pdm_device_unregister(pdmdev);
     pdm_device_free(pdmdev);
-#endif
 
     OSA_INFO("PDM SPI Device Removed.\n");
     return;
