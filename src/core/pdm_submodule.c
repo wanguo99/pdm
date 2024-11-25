@@ -1,11 +1,5 @@
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/device.h>
-#include <linux/list.h>
-
 #include "pdm.h"
 #include "pdm_submodule.h"
-#include "pdm_template.h"
 
 /**
  * @brief PDM 子驱动链表头

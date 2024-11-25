@@ -1,12 +1,14 @@
 #ifndef _PDM_H_
 #define _PDM_H_
 
-#include <linux/cdev.h>
-#include <linux/fs.h>
-#include <linux/idr.h>
-#include <linux/mod_devicetable.h>
 #include <linux/version.h>
 #include <linux/string.h>
+#include <linux/fs.h>
+#include <linux/cdev.h>
+#include <linux/idr.h>
+#include <linux/device.h>
+#include <linux/of.h>
+#include <linux/mod_devicetable.h>
 
 #include "osa_log.h"
 

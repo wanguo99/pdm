@@ -1,5 +1,3 @@
-#include <linux/slab.h>
-
 #include "pdm.h"
 
 

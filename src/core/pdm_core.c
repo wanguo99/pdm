@@ -1,12 +1,4 @@
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/device.h>
-#include <linux/slab.h>
-#include <linux/list.h>
-#include <linux/idr.h>
-#include <linux/of.h>
 #include <linux/debugfs.h>
-#include <linux/version.h>
 
 #include "pdm.h"
 #include "pdm_submodule.h"

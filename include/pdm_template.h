@@ -1,9 +1,6 @@
 #ifndef _PDM_TEMPLATE_H_
 #define _PDM_TEMPLATE_H_
 
-#include <linux/device.h>
-#include <linux/i2c.h>
-#include <linux/spi/spi.h>
 #include "pdm.h"
 
 /**

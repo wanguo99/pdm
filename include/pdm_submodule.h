@@ -3,6 +3,8 @@
 
 #include <linux/list.h>
 
+#include "pdm_template.h"
+
 /**
  * @file pdm_submodule.h
  * @brief PDM 子驱动管理接口

@@ -1,6 +1,3 @@
-#include <linux/slab.h>
-#include <linux/platform_device.h>
-
 #include "pdm.h"
 
 static LIST_HEAD(pdm_master_list);
