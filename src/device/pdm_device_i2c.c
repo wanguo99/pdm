@@ -1,8 +1,6 @@
 #include <linux/i2c.h>
 
 #include "pdm.h"
-#include "pdm_template.h"
-#include "pdm_driver_template.h"
 
 /**
  * @brief 兼容旧内核版本的 i2c_device_id 结构体定义
@@ -25,13 +23,12 @@ struct i2c_device_id {
  * @param id I2C 设备 ID
  * @return 成功返回 0，失败返回负错误码
  */
-static int pdm_template_i2c_real_probe(struct i2c_client *client, const struct i2c_device_id *id) {
-    const struct pdm_template_device_priv *data;
+static int pdm_device_i2c_real_probe(struct i2c_client *client, const struct i2c_device_id *id) {
     struct pdm_device *pdmdev;
     const char *compatible;
     int status;
 
-    pdmdev = pdm_device_alloc(sizeof(struct pdm_template_device_priv));
+    pdmdev = pdm_device_alloc(sizeof(void*));
     if (!pdmdev) {
         OSA_ERROR("Failed to allocate pdm_device.\n");
         return -ENOMEM;
@@ -40,34 +37,22 @@ static int pdm_template_i2c_real_probe(struct i2c_client *client, const struct i
     status = of_property_read_string(client->dev.of_node, "compatible", &compatible);
     if (status) {
         pr_err("Failed to read compatible property: %d\n", status);
-        goto unregister_pdmdev;
+        goto free_pdmdev;
     }
 
     strcpy(pdmdev->compatible, compatible);
     pdmdev->real_device = client;
-    status = pdm_template_master_register_device(pdmdev);
+    status = pdm_device_register(pdmdev);
     if (status) {
-        OSA_ERROR("Failed to add template device, status=%d.\n", status);
+        OSA_ERROR("Failed to register pdm device, status=%d.\n", status);
         goto free_pdmdev;
     }
 
-	data = of_device_get_match_data(&client->dev);
-	if (!data)
-	{
-        OSA_ERROR("Failed to get match data, status=%d.\n", status);
-		goto unregister_pdmdev;
-    }
-    pdm_device_devdata_set(pdmdev, (void *)data);
-
-    OSA_INFO("Template I2C Device Probed.\n");
+    OSA_INFO("PDM I2C Device Probed.\n");
     return 0;
-
-unregister_pdmdev:
-    pdm_template_master_unregister_device(pdmdev);
 
 free_pdmdev:
     pdm_device_free(pdmdev);
-
     return status;
 }
 
@@ -79,17 +64,18 @@ free_pdmdev:
  * @param client I2C 客户端指针
  * @return 成功返回 0，失败返回负错误码
  */
-static int pdm_template_i2c_real_remove(struct i2c_client *client) {
-    struct pdm_device *pdmdev = pdm_template_master_find_pdmdev(client);
+static int pdm_device_i2c_real_remove(struct i2c_client *client) {
+#if 0
+    struct pdm_device *pdmdev = pdm_device_master_find_pdmdev(client);
     if (NULL == pdmdev) {
         OSA_ERROR("Failed to find pdm device from master.\n");
         return -ENODEV;
     }
 
-    pdm_template_master_unregister_device(pdmdev);
+    pdm_device_unregister(pdmdev);
     pdm_device_free(pdmdev);
-
-    OSA_INFO("Template I2C Device Removed.\n");
+#endif
+    OSA_INFO("PDM I2C Device Removed.\n");
     return 0;
 }
 
@@ -103,12 +89,12 @@ static int pdm_template_i2c_real_remove(struct i2c_client *client) {
  * @return 成功返回 0，失败返回负错误码
  */
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
-static int pdm_template_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id) {
-    return pdm_template_i2c_real_probe(client, id);
+static int pdm_device_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id) {
+    return pdm_device_i2c_real_probe(client, id);
 }
 #else
-static int pdm_template_i2c_probe(struct i2c_client *client) {
-    return pdm_template_i2c_real_probe(client, NULL);
+static int pdm_device_i2c_probe(struct i2c_client *client) {
+    return pdm_device_i2c_real_probe(client, NULL);
 }
 #endif
 
@@ -120,12 +106,12 @@ static int pdm_template_i2c_probe(struct i2c_client *client) {
  * @param client I2C 客户端指针
  */
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 0, 0)
-static int pdm_template_i2c_remove(struct i2c_client *client) {
-    return pdm_template_i2c_real_remove(client);
+static int pdm_device_i2c_remove(struct i2c_client *client) {
+    return pdm_device_i2c_real_remove(client);
 }
 #else
-static void pdm_template_i2c_remove(struct i2c_client *client) {
-    (void)pdm_template_i2c_real_remove(client);
+static void pdm_device_i2c_remove(struct i2c_client *client) {
+    (void)pdm_device_i2c_real_remove(client);
 }
 #endif
 
@@ -146,37 +132,37 @@ static void pdm_template_i2c_remove(struct i2c_client *client) {
  *
  * 该表定义了支持的 I2C 设备 ID。
  */
-static const struct i2c_device_id pdm_template_i2c_id[] = {
-    { "pdm_template", 0 },
+static const struct i2c_device_id pdm_device_i2c_id[] = {
+    { "pdm_device", 0 },
     { }
 };
-MODULE_DEVICE_TABLE(i2c, pdm_template_i2c_id);
+MODULE_DEVICE_TABLE(i2c, pdm_device_i2c_id);
 
 /**
  * @brief 设备树匹配表
  *
  * 该表定义了支持的设备树兼容性字符串。
  */
-static const struct of_device_id pdm_template_i2c_matches[] = {
+static const struct of_device_id pdm_device_i2c_matches[] = {
     { .compatible = "pdm,template-i2c" },
     { }
 };
-MODULE_DEVICE_TABLE(of, pdm_template_i2c_matches);
+MODULE_DEVICE_TABLE(of, pdm_device_i2c_matches);
 
 /**
  * @brief I2C 驱动结构体
  *
  * 该结构体定义了 I2C 驱动的基本信息和操作函数。
  */
-static struct i2c_driver pdm_template_i2c_driver = {
+static struct i2c_driver pdm_device_i2c_driver = {
     .driver = {
         .name = "pdm-template-i2c",
-        .of_match_table = pdm_template_i2c_matches,
+        .of_match_table = pdm_device_i2c_matches,
         .owner = THIS_MODULE,
     },
-    .probe = pdm_template_i2c_probe,
-    .remove = pdm_template_i2c_remove,
-    .id_table = pdm_template_i2c_id,
+    .probe = pdm_device_i2c_probe,
+    .remove = pdm_device_i2c_remove,
+    .id_table = pdm_device_i2c_id,
 };
 
 /**
@@ -186,10 +172,10 @@ static struct i2c_driver pdm_template_i2c_driver = {
  *
  * @return 成功返回 0，失败返回负错误码
  */
-int pdm_template_i2c_driver_init(void) {
+int pdm_device_i2c_driver_init(void) {
     int status;
 
-    status = i2c_add_driver(&pdm_template_i2c_driver);
+    status = i2c_add_driver(&pdm_device_i2c_driver);
     if (status) {
         OSA_ERROR("Failed to register Template I2C Driver.\n");
         return status;
@@ -203,8 +189,8 @@ int pdm_template_i2c_driver_init(void) {
  *
  * 该函数用于退出 I2C 驱动，注销 I2C 驱动。
  */
-void pdm_template_i2c_driver_exit(void) {
-    i2c_del_driver(&pdm_template_i2c_driver);
+void pdm_device_i2c_driver_exit(void) {
+    i2c_del_driver(&pdm_device_i2c_driver);
     OSA_INFO("Template I2C Driver Exited.\n");
 }
 

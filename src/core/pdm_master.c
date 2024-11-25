@@ -1,5 +1,5 @@
 #include "pdm.h"
-#include "pdm_subdriver.h"
+#include "pdm_driver_manager.h"
 #include "pdm_template.h"
 
 /**
@@ -7,14 +7,14 @@
  *
  * 该列表用于存储所有注册的 PDM 主设备。
  */
-static LIST_HEAD(pdm_master_list);
+static LIST_HEAD(pdm_master_device_list);
 
 /**
  * @brief 保护 PDM 主设备列表的互斥锁
  *
  * 该互斥锁用于同步对 PDM 主设备列表的访问，防止并发访问导致的数据竞争。
  */
-static DEFINE_MUTEX(pdm_master_list_mutex_lock);
+static DEFINE_MUTEX(pdm_master_device_list_mutex_lock);
 
 /**
  * @brief PDM 主驱动程序列表
@@ -553,16 +553,16 @@ int pdm_master_register(struct pdm_master *master)
         return -EBUSY;
     }
 
-    mutex_lock(&pdm_master_list_mutex_lock);
-    list_for_each_entry(existing_master, &pdm_master_list, entry) {
+    mutex_lock(&pdm_master_device_list_mutex_lock);
+    list_for_each_entry(existing_master, &pdm_master_device_list, entry) {
         if (!strcmp(existing_master->name, master->name)) {
             OSA_ERROR("Master already exists: %s.\n", master->name);
-            mutex_unlock(&pdm_master_list_mutex_lock);
+            mutex_unlock(&pdm_master_device_list_mutex_lock);
             pdm_master_put(master);
             return -EEXIST;
         }
     }
-    mutex_unlock(&pdm_master_list_mutex_lock);
+    mutex_unlock(&pdm_master_device_list_mutex_lock);
 
     master->dev.type = &pdm_master_device_type;
     dev_set_name(&master->dev, "pdm_master_device_%s", master->name);
@@ -578,9 +578,9 @@ int pdm_master_register(struct pdm_master *master)
         goto err_device_unregister;
     }
 
-    mutex_lock(&pdm_master_list_mutex_lock);
-    list_add_tail(&master->entry, &pdm_master_list);
-    mutex_unlock(&pdm_master_list_mutex_lock);
+    mutex_lock(&pdm_master_device_list_mutex_lock);
+    list_add_tail(&master->entry, &pdm_master_device_list);
+    mutex_unlock(&pdm_master_device_list_mutex_lock);
 
     mutex_lock(&master->idr_mutex_lock);
     idr_init(&master->device_idr);
@@ -627,9 +627,9 @@ void pdm_master_unregister(struct pdm_master *master)
 
     master->init_done = false;
 
-    mutex_lock(&pdm_master_list_mutex_lock);
+    mutex_lock(&pdm_master_device_list_mutex_lock);
     list_del(&master->entry);
-    mutex_unlock(&pdm_master_list_mutex_lock);
+    mutex_unlock(&pdm_master_device_list_mutex_lock);
 
     mutex_lock(&master->idr_mutex_lock);
     idr_destroy(&master->device_idr);
@@ -658,6 +658,12 @@ int pdm_master_init(void)
         return status;
     }
     OSA_INFO("PDM Master Class registered.\n");
+
+
+
+    INIT_LIST_HEAD(&pdm_master_device_list);
+
+	INIT_LIST_HEAD(&pdm_master_driver_list);
 
     // 注册master驱动
     params.drivers = pdm_master_drivers;

@@ -1,7 +1,7 @@
 #include "pdm.h"
-#include "pdm_subdriver.h"
+#include "pdm_driver_manager.h"
 #include "pdm_template.h"
-#include "drivers/pdm_driver_template.h"
+//#include "drivers/pdm_driver_template.h"
 
 /**
  * @brief 全局 PDM 主设备指针
@@ -10,35 +10,6 @@
  */
 static struct pdm_master *g_pstPdmMaster = NULL;
 
-/**
- * @brief PDM 主模板驱动程序列表
- *
- * 该列表用于存储所有注册的 PDM 主模板驱动程序。
- */
-static LIST_HEAD(pdm_master_template_driver_list);
-
-/**
- * @brief PDM 主模板驱动程序数组
- *
- * 该数组包含所有需要注册的 PDM 主模板驱动程序。每个 `pdm_subdriver` 结构体包含驱动程序的名称、初始化函数和退出函数。
- */
-static struct pdm_subdriver pdm_master_template_drivers[] = {
-    {
-        .name = "Template SPI",
-        .init = pdm_template_spi_driver_init,
-        .exit = pdm_template_spi_driver_exit
-    },
-    {
-        .name = "Template I2C",
-        .init = pdm_template_i2c_driver_init,
-        .exit = pdm_template_i2c_driver_exit
-    },
-    {
-        .name = "Template PLATFORM",
-        .init = pdm_template_platform_driver_init,
-        .exit = pdm_template_platform_driver_exit
-    },
-};
 
 
 /**
@@ -150,7 +121,7 @@ void pdm_template_master_unregister_device(struct pdm_device *pdmdev)
 int pdm_template_master_init(void)
 {
     int status = 0;
-    struct pdm_subdriver_register_params params;
+//    struct pdm_subdriver_register_params params;
     struct pdm_template_master_priv *pstTemplateMasterPriv = NULL;
 
     g_pstPdmMaster = pdm_master_alloc(sizeof(struct pdm_template_master_priv));
@@ -177,6 +148,8 @@ int pdm_template_master_init(void)
     g_pstPdmMaster->fops.unlocked_ioctl = pdc_template_ioctl;
     g_pstPdmMaster->fops.write = pdc_template_write;
 
+#if 0
+    // TODO: 具体的template驱动待实现
     // 注册设备驱动
     params.drivers = pdm_master_template_drivers;
     params.count = ARRAY_SIZE(pdm_master_template_drivers);
@@ -187,12 +160,12 @@ int pdm_template_master_init(void)
         OSA_ERROR("Failed to register PDM Master Template Drivers, error: %d.\n", status);
         goto err_master_unregister;
     }
-
+#endif
     OSA_INFO("Template Master initialized OK.\n");
     return 0;
 
-err_master_unregister:
-    pdm_master_unregister(g_pstPdmMaster);
+//err_master_unregister:
+//    pdm_master_unregister(g_pstPdmMaster);
 
 err_master_free:
     pdm_master_free(g_pstPdmMaster);
@@ -208,7 +181,7 @@ err_master_free:
 void pdm_template_master_exit(void)
 {
     if (g_pstPdmMaster) {
-        pdm_subdriver_unregister(&pdm_master_template_driver_list);
+//        pdm_subdriver_unregister(&pdm_master_template_driver_list);
         pdm_master_unregister(g_pstPdmMaster);
         pdm_master_free(g_pstPdmMaster);
         g_pstPdmMaster = NULL;  // Ensure no dangling pointer

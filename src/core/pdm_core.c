@@ -3,6 +3,7 @@
 
 #include "pdm.h"
 
+static bool pdm_bus_registered;
 
 /**
  * @brief 调试文件系统目录
@@ -136,6 +137,32 @@ const struct bus_type pdm_bus_type = {
     .remove = pdm_bus_device_remove,
 };
 
+int pdm_register_driver(struct module *owner, struct pdm_driver *driver)
+{
+	int status;
+
+	/* Can't register until after driver model init */
+	if (WARN_ON(!pdm_bus_registered))
+		return -EAGAIN;
+
+	driver->driver.owner = owner;
+	driver->driver.bus = &pdm_bus_type;
+	status = driver_register(&driver->driver);
+	if (status)
+		return status;
+
+	pr_debug("driver [%s] registered\n", driver->driver.name);
+
+	/* Walk the adapters that are already present */
+	// i2c_for_each_dev(driver, __process_new_driver);
+
+	return 0;
+}
+EXPORT_SYMBOL(pdm_register_driver);
+
+
+
+
 /**
  * @brief 初始化 PDM 调试文件系统
  *
@@ -238,6 +265,8 @@ static int __init pdm_init(void)
     if (status < 0) {
         OSA_INFO("Initialize PDM Debug Fs Failed.\n");
     }
+
+    pdm_bus_registered = true;
 
     OSA_INFO("PDM Init OK.\n");
     return 0;

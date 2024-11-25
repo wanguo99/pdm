@@ -1,5 +1,36 @@
 #include "pdm.h"
+#include "pdm_driver_manager.h"
 
+
+/**
+ * @brief PDM 主模板驱动程序列表
+ *
+ * 该列表用于存储所有注册的 PDM 主模板驱动程序。
+ */
+static LIST_HEAD(pdm_device_driver_list);
+
+/**
+ * @brief PDM 主模板驱动程序数组
+ *
+ * 该数组包含所有需要注册的 PDM 主模板驱动程序。每个 `pdm_subdriver` 结构体包含驱动程序的名称、初始化函数和退出函数。
+ */
+static struct pdm_subdriver pdm_device_drivers[] = {
+    {
+        .name = "PDM SPI Device",
+        .init = pdm_device_spi_driver_init,
+        .exit = pdm_device_spi_driver_exit
+    },
+    {
+        .name = "PDM I2C Device",
+        .init = pdm_device_i2c_driver_init,
+        .exit = pdm_device_i2c_driver_exit
+    },
+    {
+        .name = "PDM PLATFORM Device",
+        .init = pdm_device_platform_driver_init,
+        .exit = pdm_device_platform_driver_exit
+    },
+};
 
 /**
  * @brief 验证 PDM 设备的有效性
@@ -382,6 +413,44 @@ void pdm_device_unregister(struct pdm_device *pdmdev)
     pdm_master_client_id_free(pdmdev->master, pdmdev);
     pdm_master_put(pdmdev->master);
     OSA_DEBUG("Device %s unregistered.\n", dev_name(&pdmdev->dev));
+}
+
+
+
+/**
+ * pdm_device_init - 初始化PDM设备
+ *
+ * 返回值:
+ * 0 - 成功
+ * 负值 - 失败
+ */
+int pdm_device_init(void)
+{
+    int status;
+    struct pdm_subdriver_register_params params;
+
+    // 注册device驱动，将所有设备添加到pdm_bus
+    params.drivers = pdm_device_drivers;
+    params.count = ARRAY_SIZE(pdm_device_drivers);
+    params.ignore_failures = true;
+    params.list = &pdm_device_driver_list;
+    status = pdm_subdriver_register(&params);
+    if (status < 0) {
+        OSA_ERROR("Failed to register PDM Master Drivers, error: %d.\n", status);
+        return status;
+    }
+
+    OSA_INFO("Initialize PDM Device OK.\n");
+    return 0;
+}
+
+/**
+ * pdm_master_exit - 卸载PDM设备
+ */
+void pdm_device_exit(void)
+{
+    pdm_subdriver_unregister(&pdm_device_driver_list);
+    OSA_INFO("PDM Device Exit.\n");
 }
 
 MODULE_LICENSE("GPL");

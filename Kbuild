@@ -4,15 +4,15 @@ obj-m := $(MODULE_NAME).o
 
 # 定义要编译的目标模块对象文件
 $(MODULE_NAME)-objs := 	src/core/pdm_core.o \
-						src/core/pdm_master.o \
 						src/core/pdm_device.o \
-						src/core/pdm_subdriver.o
+						src/core/pdm_master.o \
+						src/core/pdm_driver_manager.o
 
+$(MODULE_NAME)-objs += 	src/device/pdm_device_i2c.o \
+						src/device/pdm_device_platform.o \
+						src/device/pdm_device_spi.o
 
- $(MODULE_NAME)-objs += src/template/pdm_master_template.o \
-						src/template/drivers/pdm_driver_template_platform.o \
-						src/template/drivers/pdm_driver_template_spi.o \
-						src/template/drivers/pdm_driver_template_i2c.o
+$(MODULE_NAME)-objs += src/master/template/pdm_master_template.o 
 
 
 # 添加头文件路径
