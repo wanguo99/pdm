@@ -6,13 +6,13 @@ struct pdm_device_platform_data {
 	PDM_DEVICE_INTERFACE_TYPE type;
 };
 
-struct pdm_device_platform_data pdm_device_platform_data_gpio = {
+static struct pdm_device_platform_data pdm_device_platform_data_gpio = {
     .type = PDM_DEVICE_INTERFACE_TYPE_GPIO,
 };
-struct pdm_device_platform_data pdm_device_platform_data_pwm = {
+static struct pdm_device_platform_data pdm_device_platform_data_pwm = {
     .type = PDM_DEVICE_INTERFACE_TYPE_PWM,
 };
-struct pdm_device_platform_data pdm_device_platform_data_tty = {
+static struct pdm_device_platform_data pdm_device_platform_data_tty = {
     .type = PDM_DEVICE_INTERFACE_TYPE_TTY,
 };
 

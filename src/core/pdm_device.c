@@ -8,7 +8,7 @@
  *
  * 该列表用于存储所有注册的 PDM 主模板驱动程序。
  */
-struct list_head pdm_device_driver_list;
+static struct list_head pdm_device_driver_list;
 
 /**
  * @brief PDM 主模板驱动程序数组
