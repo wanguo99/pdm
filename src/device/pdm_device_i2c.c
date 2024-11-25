@@ -133,21 +133,11 @@ static void pdm_device_i2c_remove(struct i2c_client *client) {
  * 该表定义了支持的 I2C 设备 ID。
  */
 static const struct i2c_device_id pdm_device_i2c_id[] = {
-    { "pdm_device", 0 },
+    { "pdm-device-i2c", 0 },
     { }
 };
 MODULE_DEVICE_TABLE(i2c, pdm_device_i2c_id);
 
-/**
- * @brief 设备树匹配表
- *
- * 该表定义了支持的设备树兼容性字符串。
- */
-static const struct of_device_id pdm_device_i2c_matches[] = {
-    { .compatible = "pdm,template-i2c" },
-    { }
-};
-MODULE_DEVICE_TABLE(of, pdm_device_i2c_matches);
 
 /**
  * @brief I2C 驱动结构体
@@ -157,7 +147,6 @@ MODULE_DEVICE_TABLE(of, pdm_device_i2c_matches);
 static struct i2c_driver pdm_device_i2c_driver = {
     .driver = {
         .name = "pdm-template-i2c",
-        .of_match_table = pdm_device_i2c_matches,
         .owner = THIS_MODULE,
     },
     .probe = pdm_device_i2c_probe,

@@ -39,7 +39,7 @@ static inline struct pdm_driver *drv_to_pdmdrv(struct device_driver *drv)
  * @param pdmdev PDM 设备指针
  * @return 匹配成功返回相应的 ID，失败返回 NULL
  */
-static const struct pdm_device_id *pdm_bus_match_id(const struct pdm_device_id *id, struct pdm_device *pdmdev)
+static const struct pdm_device_id *pdm_bus_match_compatible(const struct pdm_device_id *id, struct pdm_device *pdmdev)
 {
     if (!(id && pdmdev))
         return NULL;
@@ -75,7 +75,7 @@ static int pdm_bus_device_match(struct device *dev, const struct device_driver *
 
     pdmdev = dev_to_pdm_device(dev);
     pdmdrv = drv_to_pdmdrv(drv);
-    if (pdm_bus_match_id(&pdmdrv->id_table, pdmdev))
+    if (pdm_bus_match_compatible(&pdmdrv->id_table, pdmdev))
         return 1;
 
     return 0;
@@ -141,7 +141,6 @@ int pdm_register_driver(struct module *owner, struct pdm_driver *driver)
 {
 	int status;
 
-	/* Can't register until after driver model init */
 	if (WARN_ON(!pdm_bus_registered))
 		return -EAGAIN;
 
@@ -152,16 +151,14 @@ int pdm_register_driver(struct module *owner, struct pdm_driver *driver)
 		return status;
 
 	pr_debug("driver [%s] registered\n", driver->driver.name);
-
-	/* Walk the adapters that are already present */
-	// i2c_for_each_dev(driver, __process_new_driver);
-
 	return 0;
 }
-EXPORT_SYMBOL(pdm_register_driver);
 
-
-
+void pdm_unregister_driver(struct pdm_driver *driver)
+{
+	if (driver)
+		driver_unregister(&driver->driver);
+}
 
 /**
  * @brief 初始化 PDM 调试文件系统

@@ -31,8 +31,8 @@ static LIST_HEAD(pdm_master_driver_list);
 static struct pdm_subdriver pdm_master_drivers[] = {
     {
         .name = "Template Master",
-        .init = pdm_template_master_init,
-        .exit = pdm_template_master_exit
+        .init = pdm_master_template_driver_init,
+        .exit = pdm_master_template_driver_exit,
     },
 };
 

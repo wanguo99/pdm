@@ -12,9 +12,7 @@
  */
 static int pdm_device_spi_probe(struct spi_device *spi)
 {
-
     struct pdm_device *pdmdev;
-    const char *compatible;
     int status;
 
     pdmdev = pdm_device_alloc(sizeof(void*));
@@ -22,13 +20,6 @@ static int pdm_device_spi_probe(struct spi_device *spi)
         OSA_ERROR("Failed to allocate pdm_device.\n");
         return -ENOMEM;
     }
-
-    status = of_property_read_string(spi->dev.of_node, "compatible", &compatible);
-    if (status) {
-        pr_err("Failed to read compatible property: %d\n", status);
-        goto free_pdmdev;
-    }
-    strcpy(pdmdev->compatible, compatible);
 
     pdmdev->real_device = spi;
     status = pdm_device_register(pdmdev);
@@ -92,7 +83,7 @@ static void pdm_device_spi_remove(struct spi_device *spi)
 */
 
 static const struct of_device_id of_pdm_device_spi_match[] = {
-	{ .compatible = "pdm,pdm-device-spi", },
+	{ .compatible = "cpld,pdm-device-spi", },
 	{},
 };
 MODULE_DEVICE_TABLE(of, of_pdm_device_spi_match);

@@ -276,6 +276,7 @@ int pdm_master_init(void);
 void pdm_master_exit(void);
 
 int pdm_register_driver(struct module *owner, struct pdm_driver *driver);
+void pdm_unregister_driver(struct pdm_driver *driver);
 
 /*
  * 全局变量声明
