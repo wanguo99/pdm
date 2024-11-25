@@ -71,14 +71,24 @@ int pdm_master_template_driver_init(void)
         return -ENOMEM;
     }
 
+
+    status = pdm_master_register(template_master);
+    if (status) {
+        OSA_ERROR("Failed to register Template PDM Master.\n");
+        goto err_master_free;
+    }
+
     status = pdm_register_driver(THIS_MODULE, &pdm_master_template_driver);
     if (status) {
         OSA_ERROR("Failed to register Template PDM Master Driver.\n");
-        goto err_master_free;
+        goto err_master_unregister;
     }
+
     OSA_INFO("Template PDM Master Driver Initialized.\n");
     return 0;
 
+err_master_unregister:
+    pdm_master_unregister(template_master);
 err_master_free:
     pdm_master_free(template_master);
     return status;
@@ -88,6 +98,7 @@ err_master_free:
 void pdm_master_template_driver_exit(void)
 {
     pdm_unregister_driver(&pdm_master_template_driver);
+    pdm_master_unregister(template_master);
     pdm_master_free(template_master);
     OSA_INFO("Template PDM Master Driver Exited.\n");
 }
