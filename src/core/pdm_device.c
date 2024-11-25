@@ -2,7 +2,6 @@
 #include "pdm_device.h"
 #include "pdm_driver_manager.h"
 
-
 /**
  * @brief PDM 主模板驱动程序列表
  *
@@ -43,24 +42,25 @@ static int pdm_device_verify(struct pdm_device *pdmdev)
 {
     if (!pdmdev) {
         OSA_ERROR("pdmdev is null\n");
-        goto err_invalid;
+        return -EINVAL;
     }
 
     if (!strlen(pdmdev->compatible)) {
         OSA_ERROR("pdmdev->compatible is invalid\n");
-        goto err_invalid;
+        return -EINVAL;
     }
 
     if ((!pdmdev->master) || (!strlen(pdmdev->master->name))) {
         OSA_ERROR("pdmdev->master is invalid\n");
-        goto err_invalid;
+        return -EINVAL;
+    }
+
+    if (pdmdev->id < 0) {
+        OSA_ERROR("pdmdev->id is invalid\n");
+        return -EINVAL;
     }
 
     return 0;
-
-err_invalid:
-    OSA_ERROR("pdmdev is invalid\n");
-    return -EINVAL;
 }
 
 /**
@@ -95,7 +95,6 @@ static int pdm_device_uevent(const struct device *dev, struct kobj_uevent_env *e
                                                 pdmdev->compatible, pdmdev->id);
 }
 
-
 /**
  * id_show - 显示设备ID
  * @dev: 设备结构
@@ -125,7 +124,6 @@ static ssize_t id_show(struct device *dev, struct device_attribute *da, char *bu
 }
 static DEVICE_ATTR_RO(id);
 
-
 /**
  * compatible_show - 显示设备兼容性字符串
  * @dev: 设备结构
@@ -134,7 +132,7 @@ static DEVICE_ATTR_RO(id);
  *
  * 返回值:
  * 实际写入的字节数
-*/
+ */
 static ssize_t compatible_show(struct device *dev, struct device_attribute *da, char *buf)
 {
     struct pdm_device *pdmdev = NULL;
@@ -154,7 +152,6 @@ static ssize_t compatible_show(struct device *dev, struct device_attribute *da, 
     return sysfs_emit(buf, "%s\n", pdmdev->compatible);
 }
 static DEVICE_ATTR_RO(compatible);
-
 
 /**
  * master_name_show - 显示设备所属主控制器的名称
@@ -185,7 +182,6 @@ static ssize_t master_name_show(struct device *dev, struct device_attribute *da,
 }
 static DEVICE_ATTR_RO(master_name);
 
-
 /**
  * @brief 定义 PDM 设备的属性数组
  *
@@ -210,7 +206,6 @@ const struct device_type pdm_device_type = {
     .uevent = pdm_device_uevent,
 };
 
-
 /**
  * @brief 将 PDM 设备转换为实际的设备指针
  *
@@ -223,15 +218,25 @@ struct device *pdm_device_to_dev(struct pdm_device *pdmdev)
 {
     struct device *dev = NULL;
 
+    if (pdm_device_verify(pdmdev)) {
+        return NULL;
+    }
+
     switch (pdmdev->interface) {
         case PDM_DEVICE_INTERFACE_TYPE_I2C:
-            dev = &pdmdev->real_device.i2c->dev;
+            if (pdmdev->real_device.i2c) {
+                dev = &pdmdev->real_device.i2c->dev;
+            }
             break;
         case PDM_DEVICE_INTERFACE_TYPE_I3C:
-            dev = &pdmdev->real_device.i3c->dev;
+            if (pdmdev->real_device.i3c) {
+                dev = &pdmdev->real_device.i3c->dev;
+            }
             break;
         case PDM_DEVICE_INTERFACE_TYPE_SPI:
-            dev = &pdmdev->real_device.spi->dev;
+            if (pdmdev->real_device.spi) {
+                dev = &pdmdev->real_device.spi->dev;
+            }
             break;
         default:
             dev = NULL;
@@ -240,7 +245,6 @@ struct device *pdm_device_to_dev(struct pdm_device *pdmdev)
 
     return dev;
 }
-
 
 /**
  * @brief 释放 PDM 设备资源
@@ -295,7 +299,7 @@ void *pdm_device_devdata_get(struct pdm_device *pdmdev)
 void pdm_device_devdata_set(struct pdm_device *pdmdev, void *data)
 {
     if (!pdmdev) {
-        OSA_ERROR("dev is null\n");
+        OSA_ERROR("pdmdev is null\n");
         return;
     }
 
@@ -317,8 +321,7 @@ struct pdm_device *pdm_device_alloc(unsigned int data_size)
     size_t pdmdev_size = sizeof(struct pdm_device);
 
     pdmdev = kzalloc(pdmdev_size + data_size, GFP_KERNEL);
-    if (!pdmdev)
-    {
+    if (!pdmdev) {
         OSA_ERROR("Failed to allocate memory for pdm device.\n");
         return NULL;
     }
@@ -366,7 +369,7 @@ static int pdm_device_check_exist(struct device *dev, void *data)
 
     if ((new_dev->master == on_bus_dev->master)
         && (new_dev->id == on_bus_dev->id)
-        && strcmp(new_dev->compatible, on_bus_dev->compatible) != 0)
+        && strcmp(new_dev->compatible, on_bus_dev->compatible) == 0)
     {
         OSA_ERROR("Device already exist.\n");
         return -EBUSY;
@@ -387,7 +390,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
     struct pdm_master *master = NULL;
     int status;
 
-    if (pdm_device_verify(pdmdev)){
+    if (pdm_device_verify(pdmdev)) {
         return -EINVAL;
     }
 
@@ -412,8 +415,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
     pdmdev->dev.parent = &master->dev;
     dev_set_name(&pdmdev->dev, "%s-%d-%s", master->name, pdmdev->id, pdmdev->compatible);
     status = device_add(&pdmdev->dev);
-    if (status < 0)
-    {
+    if (status < 0) {
         OSA_ERROR("Can't add %s, status %d\n", dev_name(&pdmdev->dev), status);
         goto err_free_id;
     }
@@ -448,8 +450,6 @@ void pdm_device_unregister(struct pdm_device *pdmdev)
     OSA_DEBUG("Device %s unregistered.\n", dev_name(&pdmdev->dev));
 }
 
-
-
 /**
  * pdm_device_init - 初始化PDM设备
  *
@@ -478,7 +478,7 @@ int pdm_device_init(void)
 }
 
 /**
- * pdm_master_exit - 卸载PDM设备
+ * pdm_device_exit - 卸载PDM设备
  */
 void pdm_device_exit(void)
 {

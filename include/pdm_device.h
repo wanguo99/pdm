@@ -1,5 +1,5 @@
-#ifndef _PDM_TEMPLATE_DRIVER_H_
-#define _PDM_TEMPLATE_DRIVER_H_
+#ifndef _PDM_DEVICE_H_
+#define _PDM_DEVICE_H_
 
 #include <linux/i2c.h>
 #include <linux/i3c/master.h>
@@ -188,4 +188,4 @@ int pdm_device_spi_driver_init(void);
  */
 void pdm_device_spi_driver_exit(void);
 
-#endif /* _PDM_TEMPLATE_DRIVER_H_ */
+#endif /* _PDM_DEVICE_H_ */
