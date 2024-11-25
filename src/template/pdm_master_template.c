@@ -1,7 +1,7 @@
 #include "pdm.h"
 #include "pdm_subdriver.h"
 #include "pdm_template.h"
-#include "pdm_template_driver.h"
+#include "pdm_driver_template.h"
 
 /**
  * @brief 全局 PDM 主设备指针
