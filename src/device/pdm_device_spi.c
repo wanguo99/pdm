@@ -12,7 +12,10 @@
  */
 static int pdm_device_spi_probe(struct spi_device *spi) {
     struct pdm_device *pdmdev;
+    const char *compatible;
     int status;
+
+    OSA_INFO("PDM SPI Device Probe.\n");
 
     pdmdev = pdm_device_alloc(sizeof(void*));
     if (!pdmdev) {
@@ -20,6 +23,15 @@ static int pdm_device_spi_probe(struct spi_device *spi) {
         return -ENOMEM;
     }
 
+    status = of_property_read_string(spi->dev.of_node, "compatible", &compatible);
+    if (status) {
+        pr_err("Failed to read compatible property: %d\n", status);
+        goto free_pdmdev;
+    }
+
+    printk(KERN_ERR "[WANGUO] (%s:%d) compatible: %s\n", __func__, __LINE__, compatible);
+    strcpy(pdmdev->compatible, compatible);
+    printk(KERN_ERR "[WANGUO] (%s:%d) pdmdev->compatible: %s\n", __func__, __LINE__, pdmdev->compatible);
     pdmdev->physical_info.type = PDM_DEVICE_INTERFACE_TYPE_SPI;
     pdmdev->physical_info.device = spi;
     status = pdm_device_register(pdmdev);

@@ -29,6 +29,8 @@ static int pdm_device_platform_probe(struct platform_device *pdev) {
     int status;
     struct pdm_device_platform_data *pdata = dev_get_platdata(&pdev->dev);
 
+    OSA_INFO("PDM PLATFORM Device Probe.\n");
+
     pdmdev = pdm_device_alloc(sizeof(void*));
     if (!pdmdev) {
         OSA_ERROR("Failed to allocate pdm_device.\n");

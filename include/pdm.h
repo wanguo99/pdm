@@ -29,11 +29,19 @@
 extern const struct device_type pdm_device_type;
 
 /**
+ * @brief PDM 主控制器的ID范围
+ */
+#define PDM_BUS_DEVICE_IDR_START 0
+#define PDM_BUS_DEVICE_IDR_END 1024
+
+/**
  * @brief PDM BUS结构体
  *
  * 保存PDM BUS私有数据。
  */
 struct pdm_bus {
+    struct idr device_idr;               /**< 用于给子设备分配ID的IDR */
+    struct mutex idr_mutex_lock;         /**< 用于保护IDR的互斥锁 */
     struct list_head devices;                   /**< 设备列表 */
     struct mutex devices_mutex_lock;            /**< 用于保护设备列表的互斥锁 */
 };
@@ -77,6 +85,27 @@ static inline bool is_list_valid(const struct list_head *head) {
     }
     return true;
 }
+
+/**
+ * @brief 为PDM设备分配ID
+ * @master: PDM主控制器
+ * @pdmdev: PDM设备
+ *
+ * 返回值:
+ * 0 - 成功
+ * -EINVAL - 参数无效
+ * -EBUSY - 没有可用的ID
+ * 其他负值 - 其他错误码
+ */
+int pdm_bus_device_id_alloc(struct pdm_device *pdmdev);
+
+
+/**
+ * @brief 释放PDM设备的ID
+ * @master: PDM主控制器
+ * @pdmdev: PDM设备
+ */
+void pdm_bus_device_id_free(struct pdm_device *pdmdev);
 
 /**
  * @brief 遍历 pdm_bus_type 总线上的所有设备

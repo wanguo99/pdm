@@ -27,6 +27,8 @@ static int pdm_device_i2c_real_probe(struct i2c_client *client, const struct i2c
     const char *compatible;
     int status;
 
+    OSA_INFO("PDM I2C Device Probe.\n");
+
     pdmdev = pdm_device_alloc(sizeof(void*));
     if (!pdmdev) {
         OSA_ERROR("Failed to allocate pdm_device.\n");

@@ -61,6 +61,63 @@ static int pdm_bus_device_match(struct device *dev, const struct device_driver *
     return 0;
 }
 
+
+/**
+ * @brief 为PDM设备分配ID
+ * @master: PDM主控制器
+ * @pdmdev: PDM设备
+ *
+ * 返回值:
+ * 0 - 成功
+ * -EINVAL - 参数无效
+ * -EBUSY - 没有可用的ID
+ * 其他负值 - 其他错误码
+ */
+int pdm_bus_device_id_alloc(struct pdm_device *pdmdev)
+{
+    int id;
+
+    if (!pdmdev) {
+        OSA_ERROR("Invalid input parameters (pdmdev: %p).\n", pdmdev);
+        return -EINVAL;
+    }
+
+    mutex_lock(&pdm_bus_instance.idr_mutex_lock);
+    id = idr_alloc(&pdm_bus_instance.device_idr, pdmdev, PDM_BUS_DEVICE_IDR_START, PDM_BUS_DEVICE_IDR_END, GFP_KERNEL);
+    mutex_unlock(&pdm_bus_instance.idr_mutex_lock);
+
+    if (id < 0) {
+        if (id == -ENOSPC) {
+            OSA_ERROR("No available IDs in the range.\n");
+            return -EBUSY;
+        } else {
+            OSA_ERROR("Failed to allocate ID: %d.\n", id);
+            return id;
+        }
+    }
+
+    pdmdev->id = id;
+    return 0;
+}
+
+/**
+ * @brief 释放PDM设备的ID
+ * @master: PDM主控制器
+ * @pdmdev: PDM设备
+ */
+void pdm_bus_device_id_free(struct pdm_device *pdmdev)
+{
+    if (!pdmdev) {
+        OSA_ERROR("Invalid input parameters (pdmdev: %p).\n", pdmdev);
+        return;
+    }
+
+    mutex_lock(&pdm_bus_instance.idr_mutex_lock);
+    idr_remove(&pdm_bus_instance.device_idr, pdmdev->id);
+    mutex_unlock(&pdm_bus_instance.idr_mutex_lock);
+}
+
+
 /**
  * @brief 探测 PDM 设备
  *
@@ -257,8 +314,11 @@ static int pdm_bus_init(void)
     }
 
     memset(&pdm_bus_instance, 0, sizeof(struct pdm_bus));
+
+    idr_init(&pdm_bus_instance.device_idr);
     INIT_LIST_HEAD(&pdm_bus_instance.devices);
     mutex_init(&pdm_bus_instance.devices_mutex_lock);
+    mutex_init(&pdm_bus_instance.idr_mutex_lock);
 
     OSA_INFO("PDM bus initialized\n");
     return 0;

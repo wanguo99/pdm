@@ -45,18 +45,8 @@ static int pdm_device_verify(struct pdm_device *pdmdev)
         return -EINVAL;
     }
 
-    if (!strlen(pdmdev->compatible)) {
+    if (0 == strlen(pdmdev->compatible)) {
         OSA_ERROR("compatible is invalid\n");
-        return -EINVAL;
-    }
-
-    if ((!pdmdev->master) || (!strlen(pdmdev->master->name))) {
-        OSA_ERROR("master is invalid\n");
-        return -EINVAL;
-    }
-
-    if (pdmdev->id < 0) {
-        OSA_ERROR("id is invalid\n");
         return -EINVAL;
     }
 
@@ -369,23 +359,16 @@ void pdm_device_free(struct pdm_device *pdmdev)
  */
 int pdm_device_register(struct pdm_device *pdmdev)
 {
-    struct pdm_master *master = NULL;
     int status;
 
     if (pdm_device_verify(pdmdev)) {
         return -EINVAL;
     }
 
-    master = pdmdev->master;
-    if (!pdm_master_get(master)) {
-        OSA_ERROR("pdm_device_register: Failed to get master\n");
-        return -EBUSY;
-    }
-
-    status = pdm_master_client_id_alloc(master, pdmdev);
+    status = pdm_bus_device_id_alloc(pdmdev);
     if (status) {
         OSA_ERROR("id_alloc failed, status %d\n", status);
-        goto err_put_master;
+        return -ENOMEM;
     }
 
     if (pdm_bus_physical_info_match_pdm_device(&pdmdev->physical_info)) {
@@ -393,8 +376,8 @@ int pdm_device_register(struct pdm_device *pdmdev)
         goto err_free_id;
     }
 
-    pdmdev->dev.parent = &master->dev;
-    dev_set_name(&pdmdev->dev, "%s-%d-%s", master->name, pdmdev->id, pdmdev->compatible);
+//    pdmdev->dev.parent = &master->dev;
+    dev_set_name(&pdmdev->dev, "%s-%d", pdmdev->compatible, pdmdev->id);
     status = device_add(&pdmdev->dev);
     if (status < 0) {
         OSA_ERROR("Can't add %s, status %d\n", dev_name(&pdmdev->dev), status);
@@ -405,9 +388,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
     return 0;
 
 err_free_id:
-    pdm_master_client_id_free(master, pdmdev);
-err_put_master:
-    pdm_master_put(master);
+    pdm_bus_device_id_free(pdmdev);
     return status;
 }
 
@@ -426,8 +407,7 @@ void pdm_device_unregister(struct pdm_device *pdmdev)
     }
 
     device_unregister(&pdmdev->dev);
-    pdm_master_client_id_free(pdmdev->master, pdmdev);
-    pdm_master_put(pdmdev->master);
+    pdm_bus_device_id_free(pdmdev);
     OSA_DEBUG("Device %s unregistered.\n", dev_name(&pdmdev->dev));
 }
 
@@ -450,7 +430,7 @@ int pdm_device_init(void)
     params.list = &pdm_device_driver_list;
     status = pdm_subdriver_register(&params);
     if (status < 0) {
-        OSA_ERROR("Failed to register PDM Master Drivers, error: %d.\n", status);
+        OSA_ERROR("Failed to register PDM Device Drivers, error: %d.\n", status);
         return status;
     }
 
