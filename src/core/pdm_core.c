@@ -252,15 +252,21 @@ static int __init pdm_init(void)
         return status;
     }
 
+    status = pdm_device_init();
+    if (status < 0) {
+        OSA_INFO("Initialize PDM Device Failed.\n");
+        goto err_bus_exit;
+    }
+
     status = pdm_master_init();
     if (status < 0) {
-        OSA_INFO("Initialize PDM Bus Failed.\n");
+        OSA_INFO("Initialize PDM Master Failed.\n");
         goto err_bus_exit;
     }
 
     status = pdm_debug_fs_init();
     if (status < 0) {
-        OSA_INFO("Initialize PDM Debug Fs Failed.\n");
+        OSA_INFO("Initialize PDM DebugFs Failed.\n");
     }
 
     pdm_bus_registered = true;
@@ -283,6 +289,7 @@ static void __exit pdm_exit(void)
 {
     pdm_debug_fs_exit();
     pdm_master_exit();
+    pdm_device_exit();
     pdm_bus_exit();
     OSA_INFO("PDM Exited.\n");
 }
