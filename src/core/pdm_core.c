@@ -1,14 +1,16 @@
 #include <linux/debugfs.h>
+#include <linux/proc_fs.h>
 
 #include "pdm.h"
-#include "pdm_submodule.h"
+#include "pdm_driver.h"
 
 /**
  * @brief 调试文件系统目录
  *
  * 该指针用于存储 PDM 调试文件系统的目录。
  */
-static struct dentry *pdm_debugfs;
+static struct dentry *pdm_debugfs_dir;
+static struct proc_dir_entry *pdm_procfs_dir;
 
 /*                                                                              */
 /*                            pdm_bus_type                                      */
@@ -132,6 +134,33 @@ const struct bus_type pdm_bus_type = {
     .remove = pdm_bus_device_remove,
 };
 
+static void pdm_debug_fs_init(void)
+{
+    pdm_debugfs_dir = debugfs_create_dir(PDM_DEBUG_FS_DIR_NAME, NULL);
+    if (IS_ERR(pdm_debugfs_dir)) {
+        OSA_ERROR("Register PDM debugfs failed.\n");
+    } else {
+        OSA_DEBUG("Register PDM debugfs OK.\n");
+    }
+
+    pdm_procfs_dir = proc_mkdir(PDM_DEBUG_FS_DIR_NAME, NULL);
+    if (!pdm_procfs_dir) {
+        OSA_ERROR("Register PDM procfs failed.\n");
+    } else {
+        OSA_DEBUG("Register PDM procfs OK.\n");
+    }
+}
+
+static void pdm_debug_fs_exit(void)
+{
+    if (!IS_ERR(pdm_debugfs_dir)) {
+        debugfs_remove_recursive(pdm_debugfs_dir);
+    }
+    if (!pdm_procfs_dir) {
+        remove_proc_entry(PDM_DEBUG_FS_DIR_NAME, NULL);
+    }
+}
+
 /*                                                                              */
 /*                              module_init                                     */
 /*                                                                              */
@@ -167,11 +196,7 @@ static int __init pdm_init(void)
     }
     OSA_INFO("Register PDM Submodules OK.\n");
 
-    pdm_debugfs = debugfs_create_dir("pdm", NULL);
-    if (IS_ERR(pdm_debugfs)) {
-    } else {
-        OSA_DEBUG("Register PDM debugfs OK.\n");
-    }
+    pdm_debug_fs_init();
 
     OSA_INFO("Peripheral Driver Module Init OK.\n");
     return 0;
@@ -191,10 +216,7 @@ err_bus_unregister:
  */
 static void __exit pdm_exit(void)
 {
-    if (!IS_ERR(pdm_debugfs)) {
-        debugfs_remove_recursive(pdm_debugfs);
-    }
-
+    pdm_debug_fs_exit();
     pdm_submodule_unregister_drivers();
     pdm_master_exit();
     bus_unregister(&pdm_bus_type);

@@ -35,9 +35,11 @@ extern const struct device_type pdm_device_type;
  */
 
 /**
- * @brief 定义设备名称的最大长度
+ * @brief
  */
-#define PDM_DEVICE_NAME_SIZE (64)
+#define PDM_DEVICE_NAME_SIZE        (64)        // 定义设备名称的最大长度
+#define PDM_DEBUG_FS_DIR_NAME       "pdm"       // debugfs and procfs dir name
+
 
 /**
  * @brief PDM 设备结构体

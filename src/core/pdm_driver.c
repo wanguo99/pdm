@@ -1,5 +1,6 @@
 #include "pdm.h"
-#include "pdm_submodule.h"
+#include "pdm_driver.h"
+#include "pdm_template.h"
 
 /**
  * @brief PDM 子驱动链表头
