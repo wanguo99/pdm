@@ -88,7 +88,7 @@ int pdm_subdriver_register(struct pdm_subdriver_register_params *params) {
         }
     }
 
-    OSA_INFO("PDM Subdriver Register OK.\n");
+    OSA_DEBUG("PDM Subdriver Register OK.\n");
     return 0;
 }
 

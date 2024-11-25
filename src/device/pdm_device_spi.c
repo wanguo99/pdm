@@ -15,8 +15,6 @@ static int pdm_device_spi_probe(struct spi_device *spi) {
     const char *compatible;
     int status;
 
-    OSA_INFO("PDM SPI Device Probe.\n");
-
     pdmdev = pdm_device_alloc(sizeof(void*));
     if (!pdmdev) {
         OSA_ERROR("Failed to allocate pdm_device.\n");
@@ -29,9 +27,7 @@ static int pdm_device_spi_probe(struct spi_device *spi) {
         goto free_pdmdev;
     }
 
-    printk(KERN_ERR "[WANGUO] (%s:%d) compatible: %s\n", __func__, __LINE__, compatible);
     strcpy(pdmdev->compatible, compatible);
-    printk(KERN_ERR "[WANGUO] (%s:%d) pdmdev->compatible: %s\n", __func__, __LINE__, pdmdev->compatible);
     pdmdev->physical_info.type = PDM_DEVICE_INTERFACE_TYPE_SPI;
     pdmdev->physical_info.device = spi;
     status = pdm_device_register(pdmdev);
@@ -40,7 +36,7 @@ static int pdm_device_spi_probe(struct spi_device *spi) {
         goto free_pdmdev;
     }
 
-    OSA_INFO("PDM SPI Device Probed.\n");
+    OSA_DEBUG("PDM SPI Device Probed.\n");
     return 0;
 
 free_pdmdev:
@@ -70,7 +66,7 @@ static void pdm_device_spi_remove(struct spi_device *spi) {
     pdm_device_unregister(pdmdev);
     pdm_device_free(pdmdev);
 
-    OSA_INFO("PDM SPI Device Removed.\n");
+    OSA_DEBUG("PDM SPI Device Removed.\n");
     return;
 }
 
@@ -104,7 +100,7 @@ int pdm_device_spi_driver_init(void) {
         OSA_ERROR("Failed to register PDM Device SPI Driver, status=%d.\n", status);
         return status;
     }
-    OSA_INFO("PDM Device SPI Driver Initialized.\n");
+    OSA_DEBUG("PDM Device SPI Driver Initialized.\n");
     return 0;
 }
 
@@ -115,7 +111,7 @@ int pdm_device_spi_driver_init(void) {
  */
 void pdm_device_spi_driver_exit(void) {
     spi_unregister_driver(&pdm_device_spi_driver);
-    OSA_INFO("PDM Device SPI Driver Exited.\n");
+    OSA_DEBUG("PDM Device SPI Driver Exited.\n");
 }
 
 MODULE_LICENSE("GPL");

@@ -29,8 +29,6 @@ static int pdm_device_platform_probe(struct platform_device *pdev) {
     int status;
     struct pdm_device_platform_data *pdata = dev_get_platdata(&pdev->dev);
 
-    OSA_INFO("PDM PLATFORM Device Probe.\n");
-
     pdmdev = pdm_device_alloc(sizeof(void*));
     if (!pdmdev) {
         OSA_ERROR("Failed to allocate pdm_device.\n");
@@ -52,7 +50,7 @@ static int pdm_device_platform_probe(struct platform_device *pdev) {
         goto free_pdmdev;
     }
 
-    OSA_INFO("PDM Device PLATFORM Device Probed.\n");
+    OSA_DEBUG("PDM Device PLATFORM Device Probed.\n");
     return 0;
 
 free_pdmdev:
@@ -83,7 +81,7 @@ static int pdm_device_platform_remove(struct platform_device *pdev) {
     pdm_device_unregister(pdmdev);
     pdm_device_free(pdmdev);
 
-    OSA_INFO("PDM Device PLATFORM Device Removed.\n");
+    OSA_DEBUG("PDM Device PLATFORM Device Removed.\n");
     return 0;
 }
 
@@ -120,7 +118,7 @@ int pdm_device_platform_driver_init(void) {
         OSA_ERROR("Failed to register PDM Device PLATFORM Driver, status=%d.\n", status);
         return status;
     }
-    OSA_INFO("PDM Device PLATFORM Driver Initialized.\n");
+    OSA_DEBUG("PDM Device PLATFORM Driver Initialized.\n");
     return 0;
 }
 
@@ -131,7 +129,7 @@ int pdm_device_platform_driver_init(void) {
  */
 void pdm_device_platform_driver_exit(void) {
     platform_driver_unregister(&pdm_device_platform_driver);
-    OSA_INFO("PDM Device PLATFORM Driver Exited.\n");
+    OSA_DEBUG("PDM Device PLATFORM Driver Exited.\n");
 }
 
 MODULE_LICENSE("GPL");

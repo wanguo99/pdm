@@ -546,7 +546,7 @@ int pdm_master_register(struct pdm_master *master)
     mutex_unlock(&pdm_master_device_list_mutex_lock);
 
     master->init_done = true;
-    OSA_INFO("PDM Master Registered: %s.\n", dev_name(&master->dev));
+    OSA_DEBUG("PDM Master Registered: %s.\n", dev_name(&master->dev));
 
     return 0;
 
@@ -564,21 +564,12 @@ err_device_put:
  */
 void pdm_master_unregister(struct pdm_master *master)
 {
-    struct pdm_device *client;
-
     if (!master) {
         OSA_ERROR("Invalid input parameters (master: %p).\n", master);
         return;
     }
 
-    mutex_lock(&master->client_list_mutex_lock);
-    if (!list_empty(&master->client_list)) {
-        OSA_WARN("Not all clients removed.");
-        list_for_each_entry(client, &master->client_list, entry) {
-            OSA_INFO("Client Name: %s.\n", dev_name(&client->dev));
-        }
-    }
-    mutex_unlock(&master->client_list_mutex_lock);
+    OSA_INFO("PDM Master unregistered: %s.\n", dev_name(&master->dev));
 
     master->init_done = false;
 
@@ -592,7 +583,6 @@ void pdm_master_unregister(struct pdm_master *master)
 
     pdm_master_cdev_delete(master);
     device_unregister(&master->dev);
-    OSA_INFO("PDM Master unregistered: %s.\n", dev_name(&master->dev));
 }
 
 /**
@@ -612,7 +602,7 @@ int pdm_master_init(void)
         OSA_ERROR("Failed to register PDM Master Class, error: %d.\n", status);
         return status;
     }
-    OSA_INFO("PDM Master Class registered.\n");
+    OSA_DEBUG("PDM Master Class registered.\n");
 
     INIT_LIST_HEAD(&pdm_master_device_list);
     mutex_init(&pdm_master_device_list_mutex_lock);
@@ -628,7 +618,7 @@ int pdm_master_init(void)
         return status;
     }
 
-    OSA_INFO("Initialize PDM Master OK.\n");
+    OSA_DEBUG("Initialize PDM Master OK.\n");
     return 0;
 }
 
@@ -639,7 +629,7 @@ void pdm_master_exit(void)
 {
     pdm_subdriver_unregister(&pdm_master_driver_list);
     class_unregister(&pdm_master_class);
-    OSA_INFO("PDM Master Class unregistered.\n");
+    OSA_DEBUG("PDM Master Class unregistered.\n");
 }
 
 MODULE_LICENSE("GPL");

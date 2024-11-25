@@ -244,7 +244,7 @@ int pdm_register_driver(struct module *owner, struct pdm_driver *driver)
         return status;
     }
 
-    OSA_INFO("Driver [%s] registered\n", driver->driver.name);
+    OSA_DEBUG("Driver [%s] registered\n", driver->driver.name);
     return 0;
 }
 
@@ -266,7 +266,7 @@ static int pdm_debug_fs_init(void)
         OSA_WARN("Failed to register PDM debugfs, error %ld\n", PTR_ERR(pdm_debugfs_dir));
         pdm_debugfs_dir = NULL;  // Set to NULL to indicate failure
     } else {
-        OSA_INFO("PDM debugfs registered\n");
+        OSA_DEBUG("PDM debugfs registered\n");
     }
 
     pdm_procfs_dir = proc_mkdir(PDM_DEBUG_FS_DIR_NAME, NULL);
@@ -277,7 +277,7 @@ static int pdm_debug_fs_init(void)
             pdm_debugfs_dir = NULL;
         }
     } else {
-        OSA_INFO("PDM procfs registered\n");
+        OSA_DEBUG("PDM procfs registered\n");
     }
 
     return 0;
@@ -292,11 +292,11 @@ static void pdm_debug_fs_exit(void)
 {
     if (pdm_debugfs_dir) {
         debugfs_remove_recursive(pdm_debugfs_dir);
-        OSA_INFO("PDM debugfs unregistered\n");
+        OSA_DEBUG("PDM debugfs unregistered\n");
     }
     if (pdm_procfs_dir) {
         remove_proc_entry(PDM_DEBUG_FS_DIR_NAME, NULL);
-        OSA_INFO("PDM procfs unregistered\n");
+        OSA_DEBUG("PDM procfs unregistered\n");
     }
 }
 
@@ -323,7 +323,7 @@ static int pdm_bus_init(void)
     mutex_init(&pdm_bus_instance.devices_mutex_lock);
     mutex_init(&pdm_bus_instance.idr_mutex_lock);
 
-    OSA_INFO("PDM bus initialized\n");
+    OSA_DEBUG("PDM bus initialized\n");
     return 0;
 }
 
@@ -335,7 +335,7 @@ static int pdm_bus_init(void)
 static void pdm_bus_exit(void)
 {
     bus_unregister(&pdm_bus_type);
-    OSA_INFO("PDM bus unregistered\n");
+    OSA_DEBUG("PDM bus unregistered\n");
 }
 
 /*                                                                              */
@@ -376,7 +376,7 @@ static int __init pdm_init(void)
 
     pdm_debug_fs_init();
 
-    OSA_INFO("PDM initialized successfully\n");
+    OSA_DEBUG("PDM initialized successfully\n");
     return 0;
 
 err_device_exit:

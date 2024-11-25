@@ -23,7 +23,7 @@ static int pdm_master_template_probe(struct pdm_device *pdmdev)
         return status;
     }
 
-    OSA_INFO("Template PDM Device Probed.\n");
+    OSA_DEBUG("Template PDM Device Probed.\n");
     return 0;
 }
 
@@ -44,7 +44,7 @@ static void pdm_master_template_remove(struct pdm_device *pdmdev)
         return;
     }
 
-    OSA_INFO("Template PDM Device Removed.\n");
+    OSA_DEBUG("Template PDM Device Removed.\n");
 }
 
 /**

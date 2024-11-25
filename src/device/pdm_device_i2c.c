@@ -27,8 +27,6 @@ static int pdm_device_i2c_real_probe(struct i2c_client *client, const struct i2c
     const char *compatible;
     int status;
 
-    OSA_INFO("PDM I2C Device Probe.\n");
-
     pdmdev = pdm_device_alloc(sizeof(void*));
     if (!pdmdev) {
         OSA_ERROR("Failed to allocate pdm_device.\n");
@@ -50,7 +48,7 @@ static int pdm_device_i2c_real_probe(struct i2c_client *client, const struct i2c
         goto free_pdmdev;
     }
 
-    OSA_INFO("PDM I2C Device Probed.\n");
+    OSA_DEBUG("PDM I2C Device Probed.\n");
     return 0;
 
 free_pdmdev:
@@ -81,7 +79,7 @@ static int pdm_device_i2c_real_remove(struct i2c_client *client) {
     pdm_device_unregister(pdmdev);
     pdm_device_free(pdmdev);
 
-    OSA_INFO("PDM I2C Device Removed.\n");
+    OSA_DEBUG("PDM I2C Device Removed.\n");
     return 0;
 }
 
@@ -162,7 +160,7 @@ int pdm_device_i2c_driver_init(void) {
         OSA_ERROR("Failed to register PDM Device I2C Driver, status=%d.\n", status);
         return status;
     }
-    OSA_INFO("PDM Device I2C Driver Initialized.\n");
+    OSA_DEBUG("PDM Device I2C Driver Initialized.\n");
     return 0;
 }
 
@@ -173,7 +171,7 @@ int pdm_device_i2c_driver_init(void) {
  */
 void pdm_device_i2c_driver_exit(void) {
     i2c_del_driver(&pdm_device_i2c_driver);
-    OSA_INFO("PDM Device I2C Driver Exited.\n");
+    OSA_DEBUG("PDM Device I2C Driver Exited.\n");
 }
 
 MODULE_LICENSE("GPL");

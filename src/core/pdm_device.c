@@ -410,13 +410,14 @@ void pdm_device_unregister(struct pdm_device *pdmdev)
         return;
     }
 
+    OSA_DEBUG("Device %s unregistered.\n", dev_name(&pdmdev->dev));
+
     mutex_lock(&pdm_bus_instance.devices_mutex_lock);
     list_del(&pdmdev->entry);
     mutex_unlock(&pdm_bus_instance.devices_mutex_lock);
 
     device_unregister(&pdmdev->dev);
     pdm_bus_device_id_free(pdmdev);
-    OSA_DEBUG("Device %s unregistered.\n", dev_name(&pdmdev->dev));
 }
 
 /**
@@ -442,7 +443,7 @@ int pdm_device_init(void)
         return status;
     }
 
-    OSA_INFO("Initialize PDM Device OK.\n");
+    OSA_DEBUG("Initialize PDM Device OK.\n");
     return 0;
 }
 
@@ -452,7 +453,7 @@ int pdm_device_init(void)
 void pdm_device_exit(void)
 {
     pdm_subdriver_unregister(&pdm_device_driver_list);
-    OSA_INFO("PDM Device Exit.\n");
+    OSA_DEBUG("PDM Device Exit.\n");
 }
 
 MODULE_LICENSE("GPL");
