@@ -7,7 +7,7 @@
  *
  * 该列表用于存储所有注册的 PDM 主模板驱动程序。
  */
-static LIST_HEAD(pdm_device_driver_list);
+struct list_head pdm_device_driver_list;
 
 /**
  * @brief PDM 主模板驱动程序数组
@@ -426,10 +426,10 @@ void pdm_device_unregister(struct pdm_device *pdmdev)
  */
 int pdm_device_init(void)
 {
-    int status;
     struct pdm_subdriver_register_params params;
+    int status;
 
-    // 注册device驱动，将所有设备添加到pdm_bus
+    INIT_LIST_HEAD(&pdm_device_driver_list);
     params.drivers = pdm_device_drivers;
     params.count = ARRAY_SIZE(pdm_device_drivers);
     params.ignore_failures = true;

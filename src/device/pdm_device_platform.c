@@ -37,7 +37,7 @@ static int pdm_device_platform_probe(struct platform_device *pdev)
         goto free_pdmdev;
     }
 
-    OSA_INFO("Template PLATFORM Device Probed.\n");
+    OSA_INFO("PDM Device PLATFORM Device Probed.\n");
     return 0;
 
 free_pdmdev:
@@ -66,41 +66,28 @@ static int pdm_device_platform_remove(struct platform_device *pdev)
     pdm_device_master_unregister_device(pdmdev);
     pdm_device_free(pdmdev);
 #endif
-    OSA_INFO("Template PLATFORM Device Removed.\n");
+    OSA_INFO("PDM Device PLATFORM Device Removed.\n");
     return 0;
 }
 
-
-/**
-  * @ dts节点配置示例
-
- *  / {
- *      model = "Freescale i.MX6 UltraLiteLite 14x14 EVK Board";
- *      compatible = "fsl,imx6ull-14x14-evk", "fsl,imx6ull";
-
- *      template-platform-0 {
- *          compatible = "pdm,template-platform";
- *          status = "okay";
- *      };
- *  };
-*/
-static const struct of_device_id of_platform_platform_match[] = {
-	{ .compatible = "pdm,template-gpio", },
-	{ .compatible = "pdm,template-pwm",  },
-	{ .compatible = "pdm,template-uart", },
-	{ .compatible = "pdm,template-adc",  },
-	{ .compatible = "pdm,template-dac",  },
+static const struct platform_device_id pdm_device_platform_ids[] = {
+	{ .name = "pdm-device-platform",  },
+	{ .name = "pdm-device-gpio", },
+	{ .name = "pdm-device-pwm",  },
+	{ .name = "pdm-device-uart", },
+	{ .name = "pdm-device-adc",  },
+	{ .name = "pdm-device-dac",  },
 	{},
 };
-MODULE_DEVICE_TABLE(of, of_platform_platform_match);
+MODULE_DEVICE_TABLE(platform, pdm_device_platform_ids);
 
 static struct platform_driver pdm_device_platform_driver = {
 	.probe		= pdm_device_platform_probe,
 	.remove	= pdm_device_platform_remove,
 	.driver		= {
-		.name	= "pdm-template-platform",
-		.of_match_table = of_platform_platform_match,
+		.name	= "pdm-platform-device",
 	},
+	.id_table   = pdm_device_platform_ids,
 };
 
 
@@ -116,10 +103,10 @@ int pdm_device_platform_driver_init(void) {
 
     status = platform_driver_register(&pdm_device_platform_driver);
     if (status) {
-        OSA_ERROR("Failed to register Template PLATFORM Driver.\n");
+        OSA_ERROR("Failed to register PDM Device PLATFORM Driver.\n");
         return status;
     }
-    OSA_INFO("Template PLATFORM Driver Initialized.\n");
+    OSA_INFO("PDM Device PLATFORM Driver Initialized.\n");
     return 0;
 }
 
@@ -130,9 +117,9 @@ int pdm_device_platform_driver_init(void) {
  */
 void pdm_device_platform_driver_exit(void) {
     platform_driver_unregister(&pdm_device_platform_driver);
-    OSA_INFO("Template PLATFORM Driver Exited.\n");
+    OSA_INFO("PDM Device PLATFORM Driver Exited.\n");
 }
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("<guohaoprc@163.com>");
-MODULE_DESCRIPTION("PDM Template PLATFORM Driver");
+MODULE_DESCRIPTION("PDM Device PLATFORM Driver");

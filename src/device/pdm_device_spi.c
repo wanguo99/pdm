@@ -62,32 +62,6 @@ static void pdm_device_spi_remove(struct spi_device *spi)
 }
 
 
-/**
- * @ dts节点配置示例
-
- * &qspi {
- *     pinctrl-names = "default";
- *     pinctrl-0 = <&pinctrl_qspi>;
- *     status = "okay";
-
- *     pdmdev-spi-0@1 {
- *     #address-cells = <1>;
- *     #size-cells = <1>;
- *         compatible = "pdm,pdm-device-spi";
- *         spi-max-frequency = <100000000>;
- *         spi-rx-bus-width = <4>;
- *         spi-tx-bus-width = <1>;
- *         reg = <1>;
- *     };
- * };
-*/
-
-static const struct of_device_id of_pdm_device_spi_match[] = {
-	{ .compatible = "cpld,pdm-device-spi", },
-	{},
-};
-MODULE_DEVICE_TABLE(of, of_pdm_device_spi_match);
-
 static const struct spi_device_id pdm_device_spi_ids[] = {
 	{ .name = "pdm-device-spi" },
 	{ }
@@ -100,7 +74,6 @@ static struct spi_driver pdm_device_spi_driver = {
 	.remove	= pdm_device_spi_remove,
 	.driver		= {
 		.name	= "pdm-device-spi",
-		.of_match_table = of_pdm_device_spi_match,
 	},
 	.id_table   = pdm_device_spi_ids,
 };

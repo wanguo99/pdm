@@ -7,21 +7,21 @@
  *
  * 该列表用于存储所有注册的 PDM 主设备。
  */
-static LIST_HEAD(pdm_master_device_list);
+static struct list_head pdm_master_device_list;
 
 /**
  * @brief 保护 PDM 主设备列表的互斥锁
  *
  * 该互斥锁用于同步对 PDM 主设备列表的访问，防止并发访问导致的数据竞争。
  */
-static DEFINE_MUTEX(pdm_master_device_list_mutex_lock);
+static struct mutex pdm_master_device_list_mutex_lock;
 
 /**
  * @brief PDM 主驱动程序列表
  *
  * 该列表用于存储所有注册的 PDM 主驱动程序。
  */
-static LIST_HEAD(pdm_master_driver_list);
+static struct list_head pdm_master_driver_list;
 
 /**
  * @brief PDM 主驱动程序数组
@@ -511,6 +511,11 @@ struct pdm_master *pdm_master_alloc(unsigned int data_size)
     master->dev.release = pdm_master_dev_release;
     pdm_master_devdata_set(master, (void *)master + master_size);
 
+    INIT_LIST_HEAD(&master->client_list);
+    mutex_init(&master->client_list_mutex_lock);
+    mutex_init(&master->idr_mutex_lock);
+    idr_init(&master->device_idr);
+
     return master;
 }
 
@@ -582,14 +587,6 @@ int pdm_master_register(struct pdm_master *master)
     list_add_tail(&master->entry, &pdm_master_device_list);
     mutex_unlock(&pdm_master_device_list_mutex_lock);
 
-    mutex_lock(&master->idr_mutex_lock);
-    idr_init(&master->device_idr);
-    mutex_unlock(&master->idr_mutex_lock);
-
-    mutex_lock(&master->client_list_mutex_lock);
-    INIT_LIST_HEAD(&master->client_list);
-    mutex_unlock(&master->client_list_mutex_lock);
-
     master->init_done = true;
     OSA_INFO("PDM Master Registered: %s.\n", dev_name(&master->dev));
 
@@ -659,13 +656,10 @@ int pdm_master_init(void)
     }
     OSA_INFO("PDM Master Class registered.\n");
 
-
-
     INIT_LIST_HEAD(&pdm_master_device_list);
+    mutex_init(&pdm_master_device_list_mutex_lock);
 
-	INIT_LIST_HEAD(&pdm_master_driver_list);
-
-    // 注册master驱动
+    INIT_LIST_HEAD(&pdm_master_driver_list);
     params.drivers = pdm_master_drivers;
     params.count = ARRAY_SIZE(pdm_master_drivers);
     params.ignore_failures = true;

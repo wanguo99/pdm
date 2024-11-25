@@ -117,17 +117,6 @@ static void pdm_device_i2c_remove(struct i2c_client *client) {
 
 
 /**
- * @ dts节点配置示例
- *  &i2c3 {
- *    status = "okay";
- *    template-i2c-0@b {
- *        reg = <0xb>;
- *        compatible = "pdm,template-i2c";
- *  };
- };
-*/
-
-/**
  * @brief I2C 设备 ID 表
  *
  * 该表定义了支持的 I2C 设备 ID。
@@ -146,7 +135,7 @@ MODULE_DEVICE_TABLE(i2c, pdm_device_i2c_id);
  */
 static struct i2c_driver pdm_device_i2c_driver = {
     .driver = {
-        .name = "pdm-template-i2c",
+        .name = "pdm-device-i2c",
         .owner = THIS_MODULE,
     },
     .probe = pdm_device_i2c_probe,
@@ -166,10 +155,10 @@ int pdm_device_i2c_driver_init(void) {
 
     status = i2c_add_driver(&pdm_device_i2c_driver);
     if (status) {
-        OSA_ERROR("Failed to register Template I2C Driver.\n");
+        OSA_ERROR("Failed to register PDM Device I2C Driver.\n");
         return status;
     }
-    OSA_INFO("Template I2C Driver Initialized.\n");
+    OSA_INFO("PDM Device I2C Driver Initialized.\n");
     return 0;
 }
 
@@ -180,9 +169,9 @@ int pdm_device_i2c_driver_init(void) {
  */
 void pdm_device_i2c_driver_exit(void) {
     i2c_del_driver(&pdm_device_i2c_driver);
-    OSA_INFO("Template I2C Driver Exited.\n");
+    OSA_INFO("PDM Device I2C Driver Exited.\n");
 }
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("<guohaoprc@163.com>");
-MODULE_DESCRIPTION("PDM Template I2C Driver.");
+MODULE_DESCRIPTION("PDM PDM Device I2C Driver.");
