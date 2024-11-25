@@ -157,4 +157,6 @@ extern struct bus_type pdm_bus_type;
 extern const struct bus_type pdm_bus_type;
 #endif
 
+extern struct pdm_bus pdm_bus_instance;
+
 #endif /* _PDM_H_ */

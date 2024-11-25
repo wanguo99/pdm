@@ -384,6 +384,10 @@ int pdm_device_register(struct pdm_device *pdmdev)
         goto err_free_id;
     }
 
+    mutex_lock(&pdm_bus_instance.devices_mutex_lock);
+    list_add_tail(&pdmdev->entry, &pdm_bus_instance.devices);
+    mutex_unlock(&pdm_bus_instance.devices_mutex_lock);
+
     OSA_DEBUG("Device %s registered.\n", dev_name(&pdmdev->dev));
     return 0;
 
@@ -405,6 +409,10 @@ void pdm_device_unregister(struct pdm_device *pdmdev)
         OSA_ERROR("pdmdev is null\n");
         return;
     }
+
+    mutex_lock(&pdm_bus_instance.devices_mutex_lock);
+    list_del(&pdmdev->entry);
+    mutex_unlock(&pdm_bus_instance.devices_mutex_lock);
 
     device_unregister(&pdmdev->dev);
     pdm_bus_device_id_free(pdmdev);

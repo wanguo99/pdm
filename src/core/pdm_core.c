@@ -4,7 +4,6 @@
 
 #include "pdm.h"
 
-static struct pdm_bus pdm_bus_instance;
 
 /**
  * @brief 调试文件系统目录
@@ -85,7 +84,6 @@ int pdm_bus_device_id_alloc(struct pdm_device *pdmdev)
     mutex_lock(&pdm_bus_instance.idr_mutex_lock);
     id = idr_alloc(&pdm_bus_instance.device_idr, pdmdev, PDM_BUS_DEVICE_IDR_START, PDM_BUS_DEVICE_IDR_END, GFP_KERNEL);
     mutex_unlock(&pdm_bus_instance.idr_mutex_lock);
-
     if (id < 0) {
         if (id == -ENOSPC) {
             OSA_ERROR("No available IDs in the range.\n");
@@ -172,13 +170,13 @@ static void pdm_bus_device_remove(struct device *dev)
  */
 int pdm_bus_for_each_dev(void *data, int (*fn)(struct device *dev, void *data))
 {
-	int res;
+    int res;
 
-	mutex_lock(&pdm_bus_instance.devices_mutex_lock);
-	res = bus_for_each_dev(&pdm_bus_type, NULL, data, fn);
-	mutex_unlock(&pdm_bus_instance.devices_mutex_lock);
+    mutex_lock(&pdm_bus_instance.devices_mutex_lock);
+    res = bus_for_each_dev(&pdm_bus_type, NULL, data, fn);
+    mutex_unlock(&pdm_bus_instance.devices_mutex_lock);
 
-	return res;
+    return res;
 }
 
 /**
@@ -198,7 +196,8 @@ struct pdm_device *pdm_bus_physical_info_match_pdm_device(struct pdm_device_phys
         OSA_ERROR("Invalid physical info.\n");
         return NULL;
     }
-	mutex_lock(&pdm_bus_instance.devices_mutex_lock);
+
+    mutex_lock(&pdm_bus_instance.devices_mutex_lock);
     list_for_each_entry(existing_pdmdev, &pdm_bus_instance.devices, entry) {
         if ((existing_pdmdev->physical_info.type == physical_info->type)
             && (existing_pdmdev->physical_info.device == physical_info->device))
@@ -207,9 +206,9 @@ struct pdm_device *pdm_bus_physical_info_match_pdm_device(struct pdm_device_phys
             break;
         }
     }
-	mutex_unlock(&pdm_bus_instance.devices_mutex_lock);
+    mutex_unlock(&pdm_bus_instance.devices_mutex_lock);
 
-	return target_pdmdev;
+    return target_pdmdev;
 }
 
 
@@ -338,6 +337,7 @@ static void pdm_bus_exit(void)
 /*                                                                              */
 /*                              module_init                                     */
 /*                                                                              */
+struct pdm_bus pdm_bus_instance;
 
 /**
  * @brief 初始化 PDM 模块
