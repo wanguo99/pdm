@@ -1,9 +1,6 @@
 #ifndef _PDM_SUBMODULE_H_
 #define _PDM_SUBMODULE_H_
 
-#include <linux/list.h>
-
-#include "pdm_template.h"
 
 /**
  * @file pdm_submodule.h

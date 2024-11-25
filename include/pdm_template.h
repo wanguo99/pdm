@@ -1,8 +1,6 @@
 #ifndef _PDM_TEMPLATE_H_
 #define _PDM_TEMPLATE_H_
 
-#include "pdm.h"
-
 /**
  * @file pdm_template.h
  * @brief PDM 模板驱动接口
