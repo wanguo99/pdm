@@ -79,6 +79,7 @@ static int pdm_bus_device_match(struct device *dev, const struct device_driver *
     return 0;
 }
 
+
 /**
  * @brief 探测 PDM 设备
  *
@@ -94,6 +95,7 @@ static int pdm_bus_device_probe(struct device *dev)
 
     return driver->probe(pdmdev);
 }
+
 
 /**
  * @brief 移除 PDM 设备
@@ -111,12 +113,11 @@ static void pdm_bus_device_remove(struct device *dev)
     struct pdm_device *pdmdev = dev_to_pdm_device(dev);
     struct pdm_driver *driver = drv_to_pdmdrv(dev->driver);
 
-    if ((NULL == driver) || (NULL == pdmdev) || (NULL == driver->remove)) {
-        return;
+    if (driver && pdmdev && driver->remove) {
+        driver->remove(pdmdev);
     }
-
-    driver->remove(pdmdev);
 }
+
 
 /**
  * @brief PDM 总线类型
@@ -138,16 +139,16 @@ static int pdm_debug_fs_init(void)
 {
     pdm_debugfs_dir = debugfs_create_dir(PDM_DEBUG_FS_DIR_NAME, NULL);
     if (IS_ERR(pdm_debugfs_dir)) {
-        OSA_ERROR("Register PDM debugfs failed.\n");
+        OSA_WARN("Register PDM debugfs failed.\n");
     } else {
-        OSA_DEBUG("Register PDM debugfs OK.\n");
+        OSA_INFO("Register PDM debugfs OK.\n");
     }
 
     pdm_procfs_dir = proc_mkdir(PDM_DEBUG_FS_DIR_NAME, NULL);
     if (!pdm_procfs_dir) {
-        OSA_ERROR("Register PDM procfs failed.\n");
+        OSA_WARN("Register PDM procfs failed.\n");
     } else {
-        OSA_DEBUG("Register PDM procfs OK.\n");
+        OSA_INFO("Register PDM procfs OK.\n");
     }
     return 0;
 }
@@ -194,7 +195,7 @@ static int __init pdm_init(void)
 {
     int iRet;
 
-    OSA_DEBUG("Peripheral Driver Module Init.\n");
+    OSA_DEBUG("PDM Init.\n");
 
     iRet = pdm_bus_init();
     if (iRet < 0) {

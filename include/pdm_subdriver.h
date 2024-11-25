@@ -24,6 +24,18 @@ struct pdm_subdriver {
 
 
 /**
+ * @brief 子驱动注册参数结构体
+ *
+ * 该结构体用于封装子驱动注册所需的所有参数。
+ */
+struct pdm_subdriver_register_params {
+    struct pdm_subdriver *drivers;      /**< 要注册的子驱动数组 */
+    int count;                          /**< 子驱动数组的长度 */
+    bool ignore_failures;               /**< 是否忽略某些驱动初始化失败 */
+    struct list_head *list;             /**< 子驱动链表头指针 */
+};
+
+/**
  * @brief 卸载链表中所有的驱动
  *
  * 该函数用于卸载所有已注册的 PDM 子驱动，依次调用每个子驱动的退出函数。
@@ -42,6 +54,7 @@ void pdm_subdriver_unregister(struct list_head *list);
  * @param list 子驱动链表头指针
  * @return 成功返回 0，失败返回负错误码
  */
-int pdm_subdriver_register(struct pdm_subdriver *drivers, int count, struct list_head *list);
+int pdm_subdriver_register(struct pdm_subdriver_register_params *params);
+
 
 #endif /* _PDM_SUBMODULE_H_ */

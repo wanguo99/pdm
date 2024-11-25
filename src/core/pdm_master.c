@@ -623,6 +623,7 @@ void pdm_master_unregister(struct pdm_master *master)
 int pdm_master_init(void)
 {
     int ret;
+    struct pdm_subdriver_register_params params;
 
     ret = class_register(&pdm_master_class);
     if (ret < 0) {
@@ -631,8 +632,12 @@ int pdm_master_init(void)
     }
     OSA_INFO("PDM Master Class registered.\n");
 
-    // 初始化master驱动
-    ret = pdm_subdriver_register(pdm_master_drivers, ARRAY_SIZE(pdm_master_drivers), &pdm_master_driver_list);
+    // 注册master驱动
+    params.drivers = pdm_master_drivers;
+    params.count = ARRAY_SIZE(pdm_master_drivers);
+    params.ignore_failures = true;
+    params.list = &pdm_master_driver_list;
+    ret = pdm_subdriver_register(&params);
     if (ret < 0) {
         OSA_ERROR("Failed to register PDM Master Drivers, error: %d.\n", ret);
         return ret;

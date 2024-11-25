@@ -138,6 +138,7 @@ void pdm_template_master_unregister_device(struct pdm_device *pdmdev)
 int pdm_template_master_init(void)
 {
     int status = 0;
+    struct pdm_subdriver_register_params params;
     struct pdm_template_master_priv *pstTemplateMasterPriv = NULL;
 
     g_pstPdmMaster = pdm_master_alloc(sizeof(struct pdm_template_master_priv));
@@ -164,8 +165,12 @@ int pdm_template_master_init(void)
     g_pstPdmMaster->fops.unlocked_ioctl = pdc_template_ioctl;
     g_pstPdmMaster->fops.write = pdc_template_write;
 
-    // 初始化设备驱动
-    status = pdm_subdriver_register(pdm_master_template_drivers, ARRAY_SIZE(pdm_master_template_drivers), &pdm_master_template_driver_list);
+    // 注册设备驱动
+    params.drivers = pdm_master_template_drivers;
+    params.count = ARRAY_SIZE(pdm_master_template_drivers);
+    params.ignore_failures = true;
+    params.list = &pdm_master_template_driver_list;
+    status = pdm_subdriver_register(&params);
     if (status < 0) {
         OSA_ERROR("Failed to register PDM Master Template Drivers, error: %d.\n", status);
         goto err_master_unregister;

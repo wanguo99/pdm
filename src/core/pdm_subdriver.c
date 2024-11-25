@@ -61,30 +61,34 @@ void pdm_subdriver_unregister(struct list_head *list)
  * @brief 注册数组中所有的驱动并保存至链表
  *
  * 该函数用于注册所有 PDM 子驱动，依次调用每个子驱动的初始化函数。
+ * 根据 `ignore_failures` 参数决定是否忽略某些驱动初始化失败的情况。
  *
  * @param drivers 要注册的子驱动数组
  * @param count 子驱动数组的长度
+ * @param ignore_failures 是否忽略某些驱动初始化失败
  * @param list 子驱动链表头指针
  * @return 成功返回 0，失败返回负错误码
  */
-int pdm_subdriver_register(struct pdm_subdriver *drivers, int count, struct list_head *list)
-{
+int pdm_subdriver_register(struct pdm_subdriver_register_params *params) {
     int i, ret = 0;
 
-    if (!is_list_valid(list))
+    if (!is_list_valid(params->list))
         return -EINVAL;
 
-    for (i = 0; i < count; i++) {
-        ret = pdm_subdriver_register_single(&drivers[i], list);
+    for (i = 0; i < params->count; i++) {
+        ret = pdm_subdriver_register_single(&params->drivers[i], params->list);
         if (ret) {
-            OSA_ERROR("Failed to register driver %s at index %d\n", drivers[i].name, i);
-            pdm_subdriver_unregister(list);
-            return ret;
+            OSA_ERROR("Failed to register driver %s at index %d\n", params->drivers[i].name, i);
+            if (!params->ignore_failures) {
+                pdm_subdriver_unregister(params->list);
+                return ret;
+            }
         }
     }
-    OSA_INFO("PDM Sbudriver Register OK.\n");
+    OSA_INFO("PDM Subdriver Register OK.\n");
     return 0;
 }
+
 
 
 MODULE_LICENSE("GPL");
