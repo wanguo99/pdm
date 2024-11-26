@@ -11,6 +11,7 @@
  * @return 成功返回 0，失败返回负错误码
  */
 static int pdm_device_spi_probe(struct spi_device *spi) {
+    struct pdm_device_physical_info physical_info;
     struct pdm_device *pdmdev;
     const char *compatible;
     int status;
@@ -26,10 +27,16 @@ static int pdm_device_spi_probe(struct spi_device *spi) {
         pr_err("Failed to read compatible property: %d\n", status);
         goto free_pdmdev;
     }
-    strcpy(pdmdev->physical_info.compatible, compatible);
 
-    pdmdev->physical_info.type = PDM_DEVICE_INTERFACE_TYPE_SPI;
-    pdmdev->physical_info.device = spi;
+    strcpy(physical_info.compatible, compatible);
+    physical_info.type = PDM_DEVICE_INTERFACE_TYPE_SPI;
+    physical_info.device = spi;
+    status = pdm_device_physical_info_set(pdmdev, &physical_info);
+    if (status) {
+        OSA_ERROR("Failed to set pdm device physical info, status=%d.\n", status);
+        goto free_pdmdev;
+    }
+
     status = pdm_device_register(pdmdev);
     if (status) {
         OSA_ERROR("Failed to register pdm device, status=%d.\n", status);
@@ -57,7 +64,7 @@ static void pdm_device_spi_remove(struct spi_device *spi) {
 
     physical_info.type = PDM_DEVICE_INTERFACE_TYPE_SPI;
     physical_info.device= spi;
-    pdmdev = pdm_device_match_physical_info(&physical_info);
+    pdmdev = pdm_device_physical_info_match(&physical_info);
     if (!pdmdev) {
         OSA_ERROR("Failed to find pdm device from bus.\n");
         return;

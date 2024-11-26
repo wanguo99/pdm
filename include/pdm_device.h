@@ -131,7 +131,17 @@ void pdm_device_free(struct pdm_device *pdmdev);
  * @param physical_info 要匹配的物理设备信息
  * @return 返回匹配的设备指针，如果没有找到则返回 NULL
  */
-struct pdm_device *pdm_device_match_physical_info(struct pdm_device_physical_info *physical_info);
+struct pdm_device *pdm_device_physical_info_match(struct pdm_device_physical_info *physical_info);
+
+/**
+ * @brief 设置 PDM 设备的物理设备信息
+ *
+ * 该函数用于设置 PDM 设备的物理设备信息。
+ *
+ * @param physical_info 要设置的物理设备信息
+ * @return 成功返回 0，失败返回负错误码
+ */
+int pdm_device_physical_info_set(struct pdm_device *pdmdev, struct pdm_device_physical_info *physical_info);
 
 /**
  * @brief 注册 PDM 设备

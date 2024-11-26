@@ -439,7 +439,7 @@ unmatch:
  * @param physical_info 要匹配的物理设备信息
  * @return 返回匹配的设备指针，如果没有找到则返回 NULL
  */
-struct pdm_device *pdm_device_match_physical_info(struct pdm_device_physical_info *physical_info)
+struct pdm_device *pdm_device_physical_info_match(struct pdm_device_physical_info *physical_info)
 {
     struct pdm_device *check_pdmdev;        // 用于接收physical_info
     struct pdm_device *target_pdmdev_ptr;   // 用于传入physical_info以及传出匹配到的pdm_device
@@ -470,6 +470,29 @@ struct pdm_device *pdm_device_match_physical_info(struct pdm_device_physical_inf
 }
 
 /**
+ * @brief 设置 PDM 设备的物理设备信息
+ *
+ * 该函数用于设置 PDM 设备的物理设备信息。
+ *
+ * @param physical_info 要设置的物理设备信息
+ * @return 成功返回 0，失败返回负错误码
+ */
+int pdm_device_physical_info_set(struct pdm_device *pdmdev, struct pdm_device_physical_info *physical_info)
+{
+    if (!pdmdev || !physical_info) {
+        OSA_ERROR("pdmdev or physical_info is null\n");
+        return -EINVAL;
+    }
+
+    memset(&pdmdev->physical_info, 0, sizeof(struct pdm_device_physical_info));
+    pdmdev->physical_info.type = physical_info->type;
+    pdmdev->physical_info.device = physical_info->device;
+    memcpy(pdmdev->physical_info.compatible, physical_info->compatible, PDM_DEVICE_NAME_SIZE);
+
+    return 0;
+}
+
+/**
  * @brief 注册 PDM 设备
  *
  * 该函数用于注册 PDM 设备，包括验证设备有效性、分配设备 ID、检查设备是否存在、设置设备名称和添加设备。
@@ -496,7 +519,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
         return -ENOMEM;
     }
 
-    if (pdm_device_match_physical_info(&pdmdev->physical_info)) {
+    if (pdm_device_physical_info_match(&pdmdev->physical_info)) {
         OSA_ERROR("Device %s already exists\n", dev_name(&pdmdev->dev));
         goto err_free_id;
     }
