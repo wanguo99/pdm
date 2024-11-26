@@ -45,7 +45,7 @@ static int pdm_device_verify(struct pdm_device *pdmdev)
         return -EINVAL;
     }
 
-    if (0 == strlen(pdmdev->compatible)) {
+    if (0 == strlen(pdmdev->physical_info.compatible)) {
         OSA_ERROR("compatible is invalid\n");
         return -EINVAL;
     }
@@ -93,7 +93,7 @@ static int pdm_device_uevent(const struct device *dev, struct kobj_uevent_env *e
 
     return add_uevent_var(env, "MODALIAS=pdm:pdm_master_%s:%s-%04X",
                                                 pdmdev->master->name,
-                                                pdmdev->compatible, pdmdev->id);
+                                                pdmdev->physical_info.compatible, pdmdev->id);
 }
 
 /**
@@ -150,7 +150,7 @@ static ssize_t compatible_show(struct device *dev, struct device_attribute *da, 
 
     OSA_INFO("Showing compatible string for device %s\n", dev_name(dev));
 
-    return sysfs_emit(buf, "%s\n", pdmdev->compatible);
+    return sysfs_emit(buf, "%s\n", pdmdev->physical_info.compatible);
 }
 static DEVICE_ATTR_RO(compatible);
 
@@ -429,6 +429,11 @@ int pdm_device_register(struct pdm_device *pdmdev)
 {
     int status;
 
+    if (!pdmdev) {
+        OSA_ERROR("pdmdev is null\n");
+        return -EINVAL;
+    }
+
     if (pdm_device_verify(pdmdev)) {
         return -EINVAL;
     }
@@ -444,7 +449,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
         goto err_free_id;
     }
 
-    dev_set_name(&pdmdev->dev, "%s-%d", pdmdev->compatible, pdmdev->id);
+    dev_set_name(&pdmdev->dev, "%s-%d", pdmdev->physical_info.compatible, pdmdev->id);
     status = device_add(&pdmdev->dev);
     if (status < 0) {
         OSA_ERROR("Can't add %s, status %d\n", dev_name(&pdmdev->dev), status);

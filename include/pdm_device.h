@@ -20,22 +20,27 @@ typedef enum tagPDM_DEVICE_INTERFACE_TYPE
     PDM_DEVICE_INTERFACE_TYPE_INVALID       = 0xFF,
 }PDM_DEVICE_INTERFACE_TYPE;
 
+/**
+ * @brief 物理设备信息结构体
+ */
 struct pdm_device_physical_info {
     int type;                              /**< 设备物理接口类型, PDM_DEVICE_INTERFACE_TYPE */
-    void *device;                      /**< 指向实际的设备结构体 */
+    void *device;                          /**< 指向实际的设备结构体 */
+    char compatible[PDM_DEVICE_NAME_SIZE]; /**< 设备兼容字符串 */
 };
+
 
 /**
  * @brief PDM 设备结构体
  */
 struct pdm_device {
     int id;                                     /**< 设备ID */
-    char compatible[PDM_DEVICE_NAME_SIZE];      /**< 设备兼容字符串 */
     struct device dev;                          /**< 设备结构体 */
     struct pdm_master *master;                  /**< 指向所属的PDM主控制器 */
     struct list_head entry;                     /**< 设备链表节点 */
     struct pdm_device_physical_info physical_info;     /**< 物理设备信息 */
 };
+
 
 
 

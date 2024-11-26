@@ -43,7 +43,7 @@ static int pdm_device_platform_probe(struct platform_device *pdev) {
         pr_err("Failed to read compatible property: %d\n", status);
         goto free_pdmdev;
     }
-    strcpy(pdmdev->compatible, compatible);
+    strcpy(pdmdev->physical_info.compatible, compatible);
 
     pdmdev->physical_info.type = pdata ? pdata->type : PDM_DEVICE_INTERFACE_TYPE_UNDEFINED;
     pdmdev->physical_info.device = pdev;

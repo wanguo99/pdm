@@ -38,7 +38,7 @@ static int pdm_device_i2c_real_probe(struct i2c_client *client, const struct i2c
         pr_err("Failed to read compatible property: %d\n", status);
         goto free_pdmdev;
     }
-    strcpy(pdmdev->compatible, compatible);
+    strcpy(pdmdev->physical_info.compatible, compatible);
 
     pdmdev->physical_info.type = PDM_DEVICE_INTERFACE_TYPE_I2C;
     pdmdev->physical_info.device = client;

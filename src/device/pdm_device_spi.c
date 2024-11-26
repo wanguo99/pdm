@@ -26,7 +26,7 @@ static int pdm_device_spi_probe(struct spi_device *spi) {
         pr_err("Failed to read compatible property: %d\n", status);
         goto free_pdmdev;
     }
-    strcpy(pdmdev->compatible, compatible);
+    strcpy(pdmdev->physical_info.compatible, compatible);
 
     pdmdev->physical_info.type = PDM_DEVICE_INTERFACE_TYPE_SPI;
     pdmdev->physical_info.device = spi;
