@@ -13,7 +13,7 @@
 static int pdm_subdriver_register_single(struct pdm_subdriver *driver, struct list_head *list) {
     int status = 0;
 
-    if (driver->init) {
+    if (driver->status && driver->init) {
         status = driver->init();
         if (status) {
             OSA_ERROR("Failed to register driver %s, status = %d.\n", driver->name ? driver->name : "Unknown", status);
@@ -33,7 +33,7 @@ static int pdm_subdriver_register_single(struct pdm_subdriver *driver, struct li
  * @param driver 要卸载的子驱动结构体指针
  */
 static void pdm_subdriver_unregister_single(struct pdm_subdriver *driver) {
-    if (driver->exit) {
+    if (driver->status && driver->exit) {
         driver->exit();
     }
     list_del(&driver->list);

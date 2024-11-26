@@ -17,6 +17,7 @@
  * 该结构体用于定义 PDM 子驱动的基本信息和操作函数。
  */
 struct pdm_subdriver {
+    bool status;                /**< 驱动是否加载 */
     const char *name;           /**< 子驱动的名称 */
     int (*init)(void);          /**< 子驱动的初始化函数 */
     void (*exit)(void);         /**< 子驱动的退出函数 */
