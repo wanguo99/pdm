@@ -16,16 +16,19 @@ static struct list_head pdm_device_driver_list;
  */
 static struct pdm_subdriver pdm_device_drivers[] = {
     {
+        .status = true,
         .name = "PDM SPI Device",
         .init = pdm_device_spi_driver_init,
         .exit = pdm_device_spi_driver_exit
     },
     {
+        .status = true,
         .name = "PDM I2C Device",
         .init = pdm_device_i2c_driver_init,
         .exit = pdm_device_i2c_driver_exit
     },
     {
+        .status = true,
         .name = "PDM PLATFORM Device",
         .init = pdm_device_platform_driver_init,
         .exit = pdm_device_platform_driver_exit
@@ -378,7 +381,8 @@ struct pdm_device *pdm_device_alloc(void)
     device_initialize(&pdmdev->dev);
     pdmdev->dev.bus = &pdm_bus_type;
     pdmdev->dev.type = &pdm_device_type;
-    pdmdev->dev.class = &pdm_device_class;
+    // TODO: 设置class后会和bus冲突，导致设备创建失败，具体原因后续定位
+    // pdmdev->dev.class = &pdm_device_class;
     pdmdev->dev.release = pdm_device_release;
 
     return pdmdev;

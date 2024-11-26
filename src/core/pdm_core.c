@@ -257,6 +257,7 @@ static void pdm_bus_debug_fs_exit(void)
 static int pdm_bus_init(void)
 {
     int status;
+
     status = bus_register(&pdm_bus_type);
     if (status < 0) {
         OSA_ERROR("Failed to register PDM bus, error %d\n", status);
@@ -264,9 +265,8 @@ static int pdm_bus_init(void)
     }
 
     memset(&pdm_bus_priv_data, 0, sizeof(struct pdm_bus_private_data));
-
-    idr_init(&pdm_bus_priv_data.device_idr);
     mutex_init(&pdm_bus_priv_data.idr_mutex_lock);
+    idr_init(&pdm_bus_priv_data.device_idr);
 
     pdm_bus_debug_fs_init();
 
@@ -287,6 +287,11 @@ static int pdm_bus_init(void)
 static void pdm_bus_exit(void)
 {
     pdm_bus_debug_fs_exit();
+
+    mutex_lock(&pdm_bus_priv_data.idr_mutex_lock);
+    idr_destroy(&pdm_bus_priv_data.device_idr);
+    mutex_unlock(&pdm_bus_priv_data.idr_mutex_lock);
+
     bus_unregister(&pdm_bus_type);
     OSA_DEBUG("PDM bus unregistered\n");
 }
