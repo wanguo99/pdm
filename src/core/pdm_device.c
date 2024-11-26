@@ -304,6 +304,56 @@ void pdm_device_devdata_set(struct pdm_device *pdmdev, void *data)
 }
 
 /**
+ * @brief 分配 PDM 设备结构体的私有数据
+ *
+ * 该函数用于分配新的 PDM 设备结构体的私有数据区域，并将其关联到设备结构体。
+ *
+ * @param pdmdev PDM 设备结构体指针
+ * @param size 私有数据区域的大小
+ * @return 成功返回 0，失败返回负错误码
+ */
+int pdm_device_devdata_alloc(struct pdm_device *pdmdev, size_t size)
+{
+    void *data;
+
+    if (!pdmdev) {
+        OSA_ERROR("pdmdev is null\n");
+        return -EINVAL;
+    }
+
+    data = kzalloc(size, GFP_KERNEL);
+    if (!data) {
+        OSA_ERROR("Failed to allocate memory for pdm device devdata.\n");
+        return -ENOMEM;
+    }
+
+    pdm_device_devdata_set(pdmdev, data);
+    return 0;
+}
+
+/**
+ * @brief 释放 PDM 设备结构体的私有数据
+ *
+ * 该函数用于释放 PDM 设备结构体的私有数据区域，并将其关联的指针设置为 NULL。
+ *
+ * @param pdmdev PDM 设备结构体指针
+ * @param data 私有数据指针
+ */
+void pdm_device_devdata_free(struct pdm_device *pdmdev, void *data)
+{
+    if (!pdmdev) {
+        OSA_ERROR("pdmdev is null\n");
+        return;
+    }
+
+    if (data) {
+        kfree(data);
+    }
+    pdm_device_devdata_set(pdmdev, NULL);
+}
+
+
+/**
  * @brief 分配 PDM 设备结构体
  *
  * 该函数用于分配一个新的 PDM 设备结构体，并初始化设备的相关字段。
@@ -415,7 +465,6 @@ struct pdm_device *pdm_device_match_physical_info(struct pdm_device_physical_inf
     kfree(check_pdmdev);
     return target_pdmdev_ptr;
 }
-
 
 /**
  * @brief 注册 PDM 设备

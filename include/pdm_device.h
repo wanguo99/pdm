@@ -29,7 +29,6 @@ struct pdm_device_physical_info {
     char compatible[PDM_DEVICE_NAME_SIZE]; /**< 设备兼容字符串 */
 };
 
-
 /**
  * @brief PDM 设备结构体
  */
@@ -40,9 +39,6 @@ struct pdm_device {
     struct list_head entry;                     /**< 设备链表节点 */
     struct pdm_device_physical_info physical_info;     /**< 物理设备信息 */
 };
-
-
-
 
 /*
  * PDM device 相关函数
@@ -87,6 +83,27 @@ void *pdm_device_devdata_get(struct pdm_device *pdmdev);
  * @param data 私有数据指针
  */
 void pdm_device_devdata_set(struct pdm_device *pdmdev, void *data);
+
+/**
+ * @brief 分配 PDM 设备结构体的私有数据
+ *
+ * 该函数用于分配新的 PDM 设备结构体的私有数据区域，并将其关联到设备结构体。
+ *
+ * @param pdmdev PDM 设备结构体指针
+ * @param size 私有数据区域的大小
+ * @return 成功返回 0，失败返回负错误码
+ */
+int pdm_device_devdata_alloc(struct pdm_device *pdmdev, size_t size);
+
+/**
+ * @brief 释放 PDM 设备结构体的私有数据
+ *
+ * 该函数用于释放 PDM 设备结构体的私有数据区域，并将其关联的指针设置为 NULL。
+ *
+ * @param pdmdev PDM 设备结构体指针
+ * @param data 私有数据指针
+ */
+void pdm_device_devdata_free(struct pdm_device *pdmdev, void *data);
 
 /**
  * @brief 分配 PDM 设备结构体
@@ -149,8 +166,6 @@ int pdm_device_init(void);
  */
 void pdm_device_exit(void);
 
-
-
 /**
  * @brief 初始化 I2C 驱动
  *
@@ -166,7 +181,6 @@ int pdm_device_i2c_driver_init(void);
  * 该函数用于退出 I2C 驱动，注销 I2C 驱动。
  */
 void pdm_device_i2c_driver_exit(void);
-
 
 /**
  * @brief 初始化 PLATFORM 驱动
