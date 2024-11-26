@@ -207,6 +207,14 @@ const struct device_type pdm_device_type = {
     .uevent = pdm_device_uevent,
 };
 
+
+/**
+ * @brief PDM 设备类
+ */
+static struct class pdm_device_class = {
+    .name = "pdm_device",
+};
+
 /**
  * @brief 将 PDM 设备转换为实际的设备指针
  *
@@ -322,13 +330,84 @@ struct pdm_device *pdm_device_alloc(unsigned int data_size)
     }
 
     device_initialize(&pdmdev->dev);
-    pdmdev->dev.type = &pdm_device_type;
     pdmdev->dev.bus = &pdm_bus_type;
+    pdmdev->dev.type = &pdm_device_type;
+    pdmdev->dev.class = &pdm_device_class;
     pdmdev->dev.release = pdm_device_release;
 
     pdm_device_devdata_set(pdmdev, (void *)pdmdev + pdmdev_size);
 
     return pdmdev;
+}
+
+/**
+ * @brief 检查设备是否匹配给定的物理信息
+ *
+ * 该函数用于检查给定的 PDM 设备是否匹配指定的物理信息。
+ *
+ * @param dev 当前遍历到的设备
+ * @param data 传递给回调函数的数据，包含要匹配的物理信息
+ * @return 返回遍历结果，1 表示匹配并停止遍历，0 表示不匹配并继续遍历
+ */
+static int pdm_device_physical_info_check(struct device *dev, void *data) {
+    struct pdm_device *pdmdev = dev_to_pdm_device(dev);
+    struct pdm_device **checked_pdmdev = (struct pdm_device **)data;
+
+    if (pdm_device_verify(pdmdev)) {
+        goto unmatch;
+    }
+
+    if (!checked_pdmdev || !*checked_pdmdev) {
+        goto unmatch;
+    }
+
+    if ((pdmdev->physical_info.type == (*checked_pdmdev)->physical_info.type) &&
+        (pdmdev->physical_info.device == (*checked_pdmdev)->physical_info.device)) {
+        *checked_pdmdev = pdmdev;
+        return 1;
+    }
+
+unmatch:
+    *checked_pdmdev = NULL;
+    return 0;
+}
+
+/**
+ * @brief 查找与给定物理信息匹配的 PDM 设备
+ *
+ * 该函数用于查找与给定物理信息匹配的 PDM 设备。
+ *
+ * @param physical_info 要匹配的物理设备信息
+ * @return 返回匹配的设备指针，如果没有找到则返回 NULL
+ */
+struct pdm_device *pdm_device_match_physical_info(struct pdm_device_physical_info *physical_info)
+{
+    struct pdm_device *check_pdmdev;        // 用于接收physical_info
+    struct pdm_device *target_pdmdev_ptr;   // 用于传入physical_info以及传出匹配到的pdm_device
+
+    if (!physical_info) {
+        OSA_ERROR("Invalid physical info.\n");
+        return NULL;
+    }
+
+    check_pdmdev = kzalloc(sizeof(struct pdm_device), GFP_KERNEL);
+    if (!check_pdmdev) {
+        OSA_ERROR("Failed to allocate memory for pdm device.\n");
+        return NULL;
+    }
+
+    check_pdmdev->physical_info.type = physical_info->type;
+    check_pdmdev->physical_info.device = physical_info->device;
+
+    target_pdmdev_ptr = check_pdmdev;
+    class_for_each_device(&pdm_device_class, NULL, &target_pdmdev_ptr, pdm_device_physical_info_check);
+
+    if (target_pdmdev_ptr == check_pdmdev) {
+        target_pdmdev_ptr = NULL;
+    }
+
+    kfree(check_pdmdev);
+    return target_pdmdev_ptr;
 }
 
 /**
@@ -371,22 +450,17 @@ int pdm_device_register(struct pdm_device *pdmdev)
         return -ENOMEM;
     }
 
-    if (pdm_bus_physical_info_match_pdm_device(&pdmdev->physical_info)) {
+    if (pdm_device_match_physical_info(&pdmdev->physical_info)) {
         OSA_ERROR("Device %s already exists\n", dev_name(&pdmdev->dev));
         goto err_free_id;
     }
 
-//    pdmdev->dev.parent = &master->dev;
     dev_set_name(&pdmdev->dev, "%s-%d", pdmdev->compatible, pdmdev->id);
     status = device_add(&pdmdev->dev);
     if (status < 0) {
         OSA_ERROR("Can't add %s, status %d\n", dev_name(&pdmdev->dev), status);
         goto err_free_id;
     }
-
-    mutex_lock(&pdm_bus_instance.devices_mutex_lock);
-    list_add_tail(&pdmdev->entry, &pdm_bus_instance.devices);
-    mutex_unlock(&pdm_bus_instance.devices_mutex_lock);
 
     OSA_DEBUG("Device %s registered.\n", dev_name(&pdmdev->dev));
     return 0;
@@ -412,10 +486,6 @@ void pdm_device_unregister(struct pdm_device *pdmdev)
 
     OSA_DEBUG("Device %s unregistered.\n", dev_name(&pdmdev->dev));
 
-    mutex_lock(&pdm_bus_instance.devices_mutex_lock);
-    list_del(&pdmdev->entry);
-    mutex_unlock(&pdm_bus_instance.devices_mutex_lock);
-
     device_unregister(&pdmdev->dev);
     pdm_bus_device_id_free(pdmdev);
 }
@@ -431,6 +501,13 @@ int pdm_device_init(void)
 {
     struct pdm_subdriver_register_params params;
     int status;
+
+    status = class_register(&pdm_device_class);
+    if (status < 0) {
+        OSA_ERROR("Failed to register PDM Device Class, error: %d.\n", status);
+        return status;
+    }
+    OSA_DEBUG("PDM Device Class registered.\n");
 
     INIT_LIST_HEAD(&pdm_device_driver_list);
     params.drivers = pdm_device_drivers;
@@ -453,6 +530,7 @@ int pdm_device_init(void)
 void pdm_device_exit(void)
 {
     pdm_subdriver_unregister(&pdm_device_driver_list);
+    class_unregister(&pdm_device_class);
     OSA_DEBUG("PDM Device Exit.\n");
 }
 

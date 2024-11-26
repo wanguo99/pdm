@@ -57,7 +57,7 @@ static void pdm_device_spi_remove(struct spi_device *spi) {
 
     physical_info.type = PDM_DEVICE_INTERFACE_TYPE_SPI;
     physical_info.device= spi;
-    pdmdev = pdm_bus_physical_info_match_pdm_device(&physical_info);
+    pdmdev = pdm_device_match_physical_info(&physical_info);
     if (!pdmdev) {
         OSA_ERROR("Failed to find pdm device from bus.\n");
         return;

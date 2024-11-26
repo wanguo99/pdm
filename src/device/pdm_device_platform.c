@@ -72,7 +72,7 @@ static int pdm_device_platform_remove(struct platform_device *pdev) {
 
     physical_info.type = PDM_DEVICE_INTERFACE_TYPE_PLATFORM;
     physical_info.device= pdev;
-    pdmdev = pdm_bus_physical_info_match_pdm_device(&physical_info);
+    pdmdev = pdm_device_match_physical_info(&physical_info);
     if (!pdmdev) {
         OSA_ERROR("Failed to find pdm device from bus.\n");
         return -ENODEV;

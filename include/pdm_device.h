@@ -103,6 +103,16 @@ struct pdm_device *pdm_device_alloc(unsigned int data_size);
 void pdm_device_free(struct pdm_device *pdmdev);
 
 /**
+ * @brief 查找与给定物理信息匹配的 PDM 设备
+ *
+ * 该函数用于查找与给定物理信息匹配的 PDM 设备。
+ *
+ * @param physical_info 要匹配的物理设备信息
+ * @return 返回匹配的设备指针，如果没有找到则返回 NULL
+ */
+struct pdm_device *pdm_device_match_physical_info(struct pdm_device_physical_info *physical_info);
+
+/**
  * @brief 注册 PDM 设备
  *
  * 该函数用于注册 PDM 设备。

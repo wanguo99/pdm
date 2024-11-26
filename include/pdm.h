@@ -42,8 +42,6 @@ extern const struct device_type pdm_device_type;
 struct pdm_bus {
     struct idr device_idr;               /**< 用于给子设备分配ID的IDR */
     struct mutex idr_mutex_lock;         /**< 用于保护IDR的互斥锁 */
-    struct list_head devices;                   /**< 设备列表 */
-    struct mutex devices_mutex_lock;            /**< 用于保护设备列表的互斥锁 */
 };
 
 /**
