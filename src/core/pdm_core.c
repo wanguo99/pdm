@@ -4,7 +4,7 @@
 
 #include "pdm.h"
 
-struct pdm_bus_private_data pdm_bus_priv_data;
+static struct pdm_bus_private_data pdm_bus_priv_data;
 
 /**
  * @brief 遍历 pdm_bus_type 总线上的所有设备
