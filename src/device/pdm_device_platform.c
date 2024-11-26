@@ -82,7 +82,6 @@ static int pdm_device_platform_remove(struct platform_device *pdev) {
     }
 
     pdm_device_unregister(pdmdev);
-    pdm_device_free(pdmdev);
 
     OSA_DEBUG("PDM Device PLATFORM Device Removed.\n");
     return 0;

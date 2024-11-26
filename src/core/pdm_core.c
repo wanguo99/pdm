@@ -311,7 +311,7 @@ static int __init pdm_init(void)
 {
     int status;
 
-    OSA_INFO("PDM Init\n");
+    OSA_INFO("===== PDM Init =====\n");
 
     status = pdm_bus_init();
     if (status < 0) {
@@ -331,7 +331,7 @@ static int __init pdm_init(void)
         goto err_device_exit;
     }
 
-    OSA_DEBUG("PDM initialized successfully\n");
+    OSA_INFO("----- PDM Inited ----- \n");
     return 0;
 
 err_device_exit:
@@ -349,10 +349,11 @@ err_bus_exit:
  */
 static void __exit pdm_exit(void)
 {
+    OSA_INFO("===== PDM Exit =====\n");
     pdm_master_exit();
     pdm_device_exit();
     pdm_bus_exit();
-    OSA_INFO("PDM exited\n");
+    OSA_INFO("----- PDM Exited -----\n");
 }
 
 module_init(pdm_init);

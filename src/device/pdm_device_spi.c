@@ -64,7 +64,6 @@ static void pdm_device_spi_remove(struct spi_device *spi) {
     }
 
     pdm_device_unregister(pdmdev);
-    pdm_device_free(pdmdev);
 
     OSA_DEBUG("PDM SPI Device Removed.\n");
     return;

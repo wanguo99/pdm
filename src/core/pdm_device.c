@@ -421,17 +421,18 @@ static int pdm_device_physical_info_check(struct device *dev, void *data) {
     }
 
     if (!checked_pdmdev || !*checked_pdmdev) {
+        OSA_INFO("Invalid argument. \n");
         goto unmatch;
     }
 
     if ((pdmdev->physical_info.type == (*checked_pdmdev)->physical_info.type) &&
         (pdmdev->physical_info.device == (*checked_pdmdev)->physical_info.device)) {
         *checked_pdmdev = pdmdev;
+        OSA_DEBUG("Found pdmdev: (%p) \n", pdmdev);
         return 1;
     }
 
 unmatch:
-    *checked_pdmdev = NULL;
     return 0;
 }
 
@@ -445,8 +446,8 @@ unmatch:
  */
 struct pdm_device *pdm_device_physical_info_match(struct pdm_device_physical_info *physical_info)
 {
-    struct pdm_device *check_pdmdev;        // 用于接收physical_info
-    struct pdm_device *target_pdmdev_ptr;   // 用于传入physical_info以及传出匹配到的pdm_device
+    struct pdm_device *check_pdmdev;
+    struct pdm_device *target_pdmdev_ptr;
 
     if (!physical_info) {
         OSA_ERROR("Invalid physical info.\n");
@@ -461,10 +462,8 @@ struct pdm_device *pdm_device_physical_info_match(struct pdm_device_physical_inf
 
     check_pdmdev->physical_info.type = physical_info->type;
     check_pdmdev->physical_info.device = physical_info->device;
-
     target_pdmdev_ptr = check_pdmdev;
-    class_for_each_device(&pdm_device_class, NULL, &target_pdmdev_ptr, pdm_device_physical_info_check);
-
+    pdm_bus_for_each_dev(&target_pdmdev_ptr, pdm_device_physical_info_check);
     if (target_pdmdev_ptr == check_pdmdev) {
         target_pdmdev_ptr = NULL;
     }

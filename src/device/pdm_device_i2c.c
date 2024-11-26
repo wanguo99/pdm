@@ -56,6 +56,7 @@ free_pdmdev:
     return status;
 }
 
+
 /**
  * @brief 实际的 I2C 移除函数
  *
@@ -77,7 +78,6 @@ static int pdm_device_i2c_real_remove(struct i2c_client *client) {
     }
 
     pdm_device_unregister(pdmdev);
-    pdm_device_free(pdmdev);
 
     OSA_DEBUG("PDM I2C Device Removed.\n");
     return 0;
