@@ -18,19 +18,6 @@ static struct proc_dir_entry *pdm_procfs_dir;
 /*                                                                              */
 
 /**
- * @brief 将 device_driver 转换为 pdm_driver
- *
- * 该函数用于将 device_driver 转换为 pdm_driver。
- *
- * @param drv device_driver 结构体指针
- * @return pdm_driver 结构体指针
- */
-static inline struct pdm_driver *drv_to_pdmdrv(struct device_driver *drv)
-{
-    return container_of(drv, struct pdm_driver, driver);
-}
-
-/**
  * @brief 匹配 PDM 设备和驱动
  *
  * 该函数用于匹配 PDM 设备和驱动。
@@ -44,22 +31,83 @@ static int pdm_bus_device_match(struct device *dev, struct device_driver *drv) {
 #else
 static int pdm_bus_device_match(struct device *dev, const struct device_driver *drv) {
 #endif
-    struct pdm_device *pdmdev;
-    struct pdm_driver *pdmdrv;
 
     if (dev->type != &pdm_device_type)
         return 0;
 
-    pdmdev = dev_to_pdm_device(dev);
-    pdmdrv = drv_to_pdmdrv(drv);
-
     /* Attempt an OF style match */
-    if (of_driver_match_device(pdm_device_to_physical_dev(pdmdev), drv))
+    if (of_driver_match_device(dev, drv))
         return 1;
 
     return 0;
 }
 
+/**
+ * @brief 探测 PDM 设备
+ *
+ * 该函数用于处理 PDM 设备的探测操作。
+ *
+ * @param dev 设备指针
+ * @return 成功返回 0，失败返回负错误码
+ */
+static int pdm_bus_device_probe(struct device *dev)
+{
+    struct pdm_device *pdmdev;
+    struct pdm_driver *pdmdrv;
+
+    if (!dev) {
+        OSA_WARN("Device pointer is NULL\n");
+        return -EINVAL;
+    }
+
+    pdmdev = dev_to_pdm_device(dev);
+    pdmdrv = drv_to_pdm_driver(dev->driver);
+    if (pdmdev && pdmdrv && pdmdrv->probe) {
+        return pdmdrv->probe(pdmdev);
+    }
+
+    OSA_WARN("Driver or device not found or probe function not available\n");
+    return -ENODEV;
+}
+
+/**
+ * @brief 移除 PDM 设备
+ *
+ * 该函数用于处理 PDM 设备的移除操作。
+ *
+ * @param dev 设备指针
+ */
+static void pdm_bus_device_remove(struct device *dev)
+{
+    struct pdm_device *pdmdev;
+    struct pdm_driver *pdmdrv;
+
+    if (!dev) {
+        OSA_WARN("Device pointer is NULL\n");
+        return;
+    }
+
+    pdmdev = dev_to_pdm_device(dev);
+    pdmdrv = drv_to_pdm_driver(dev->driver);
+    if (pdmdev && pdmdrv && pdmdrv->remove) {
+        pdmdrv->remove(pdmdev);
+    }
+}
+
+
+/**
+ * @brief 遍历 pdm_bus_type 总线上的所有设备
+ *
+ * 该函数用于遍历 `pdm_bus_type` 总线上的所有设备，并对每个设备调用指定的回调函数。
+ *
+ * @param data 传递给回调函数的数据
+ * @param fn 回调函数指针，用于处理每个设备
+ * @return 返回遍历结果，0 表示成功，非零值表示失败
+ */
+int pdm_bus_for_each_dev(void *data, int (*fn)(struct device *dev, void *data))
+{
+    return bus_for_each_dev(&pdm_bus_type, NULL, data, fn);
+}
 
 /**
  * @brief 为PDM设备分配ID
@@ -114,69 +162,6 @@ void pdm_bus_device_id_free(struct pdm_device *pdmdev)
     idr_remove(&pdm_bus_instance.device_idr, pdmdev->id);
     mutex_unlock(&pdm_bus_instance.idr_mutex_lock);
 }
-
-
-/**
- * @brief 探测 PDM 设备
- *
- * 该函数用于处理 PDM 设备的探测操作。
- *
- * @param dev 设备指针
- * @return 成功返回 0，失败返回负错误码
- */
-static int pdm_bus_device_probe(struct device *dev)
-{
-    struct pdm_device *pdmdev = dev_to_pdm_device(dev);
-    struct pdm_driver *driver = drv_to_pdmdrv(dev->driver);
-
-    if (!driver || !driver->probe) {
-        OSA_ERROR("Driver probe function is not defined\n");
-        return -EINVAL;
-    }
-
-    return driver->probe(pdmdev);
-}
-
-/**
- * @brief 移除 PDM 设备
- *
- * 该函数用于处理 PDM 设备的移除操作。
- *
- * @param dev 设备指针
- */
-static void pdm_bus_device_remove(struct device *dev)
-{
-#if 1
-    return;
-#else
-    if (!dev) {
-        OSA_WARN("Device pointer is NULL\n");
-        return;
-    }
-
-    struct pdm_device *pdmdev = dev_to_pdm_device(dev);
-    struct pdm_driver *driver = drv_to_pdmdrv(dev->driver);
-
-    if (driver && pdmdev && driver->remove) {
-        driver->remove(pdmdev);
-    }
-#endif
-}
-
-/**
- * @brief 遍历 pdm_bus_type 总线上的所有设备
- *
- * 该函数用于遍历 `pdm_bus_type` 总线上的所有设备，并对每个设备调用指定的回调函数。
- *
- * @param data 传递给回调函数的数据
- * @param fn 回调函数指针，用于处理每个设备
- * @return 返回遍历结果，0 表示成功，非零值表示失败
- */
-int pdm_bus_for_each_dev(void *data, int (*fn)(struct device *dev, void *data))
-{
-    return bus_for_each_dev(&pdm_bus_type, NULL, data, fn);
-}
-
 
 /**
  * @brief PDM 总线类型

@@ -147,6 +147,16 @@ int pdm_register_driver(struct module *owner, struct pdm_driver *driver);
 void pdm_unregister_driver(struct pdm_driver *driver);
 
 /**
+ * @brief 将 driver 转换为 pdm_driver
+ *
+ * 该宏用于将 driver 转换为 pdm_driver
+ *
+ * @param __dev driver 结构体指针
+ * @return pdm_driver 结构体指针
+ */
+#define drv_to_pdm_driver(__drv) container_of(__drv, struct pdm_driver, driver)
+
+/**
  * @brief PDM 总线类型
  */
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 2, 0)
