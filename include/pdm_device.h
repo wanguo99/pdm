@@ -103,7 +103,7 @@ int pdm_device_devdata_alloc(struct pdm_device *pdmdev, size_t size);
  * @param pdmdev PDM 设备结构体指针
  * @param data 私有数据指针
  */
-void pdm_device_devdata_free(struct pdm_device *pdmdev, void *data);
+void pdm_device_devdata_free(struct pdm_device *pdmdev);
 
 /**
  * @brief 分配 PDM 设备结构体

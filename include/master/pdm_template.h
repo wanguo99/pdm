@@ -38,7 +38,7 @@ struct pdm_template_master_priv {
  * 该结构体用于存储 PDM 模板设备的私有数据，包括操作函数指针。
  */
 struct pdm_template_device_priv {
-    struct pdm_template_operations ops;  /**< 操作函数回调 */
+    struct pdm_template_operations *ops;  /**< 操作函数回调 */
 };
 
 /**

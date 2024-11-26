@@ -16,6 +16,7 @@ static struct pdm_master *template_master = NULL;
 static int pdm_master_template_probe(struct pdm_device *pdmdev)
 {
     int status;
+    struct pdm_template_device_priv *data;
 
     status = pdm_master_client_add(template_master, pdmdev);
     if (status) {
@@ -23,8 +24,29 @@ static int pdm_master_template_probe(struct pdm_device *pdmdev)
         return status;
     }
 
+    status = pdm_device_devdata_alloc(pdmdev, sizeof(struct pdm_template_device_priv));
+    if (status) {
+        OSA_ERROR("Alloc Device Private Data Failed, status=%d.\n", status);
+        goto err_client_del;
+    }
+
+    data = (struct pdm_template_device_priv *)pdm_device_devdata_get(pdmdev);
+    if (!data)
+    {
+        OSA_ERROR("Get Device Private Data Failed, status=%d.\n", status);
+        goto err_devdata_free;
+    }
+    data->ops = NULL;
+
     OSA_DEBUG("Template PDM Device Probed.\n");
     return 0;
+
+err_devdata_free:
+    pdm_device_devdata_free(pdmdev);
+
+err_client_del:
+    pdm_master_client_delete(template_master, pdmdev);
+    return status;
 }
 
 /**

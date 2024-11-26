@@ -339,13 +339,16 @@ int pdm_device_devdata_alloc(struct pdm_device *pdmdev, size_t size)
  * @param pdmdev PDM 设备结构体指针
  * @param data 私有数据指针
  */
-void pdm_device_devdata_free(struct pdm_device *pdmdev, void *data)
+void pdm_device_devdata_free(struct pdm_device *pdmdev)
 {
+    void *data;
+
     if (!pdmdev) {
         OSA_ERROR("pdmdev is null\n");
         return;
     }
 
+    data = pdm_device_devdata_get(pdmdev);
     if (data) {
         kfree(data);
     }
