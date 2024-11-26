@@ -491,11 +491,15 @@ void pdm_device_unregister(struct pdm_device *pdmdev)
 }
 
 /**
- * pdm_device_init - 初始化PDM设备
+ * @brief 初始化 PDM 设备
  *
- * 返回值:
- * 0 - 成功
- * 负值 - 失败
+ * 该函数用于初始化 PDM 设备，包括注册设备类和设备驱动。
+ * 它会执行以下操作：
+ * - 注册 PDM 设备类
+ * - 初始化子驱动列表
+ * - 注册 PDM 设备驱动
+ *
+ * @return 成功返回 0，失败返回负错误码
  */
 int pdm_device_init(void)
 {
@@ -510,6 +514,7 @@ int pdm_device_init(void)
     OSA_DEBUG("PDM Device Class registered.\n");
 
     INIT_LIST_HEAD(&pdm_device_driver_list);
+
     params.drivers = pdm_device_drivers;
     params.count = ARRAY_SIZE(pdm_device_drivers);
     params.ignore_failures = true;
@@ -517,15 +522,24 @@ int pdm_device_init(void)
     status = pdm_subdriver_register(&params);
     if (status < 0) {
         OSA_ERROR("Failed to register PDM Device Drivers, error: %d.\n", status);
-        return status;
+        goto err_class_unregister;
     }
 
     OSA_DEBUG("Initialize PDM Device OK.\n");
     return 0;
+
+err_class_unregister:
+    class_unregister(&pdm_device_class);
+    return status;
 }
 
 /**
- * pdm_device_exit - 卸载PDM设备
+ * @brief 卸载 PDM 设备
+ *
+ * 该函数用于卸载 PDM 设备，包括注销设备驱动和设备类。
+ * 它会执行以下操作：
+ * - 注销 PDM 设备驱动
+ * - 注销 PDM 设备类
  */
 void pdm_device_exit(void)
 {

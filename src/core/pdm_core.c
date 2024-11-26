@@ -266,6 +266,9 @@ static void pdm_debug_fs_exit(void)
  * @brief 初始化 PDM 总线
  *
  * 该函数用于注册 PDM 总线类型，使其可以在内核中使用。
+ * 它会执行以下操作：
+ * - 注册 PDM 总线类型
+ * - 初始化 PDM 总线实例的相关数据结构
  *
  * @return 成功返回 0，失败返回负错误码
  */
@@ -287,10 +290,15 @@ static int pdm_bus_init(void)
     return 0;
 }
 
+
 /**
  * @brief 卸载 PDM 总线
  *
  * 该函数用于注销 PDM 总线类型，使其不再在内核中使用。
+ * 它会执行以下操作：
+ * - 注销 PDM 总线类型
+ *
+ * @note 在调用此函数之前，请确保所有相关的设备已经注销。
  */
 static void pdm_bus_exit(void)
 {
