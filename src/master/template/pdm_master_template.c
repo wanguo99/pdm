@@ -60,6 +60,8 @@ static void pdm_master_template_remove(struct pdm_device *pdmdev)
 {
     int status;
 
+    pdm_device_devdata_free(pdmdev);
+
     status = pdm_master_client_delete(template_master, pdmdev);
     if (status) {
         OSA_ERROR("Template Master Delete Device Failed, status=%d.\n", status);
