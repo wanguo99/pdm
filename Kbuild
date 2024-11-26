@@ -19,6 +19,5 @@ $(MODULE_NAME)-objs += src/master/template/pdm_master_template.o
 ccflags-y += 	-I$(src)/include
 
 # 指定额外的头文件和符号表文件
-# OSA_DIR := $(src)/../osa
+# OSA_DIR ?= $(src)/../osa
 # KBUILD_EXTRA_SYMBOLS := $(OSA_DIR)/Module.symvers
-# ccflags-y += 	-I$(OSA_DIR)/include

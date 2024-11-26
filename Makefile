@@ -15,11 +15,6 @@ MODULE_INSTALL_DIR := $(DESTDIR)/lib/modules/$(KERNEL_VERSION)
 # 符号表
 SYMBOL_INSTALL_DIR := $(DESTDIR)/lib/modules/$(KERNEL_VERSION)/symvers/$(MODULE_NAME)
 
-# 依赖的模块符号表
-TARGET_ROOT ?= "/"
-ROOT_SYMBOL_DIR := $(TARGET_ROOT)/lib/$(KERNEL_VERSION)/symvers
-# EXTRA_SYMBOLS ?= $(ROOT_SYMBOL_DIR)/osa/Module.symvers
-
 # 日志打印开关, 默认只打印文件名和行号，函数名需要手动开启
 DEBUG_OSA_LOG_ENABLE ?= 1
 DEBUG_OSA_LOG_WITH_FILE_LINE ?= 1
