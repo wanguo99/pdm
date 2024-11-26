@@ -88,10 +88,9 @@ void pdm_device_devdata_set(struct pdm_device *pdmdev, void *data);
  *
  * 该函数用于分配新的 PDM 设备结构体。
  *
- * @param data_size 私有数据区域的大小
  * @return 分配的 PDM 设备结构体指针，失败返回 NULL
  */
-struct pdm_device *pdm_device_alloc(unsigned int data_size);
+struct pdm_device *pdm_device_alloc(void);
 
 /**
  * @brief 释放 PDM 设备结构体

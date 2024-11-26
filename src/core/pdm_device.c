@@ -258,19 +258,13 @@ struct device *pdm_device_to_physical_dev(struct pdm_device *pdmdev)
  */
 static void pdm_device_release(struct device *dev)
 {
-    struct pdm_device *pdmdev = NULL;
-
-    if (!dev) {
-        OSA_ERROR("dev is null\n");
-        return;
+    struct pdm_device *pdmdev = dev_to_pdm_device(dev);
+    if (pdmdev) {
+        OSA_DEBUG("PDM device released: %p\n", pdmdev);
+        kfree(pdmdev);
+    }else {
+        OSA_ERROR("pdmdev is null\n");
     }
-
-    pdmdev = dev_to_pdm_device(dev);
-    if (pdm_device_verify(pdmdev)) {
-        return;
-    }
-
-    kfree(pdmdev);
 }
 
 /**
@@ -318,12 +312,11 @@ void pdm_device_devdata_set(struct pdm_device *pdmdev, void *data)
  * @param data_size 私有数据区域的大小
  * @return 成功返回分配的 PDM 设备结构体指针，失败返回 NULL
  */
-struct pdm_device *pdm_device_alloc(unsigned int data_size)
+struct pdm_device *pdm_device_alloc(void)
 {
     struct pdm_device *pdmdev;
-    size_t pdmdev_size = sizeof(struct pdm_device);
 
-    pdmdev = kzalloc(pdmdev_size + data_size, GFP_KERNEL);
+    pdmdev = kzalloc(sizeof(struct pdm_device), GFP_KERNEL);
     if (!pdmdev) {
         OSA_ERROR("Failed to allocate memory for pdm device.\n");
         return NULL;
@@ -335,9 +328,22 @@ struct pdm_device *pdm_device_alloc(unsigned int data_size)
     pdmdev->dev.class = &pdm_device_class;
     pdmdev->dev.release = pdm_device_release;
 
-    pdm_device_devdata_set(pdmdev, (void *)pdmdev + pdmdev_size);
-
     return pdmdev;
+}
+
+/**
+ * @brief 释放 PDM 设备结构体
+ *
+ * 该函数用于释放 PDM 设备结构体及其相关资源。
+ * 通过调用 `put_device` 函数来减少设备引用计数，当引用计数为零时，设备将被自动释放。
+ *
+ * @param pdmdev PDM 设备结构体指针
+ */
+void pdm_device_free(struct pdm_device *pdmdev)
+{
+    if (pdmdev) {
+        put_device(&pdmdev->dev);
+    }
 }
 
 /**
@@ -408,23 +414,6 @@ struct pdm_device *pdm_device_match_physical_info(struct pdm_device_physical_inf
 
     kfree(check_pdmdev);
     return target_pdmdev_ptr;
-}
-
-/**
- * @brief 释放 PDM 设备结构体
- *
- * 该函数用于释放 PDM 设备结构体及其相关资源。
- * 通过调用 `put_device` 函数来减少设备引用计数，当引用计数为零时，设备将被自动释放。
- *
- * @param pdmdev PDM 设备结构体指针
- */
-void pdm_device_free(struct pdm_device *pdmdev)
-{
-    if (pdm_device_verify(pdmdev)) {
-        return;
-    }
-
-    put_device(&pdmdev->dev);
 }
 
 

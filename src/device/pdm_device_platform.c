@@ -5,6 +5,9 @@ struct pdm_device_platform_data {
     PDM_DEVICE_INTERFACE_TYPE type;
 };
 
+static struct pdm_device_platform_data pdm_device_platform_data_plat = {
+    .type = PDM_DEVICE_INTERFACE_TYPE_PLATFORM,
+};
 static struct pdm_device_platform_data pdm_device_platform_data_gpio = {
     .type = PDM_DEVICE_INTERFACE_TYPE_GPIO,
 };
@@ -29,7 +32,7 @@ static int pdm_device_platform_probe(struct platform_device *pdev) {
     int status;
     struct pdm_device_platform_data *pdata = dev_get_platdata(&pdev->dev);
 
-    pdmdev = pdm_device_alloc(sizeof(void*));
+    pdmdev = pdm_device_alloc();
     if (!pdmdev) {
         OSA_ERROR("Failed to allocate pdm_device.\n");
         return -ENOMEM;
@@ -40,8 +43,8 @@ static int pdm_device_platform_probe(struct platform_device *pdev) {
         pr_err("Failed to read compatible property: %d\n", status);
         goto free_pdmdev;
     }
-
     strcpy(pdmdev->compatible, compatible);
+
     pdmdev->physical_info.type = pdata ? pdata->type : PDM_DEVICE_INTERFACE_TYPE_UNDEFINED;
     pdmdev->physical_info.device = pdev;
     status = pdm_device_register(pdmdev);
@@ -86,7 +89,7 @@ static int pdm_device_platform_remove(struct platform_device *pdev) {
 }
 
 static const struct platform_device_id pdm_device_platform_ids[] = {
-    { .name = "pdm-device-platform", },
+    { .name = "pdm-device-platform", .driver_data = (kernel_ulong_t)&pdm_device_platform_data_plat, },
     { .name = "pdm-device-gpio", .driver_data = (kernel_ulong_t)&pdm_device_platform_data_gpio, },
     { .name = "pdm-device-pwm", .driver_data = (kernel_ulong_t)&pdm_device_platform_data_pwm, },
     { .name = "pdm-device-tty", .driver_data = (kernel_ulong_t)&pdm_device_platform_data_tty, },

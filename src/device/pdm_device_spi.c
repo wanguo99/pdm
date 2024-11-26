@@ -15,7 +15,7 @@ static int pdm_device_spi_probe(struct spi_device *spi) {
     const char *compatible;
     int status;
 
-    pdmdev = pdm_device_alloc(sizeof(void*));
+    pdmdev = pdm_device_alloc();
     if (!pdmdev) {
         OSA_ERROR("Failed to allocate pdm_device.\n");
         return -ENOMEM;
@@ -26,8 +26,8 @@ static int pdm_device_spi_probe(struct spi_device *spi) {
         pr_err("Failed to read compatible property: %d\n", status);
         goto free_pdmdev;
     }
-
     strcpy(pdmdev->compatible, compatible);
+
     pdmdev->physical_info.type = PDM_DEVICE_INTERFACE_TYPE_SPI;
     pdmdev->physical_info.device = spi;
     status = pdm_device_register(pdmdev);
@@ -86,9 +86,9 @@ static struct spi_driver pdm_device_spi_driver = {
 };
 
 /**
- * @brief 初始化 SPI 驱动
+ * @brief 初始化 PDM 设备 SPI 驱动
  *
- * 该函数用于初始化 SPI 驱动，注册 SPI 驱动到系统。
+ * 该函数用于初始化 PDM 设备 SPI 驱动，注册 PDM 设备 SPI 驱动到系统。
  *
  * @return 成功返回 0，失败返回负错误码
  */
@@ -105,9 +105,9 @@ int pdm_device_spi_driver_init(void) {
 }
 
 /**
- * @brief 退出 SPI 驱动
+ * @brief 退出 PDM 设备 SPI 驱动
  *
- * 该函数用于退出 SPI 驱动，注销 SPI 驱动。
+ * 该函数用于退出 PDM 设备 SPI 驱动，注销 PDM 设备 SPI 驱动。
  */
 void pdm_device_spi_driver_exit(void) {
     spi_unregister_driver(&pdm_device_spi_driver);

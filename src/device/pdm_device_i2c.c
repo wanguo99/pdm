@@ -27,7 +27,7 @@ static int pdm_device_i2c_real_probe(struct i2c_client *client, const struct i2c
     const char *compatible;
     int status;
 
-    pdmdev = pdm_device_alloc(sizeof(void*));
+    pdmdev = pdm_device_alloc();
     if (!pdmdev) {
         OSA_ERROR("Failed to allocate pdm_device.\n");
         return -ENOMEM;
@@ -38,8 +38,8 @@ static int pdm_device_i2c_real_probe(struct i2c_client *client, const struct i2c
         pr_err("Failed to read compatible property: %d\n", status);
         goto free_pdmdev;
     }
-
     strcpy(pdmdev->compatible, compatible);
+
     pdmdev->physical_info.type = PDM_DEVICE_INTERFACE_TYPE_I2C;
     pdmdev->physical_info.device = client;
     status = pdm_device_register(pdmdev);
