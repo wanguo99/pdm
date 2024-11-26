@@ -124,7 +124,7 @@ int pdm_master_template_driver_init(void)
         goto err_master_free;
     }
 
-    status = pdm_register_driver(THIS_MODULE, &pdm_master_template_driver);
+    status = pdm_bus_register_driver(THIS_MODULE, &pdm_master_template_driver);
     if (status) {
         OSA_ERROR("Failed to register Template PDM Master Driver, status=%d.\n", status);
         goto err_master_unregister;
@@ -147,7 +147,7 @@ err_master_free:
  */
 void pdm_master_template_driver_exit(void)
 {
-    pdm_unregister_driver(&pdm_master_template_driver);
+    pdm_bus_unregister_driver(&pdm_master_template_driver);
     pdm_master_unregister(template_master);
     pdm_master_free(template_master);
     OSA_INFO("Template PDM Master Driver Exited.\n");

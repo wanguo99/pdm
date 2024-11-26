@@ -4,18 +4,98 @@
 
 #include "pdm.h"
 
+struct pdm_bus_private_data pdm_bus_priv_data;
 
 /**
- * @brief 调试文件系统目录
+ * @brief 遍历 pdm_bus_type 总线上的所有设备
  *
- * 该指针用于存储 PDM 调试文件系统的目录。
+ * 该函数用于遍历 `pdm_bus_type` 总线上的所有设备，并对每个设备调用指定的回调函数。
+ *
+ * @param data 传递给回调函数的数据
+ * @param fn 回调函数指针，用于处理每个设备
+ * @return 返回遍历结果，0 表示成功，非零值表示失败
  */
-static struct dentry *pdm_debugfs_dir;
-static struct proc_dir_entry *pdm_procfs_dir;
+int pdm_bus_for_each_dev(void *data, int (*fn)(struct device *dev, void *data))
+{
+    return bus_for_each_dev(&pdm_bus_type, NULL, data, fn);
+}
 
-/*                                                                              */
-/*                            pdm_bus_type                                      */
-/*                                                                              */
+/**
+ * @brief 为PDM设备分配ID
+ * @master: PDM主控制器
+ * @pdmdev: PDM设备
+ *
+ * 返回值:
+ * 0 - 成功
+ * -EINVAL - 参数无效
+ * -EBUSY - 没有可用的ID
+ * 其他负值 - 其他错误码
+ */
+int pdm_bus_device_id_alloc(struct pdm_device *pdmdev)
+{
+    int id;
+
+    if (!pdmdev) {
+        OSA_ERROR("Invalid input parameters (pdmdev: %p).\n", pdmdev);
+        return -EINVAL;
+    }
+
+    mutex_lock(&pdm_bus_priv_data.idr_mutex_lock);
+    id = idr_alloc(&pdm_bus_priv_data.device_idr, pdmdev, PDM_BUS_DEVICE_IDR_START, PDM_BUS_DEVICE_IDR_END, GFP_KERNEL);
+    mutex_unlock(&pdm_bus_priv_data.idr_mutex_lock);
+    if (id < 0) {
+        if (id == -ENOSPC) {
+            OSA_ERROR("No available IDs in the range.\n");
+            return -EBUSY;
+        } else {
+            OSA_ERROR("Failed to allocate ID: %d.\n", id);
+            return id;
+        }
+    }
+
+    pdmdev->id = id;
+    return 0;
+}
+
+/**
+ * @brief 释放PDM设备的ID
+ * @master: PDM主控制器
+ * @pdmdev: PDM设备
+ */
+void pdm_bus_device_id_free(struct pdm_device *pdmdev)
+{
+    if (!pdmdev) {
+        OSA_ERROR("Invalid input parameters (pdmdev: %p).\n", pdmdev);
+        return;
+    }
+
+    mutex_lock(&pdm_bus_priv_data.idr_mutex_lock);
+    idr_remove(&pdm_bus_priv_data.device_idr, pdmdev->id);
+    mutex_unlock(&pdm_bus_priv_data.idr_mutex_lock);
+}
+
+
+int pdm_bus_register_driver(struct module *owner, struct pdm_driver *driver)
+{
+    int status;
+
+    driver->driver.owner = owner;
+    driver->driver.bus = &pdm_bus_type;
+    status = driver_register(&driver->driver);
+    if (status) {
+        OSA_ERROR("Failed to register driver [%s], error %d\n", driver->driver.name, status);
+        return status;
+    }
+
+    OSA_DEBUG("Driver [%s] registered\n", driver->driver.name);
+    return 0;
+}
+
+void pdm_bus_unregister_driver(struct pdm_driver *driver)
+{
+    if (driver)
+        driver_unregister(&driver->driver);
+}
 
 /**
  * @brief 匹配 PDM 设备和驱动
@@ -94,75 +174,6 @@ static void pdm_bus_device_remove(struct device *dev)
     }
 }
 
-
-/**
- * @brief 遍历 pdm_bus_type 总线上的所有设备
- *
- * 该函数用于遍历 `pdm_bus_type` 总线上的所有设备，并对每个设备调用指定的回调函数。
- *
- * @param data 传递给回调函数的数据
- * @param fn 回调函数指针，用于处理每个设备
- * @return 返回遍历结果，0 表示成功，非零值表示失败
- */
-int pdm_bus_for_each_dev(void *data, int (*fn)(struct device *dev, void *data))
-{
-    return bus_for_each_dev(&pdm_bus_type, NULL, data, fn);
-}
-
-/**
- * @brief 为PDM设备分配ID
- * @master: PDM主控制器
- * @pdmdev: PDM设备
- *
- * 返回值:
- * 0 - 成功
- * -EINVAL - 参数无效
- * -EBUSY - 没有可用的ID
- * 其他负值 - 其他错误码
- */
-int pdm_bus_device_id_alloc(struct pdm_device *pdmdev)
-{
-    int id;
-
-    if (!pdmdev) {
-        OSA_ERROR("Invalid input parameters (pdmdev: %p).\n", pdmdev);
-        return -EINVAL;
-    }
-
-    mutex_lock(&pdm_bus_instance.idr_mutex_lock);
-    id = idr_alloc(&pdm_bus_instance.device_idr, pdmdev, PDM_BUS_DEVICE_IDR_START, PDM_BUS_DEVICE_IDR_END, GFP_KERNEL);
-    mutex_unlock(&pdm_bus_instance.idr_mutex_lock);
-    if (id < 0) {
-        if (id == -ENOSPC) {
-            OSA_ERROR("No available IDs in the range.\n");
-            return -EBUSY;
-        } else {
-            OSA_ERROR("Failed to allocate ID: %d.\n", id);
-            return id;
-        }
-    }
-
-    pdmdev->id = id;
-    return 0;
-}
-
-/**
- * @brief 释放PDM设备的ID
- * @master: PDM主控制器
- * @pdmdev: PDM设备
- */
-void pdm_bus_device_id_free(struct pdm_device *pdmdev)
-{
-    if (!pdmdev) {
-        OSA_ERROR("Invalid input parameters (pdmdev: %p).\n", pdmdev);
-        return;
-    }
-
-    mutex_lock(&pdm_bus_instance.idr_mutex_lock);
-    idr_remove(&pdm_bus_instance.device_idr, pdmdev->id);
-    mutex_unlock(&pdm_bus_instance.idr_mutex_lock);
-}
-
 /**
  * @brief PDM 总线类型
  *
@@ -179,34 +190,20 @@ const struct bus_type pdm_bus_type = {
     .remove = pdm_bus_device_remove,
 };
 
-int pdm_register_driver(struct module *owner, struct pdm_driver *driver)
-{
-    int status;
-
-    driver->driver.owner = owner;
-    driver->driver.bus = &pdm_bus_type;
-    status = driver_register(&driver->driver);
-    if (status) {
-        OSA_ERROR("Failed to register driver [%s], error %d\n", driver->driver.name, status);
-        return status;
-    }
-
-    OSA_DEBUG("Driver [%s] registered\n", driver->driver.name);
-    return 0;
-}
-
-void pdm_unregister_driver(struct pdm_driver *driver)
-{
-    if (driver)
-        driver_unregister(&driver->driver);
-}
+/**
+ * @brief 调试文件系统目录
+ *
+ * 该指针用于存储 PDM 调试文件系统的目录。
+ */
+static struct dentry *pdm_debugfs_dir;
+static struct proc_dir_entry *pdm_procfs_dir;
 
 /**
  * @brief 初始化 PDM 调试文件系统
  *
  * 该函数用于在 debugfs 和 procfs 中创建 PDM 相关的目录。
  */
-static int pdm_debug_fs_init(void)
+static int pdm_bus_debug_fs_init(void)
 {
     pdm_debugfs_dir = debugfs_create_dir(PDM_DEBUG_FS_DIR_NAME, NULL);
     if (IS_ERR(pdm_debugfs_dir)) {
@@ -235,7 +232,7 @@ static int pdm_debug_fs_init(void)
  *
  * 该函数用于删除在 debugfs 和 procfs 中创建的 PDM 相关目录。
  */
-static void pdm_debug_fs_exit(void)
+static void pdm_bus_debug_fs_exit(void)
 {
     if (pdm_debugfs_dir) {
         debugfs_remove_recursive(pdm_debugfs_dir);
@@ -266,10 +263,12 @@ static int pdm_bus_init(void)
         return status;
     }
 
-    memset(&pdm_bus_instance, 0, sizeof(struct pdm_bus));
+    memset(&pdm_bus_priv_data, 0, sizeof(struct pdm_bus_private_data));
 
-    idr_init(&pdm_bus_instance.device_idr);
-    mutex_init(&pdm_bus_instance.idr_mutex_lock);
+    idr_init(&pdm_bus_priv_data.device_idr);
+    mutex_init(&pdm_bus_priv_data.idr_mutex_lock);
+
+    pdm_bus_debug_fs_init();
 
     OSA_DEBUG("PDM bus initialized\n");
     return 0;
@@ -287,6 +286,7 @@ static int pdm_bus_init(void)
  */
 static void pdm_bus_exit(void)
 {
+    pdm_bus_debug_fs_exit();
     bus_unregister(&pdm_bus_type);
     OSA_DEBUG("PDM bus unregistered\n");
 }
@@ -294,7 +294,6 @@ static void pdm_bus_exit(void)
 /*                                                                              */
 /*                              module_init                                     */
 /*                                                                              */
-struct pdm_bus pdm_bus_instance;
 
 /**
  * @brief 初始化 PDM 模块
@@ -327,8 +326,6 @@ static int __init pdm_init(void)
         goto err_device_exit;
     }
 
-    pdm_debug_fs_init();
-
     OSA_DEBUG("PDM initialized successfully\n");
     return 0;
 
@@ -347,7 +344,6 @@ err_bus_exit:
  */
 static void __exit pdm_exit(void)
 {
-    pdm_debug_fs_exit();
     pdm_master_exit();
     pdm_device_exit();
     pdm_bus_exit();

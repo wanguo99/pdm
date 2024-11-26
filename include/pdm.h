@@ -22,32 +22,25 @@
  */
 
 /**
- * @brief PDM 设备类型
- *
- * 该变量定义了 PDM 设备的类型。
+ * @brief PDM 总线上的设备的ID范围
  */
-extern const struct device_type pdm_device_type;
+#define PDM_BUS_DEVICE_IDR_START        (0)
+#define PDM_BUS_DEVICE_IDR_END          (1024)
 
 /**
- * @brief PDM 主控制器的ID范围
+ * @brief DebugFS 和 ProcFS 目录名称
  */
-#define PDM_BUS_DEVICE_IDR_START 0
-#define PDM_BUS_DEVICE_IDR_END 1024
+#define PDM_DEBUG_FS_DIR_NAME           "pdm"       /**< debugfs和procfs目录名 */
 
 /**
  * @brief PDM BUS结构体
  *
  * 保存PDM BUS私有数据。
  */
-struct pdm_bus {
+struct pdm_bus_private_data {
     struct idr device_idr;               /**< 用于给子设备分配ID的IDR */
     struct mutex idr_mutex_lock;         /**< 用于保护IDR的互斥锁 */
 };
-
-/**
- * @brief DebugFS 和 ProcFS 目录名称
- */
-#define PDM_DEBUG_FS_DIR_NAME       "pdm"       /**< debugfs和procfs目录名 */
 
 /**
  * @brief PDM 设备ID结构体
@@ -117,16 +110,6 @@ void pdm_bus_device_id_free(struct pdm_device *pdmdev);
 int pdm_bus_for_each_dev(void *data, int (*fn)(struct device *dev, void *data));
 
 /**
- * @brief 查找与给定物理信息匹配的 PDM 设备
- *
- * 该函数用于查找与给定物理信息匹配的 PDM 设备。
- *
- * @param physical_info 要匹配的物理设备信息
- * @return 返回匹配的设备指针，如果没有找到则返回 NULL
- */
-struct pdm_device *pdm_bus_physical_info_match_pdm_device(struct pdm_device_physical_info *physical_info);
-
-/**
  * @brief 注册 PDM 驱动
  *
  * 该函数用于注册 PDM 驱动。
@@ -135,7 +118,7 @@ struct pdm_device *pdm_bus_physical_info_match_pdm_device(struct pdm_device_phys
  * @param driver 驱动结构体指针
  * @return 成功返回 0，失败返回负错误码
  */
-int pdm_register_driver(struct module *owner, struct pdm_driver *driver);
+int pdm_bus_register_driver(struct module *owner, struct pdm_driver *driver);
 
 /**
  * @brief 注销 PDM 驱动
@@ -144,7 +127,7 @@ int pdm_register_driver(struct module *owner, struct pdm_driver *driver);
  *
  * @param driver 驱动结构体指针
  */
-void pdm_unregister_driver(struct pdm_driver *driver);
+void pdm_bus_unregister_driver(struct pdm_driver *driver);
 
 /**
  * @brief 将 driver 转换为 pdm_driver
@@ -156,6 +139,7 @@ void pdm_unregister_driver(struct pdm_driver *driver);
  */
 #define drv_to_pdm_driver(__drv) container_of(__drv, struct pdm_driver, driver)
 
+
 /**
  * @brief PDM 总线类型
  */
@@ -164,7 +148,5 @@ extern struct bus_type pdm_bus_type;
 #else
 extern const struct bus_type pdm_bus_type;
 #endif
-
-extern struct pdm_bus pdm_bus_instance;
 
 #endif /* _PDM_H_ */

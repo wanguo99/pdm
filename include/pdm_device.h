@@ -5,6 +5,14 @@
 #include <linux/i3c/master.h>
 #include <linux/spi/spi.h>
 
+
+/**
+ * @brief PDM 设备类型
+ *
+ * 该变量定义了 PDM 设备的类型。
+ */
+extern const struct device_type pdm_device_type;
+
 #define PDM_DEVICE_NAME_SIZE        (64)        // 定义设备名称的最大长度
 
 typedef enum tagPDM_DEVICE_INTERFACE_TYPE
