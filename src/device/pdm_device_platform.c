@@ -29,7 +29,6 @@ static struct pdm_device_platform_data pdm_device_platform_data_tty = {
 static int pdm_device_platform_probe(struct platform_device *pdev) {
     struct pdm_device_physical_info physical_info;
     struct pdm_device *pdmdev;
-    const char *compatible;
     int status;
     struct pdm_device_platform_data *pdata = dev_get_platdata(&pdev->dev);
 
@@ -39,15 +38,9 @@ static int pdm_device_platform_probe(struct platform_device *pdev) {
         return -ENOMEM;
     }
 
-    status = of_property_read_string(pdev->dev.of_node, "compatible", &compatible);
-    if (status) {
-        pr_err("Failed to read compatible property: %d\n", status);
-        goto free_pdmdev;
-    }
-
-    strcpy(physical_info.compatible, compatible);
     physical_info.type = pdata ? pdata->type : PDM_DEVICE_INTERFACE_TYPE_UNDEFINED;
     physical_info.device = pdev;
+    physical_info.of_node = pdev->dev.of_node;
     status = pdm_device_physical_info_set(pdmdev, &physical_info);
     if (status) {
         OSA_ERROR("Failed to set pdm device physical info, status=%d.\n", status);

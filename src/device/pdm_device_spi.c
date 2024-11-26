@@ -13,7 +13,6 @@
 static int pdm_device_spi_probe(struct spi_device *spi) {
     struct pdm_device_physical_info physical_info;
     struct pdm_device *pdmdev;
-    const char *compatible;
     int status;
 
     pdmdev = pdm_device_alloc();
@@ -22,15 +21,9 @@ static int pdm_device_spi_probe(struct spi_device *spi) {
         return -ENOMEM;
     }
 
-    status = of_property_read_string(spi->dev.of_node, "compatible", &compatible);
-    if (status) {
-        pr_err("Failed to read compatible property: %d\n", status);
-        goto free_pdmdev;
-    }
-
-    strcpy(physical_info.compatible, compatible);
     physical_info.type = PDM_DEVICE_INTERFACE_TYPE_SPI;
     physical_info.device = spi;
+    physical_info.of_node = spi->dev.of_node;
     status = pdm_device_physical_info_set(pdmdev, &physical_info);
     if (status) {
         OSA_ERROR("Failed to set pdm device physical info, status=%d.\n", status);

@@ -45,19 +45,19 @@ static int pdm_device_verify(struct pdm_device *pdmdev)
         return -EINVAL;
     }
 
-    if (0 == strlen(pdmdev->physical_info.compatible)) {
-        OSA_ERROR("compatible is invalid\n");
-        return -EINVAL;
-    }
-
     if ((pdmdev->physical_info.type <= PDM_DEVICE_INTERFACE_TYPE_UNDEFINED)
         || (pdmdev->physical_info.type >= PDM_DEVICE_INTERFACE_TYPE_INVALID)) {
-        OSA_ERROR("interface is invalid\n");
+        OSA_ERROR("physical_info type is invalid\n");
         return -EINVAL;
     }
 
     if (!pdmdev->physical_info.device) {
-        OSA_ERROR("physical_device is invalid\n");
+        OSA_ERROR("physical_info device is invalid\n");
+        return -EINVAL;
+    }
+
+    if (!pdmdev->physical_info.of_node) {
+        OSA_ERROR("physical_info of_node is invalid\n");
         return -EINVAL;
     }
 
@@ -91,9 +91,8 @@ static int pdm_device_uevent(const struct device *dev, struct kobj_uevent_env *e
 
     OSA_DEBUG("Generating MODALIAS for device %s\n", dev_name(dev));
 
-    return add_uevent_var(env, "MODALIAS=pdm:pdm_master_%s:%s-%04X",
-                                                pdmdev->master->name,
-                                                pdmdev->physical_info.compatible, pdmdev->id);
+    return add_uevent_var(env, "MODALIAS=pdm:pdm_master_%s-%04X",
+                                                pdmdev->master->name, pdmdev->id);
 }
 
 /**
@@ -149,8 +148,9 @@ static ssize_t compatible_show(struct device *dev, struct device_attribute *da, 
     }
 
     OSA_INFO("Showing compatible string for device %s\n", dev_name(dev));
-
-    return sysfs_emit(buf, "%s\n", pdmdev->physical_info.compatible);
+    return 0;
+    // TODO: 后续增加compatible解析
+    // return sysfs_emit(buf, "%s\n", pdmdev->physical_info.compatible);
 }
 static DEVICE_ATTR_RO(compatible);
 
@@ -474,6 +474,8 @@ struct pdm_device *pdm_device_physical_info_match(struct pdm_device_physical_inf
  *
  * 该函数用于设置 PDM 设备的物理设备信息。
  *
+ * // TODO: 后续增加对of_node信息的解析
+ *
  * @param physical_info 要设置的物理设备信息
  * @return 成功返回 0，失败返回负错误码
  */
@@ -487,7 +489,7 @@ int pdm_device_physical_info_set(struct pdm_device *pdmdev, struct pdm_device_ph
     memset(&pdmdev->physical_info, 0, sizeof(struct pdm_device_physical_info));
     pdmdev->physical_info.type = physical_info->type;
     pdmdev->physical_info.device = physical_info->device;
-    memcpy(pdmdev->physical_info.compatible, physical_info->compatible, PDM_DEVICE_NAME_SIZE);
+    pdmdev->physical_info.of_node = physical_info->of_node;
 
     return 0;
 }
@@ -524,7 +526,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
         goto err_free_id;
     }
 
-    dev_set_name(&pdmdev->dev, "%s-%d", pdmdev->physical_info.compatible, pdmdev->id);
+    dev_set_name(&pdmdev->dev, "pdmdev-%d", pdmdev->id);
     status = device_add(&pdmdev->dev);
     if (status < 0) {
         OSA_ERROR("Can't add %s, status %d\n", dev_name(&pdmdev->dev), status);

@@ -26,7 +26,7 @@ typedef enum tagPDM_DEVICE_INTERFACE_TYPE
 struct pdm_device_physical_info {
     int type;                              /**< 设备物理接口类型, PDM_DEVICE_INTERFACE_TYPE */
     void *device;                          /**< 指向实际的设备结构体 */
-    char compatible[PDM_DEVICE_NAME_SIZE]; /**< 设备兼容字符串 */
+    struct device_node	*of_node;          /**< 设备树节点信息 */
 };
 
 /**
