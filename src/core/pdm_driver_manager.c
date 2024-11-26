@@ -49,7 +49,7 @@ static void pdm_subdriver_unregister_single(struct pdm_subdriver *driver) {
 void pdm_subdriver_unregister(struct list_head *list) {
     struct pdm_subdriver *driver, *tmp;
 
-    if (!is_list_valid(list)) {
+    if (!list) {
         OSA_ERROR("Invalid or uninitialized list pointer.\n");
         return;
     }
@@ -71,7 +71,7 @@ void pdm_subdriver_unregister(struct list_head *list) {
 int pdm_subdriver_register(struct pdm_subdriver_register_params *params) {
     int i, status = 0;
 
-    if (!params || !params->drivers || params->count <= 0 || !is_list_valid(params->list)) {
+    if (!params || !params->drivers || params->count <= 0 || !params->list) {
         OSA_ERROR("Invalid input parameters.\n");
         return -EINVAL;
     }
