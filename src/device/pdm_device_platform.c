@@ -69,7 +69,7 @@ free_pdmdev:
  * @param pdev 指向 PLATFORM 设备的指针
  * @return 成功返回 0，失败返回负错误码
  */
-static int pdm_device_platform_remove(struct platform_device *pdev) {
+static int pdm_device_platform_real_remove(struct platform_device *pdev) {
     struct pdm_device_physical_info physical_info;
     struct pdm_device *pdmdev;
 
@@ -86,6 +86,23 @@ static int pdm_device_platform_remove(struct platform_device *pdev) {
     OSA_DEBUG("PDM Device PLATFORM Device Removed.\n");
     return 0;
 }
+
+/**
+ * @brief 兼容旧内核版本的 PLATFORM 移除函数
+ *
+ * 该函数用于兼容 Linux 内核版本低于 6.10.0 的情况。
+ *
+ * @param pdev PLATFORM 设备指针
+ */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 10, 0)
+static int pdm_device_platform_remove(struct platform_device *pdev) {
+    return pdm_device_platform_real_remove(pdev);
+}
+#else
+static void pdm_device_platform_remove(struct platform_device *pdev) {
+    (void)pdm_device_platform_real_remove(pdev);
+}
+#endif
 
 static const struct platform_device_id pdm_device_platform_ids[] = {
     { .name = "pdm-device-platform", .driver_data = (kernel_ulong_t)&pdm_device_platform_data_plat, },
