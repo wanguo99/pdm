@@ -111,13 +111,14 @@ static int pdm_bus_device_match(struct device *dev, struct device_driver *drv) {
 #else
 static int pdm_bus_device_match(struct device *dev, const struct device_driver *drv) {
 #endif
-
-    if (dev->type != &pdm_device_type)
+    if (dev->type != &pdm_device_type) {
         return 0;
+    }
 
     /* Attempt an OF style match */
-    if (of_driver_match_device(dev, drv))
+    if (of_driver_match_device(dev, drv)) {
         return 1;
+    }
 
     return 0;
 }

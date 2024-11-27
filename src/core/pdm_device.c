@@ -541,6 +541,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
         OSA_ERROR("Can't add %s, status %d\n", dev_name(&pdmdev->dev), status);
         goto err_free_id;
     }
+    pdmdev->dev.of_node = pdmdev->physical_info.of_node;
 
     OSA_DEBUG("Device %s registered.\n", dev_name(&pdmdev->dev));
     return 0;
