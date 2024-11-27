@@ -187,6 +187,15 @@ static long pdm_master_fops_default_ioctl(struct file *filp, unsigned int cmd, u
     return -ENOTSUPP;
 }
 
+static struct file_operations pdm_master_default_fops = {
+    .owner = THIS_MODULE,
+    .open = pdm_master_fops_default_open,
+    .read = pdm_master_fops_default_read,
+    .write = pdm_master_fops_default_write,
+    .unlocked_ioctl = pdm_master_fops_default_ioctl,
+    .release = pdm_master_fops_default_release,
+};
+
 /**
  * @brief 显示所有已注册的 PDM 设备列表
  *
@@ -288,13 +297,8 @@ static int pdm_master_cdev_add(struct pdm_master *master)
         goto err_out;
     }
 
-    master->fops.open = pdm_master_fops_default_open;
-    master->fops.release = pdm_master_fops_default_release;
-    master->fops.read = pdm_master_fops_default_read;
-    master->fops.write = pdm_master_fops_default_write;
-    master->fops.unlocked_ioctl = pdm_master_fops_default_ioctl;
-
-    cdev_init(&master->cdev, &master->fops);
+    master->fops = &pdm_master_default_fops;
+    cdev_init(&master->cdev, master->fops);
     master->cdev.owner = THIS_MODULE;
     status = cdev_add(&master->cdev, master->devno, 1);
     if (status < 0) {
