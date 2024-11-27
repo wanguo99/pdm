@@ -14,6 +14,7 @@ $(MODULE_NAME)-objs += 	src/device/pdm_device_i2c.o \
 
 $(MODULE_NAME)-objs += src/master/template/pdm_master_template.o 
 
+$(MODULE_NAME)-objs += src/master/led/pdm_master_led.o 
 
 # 添加头文件路径
 ccflags-y += 	-I$(src)/include \

@@ -1,7 +1,7 @@
 #include <linux/spi/spi.h>
 
 #include "pdm.h"
-#include "master/pdm_master_template.h"
+#include "pdm_master_template.h"
 
 static struct pdm_master *template_master = NULL;
 
@@ -16,7 +16,7 @@ static struct pdm_master *template_master = NULL;
 static int pdm_master_template_probe(struct pdm_device *pdmdev)
 {
     int status;
-    struct pdm_template_device_priv *data;
+    struct pdm_device_template_priv *data;
 
     status = pdm_master_client_add(template_master, pdmdev);
     if (status) {
@@ -24,13 +24,13 @@ static int pdm_master_template_probe(struct pdm_device *pdmdev)
         return status;
     }
 
-    status = pdm_device_devdata_alloc(pdmdev, sizeof(struct pdm_template_device_priv));
+    status = pdm_device_devdata_alloc(pdmdev, sizeof(struct pdm_device_template_priv));
     if (status) {
         OSA_ERROR("Alloc Device Private Data Failed, status=%d.\n", status);
         goto err_client_del;
     }
 
-    data = (struct pdm_template_device_priv *)pdm_device_devdata_get(pdmdev);
+    data = (struct pdm_device_template_priv *)pdm_device_devdata_get(pdmdev);
     if (!data)
     {
         OSA_ERROR("Get Device Private Data Failed, status=%d.\n", status);
@@ -111,7 +111,7 @@ int pdm_master_template_driver_init(void)
 {
     int status;
 
-    template_master = pdm_master_alloc(sizeof(void*));
+    template_master = pdm_master_alloc(sizeof(struct pdm_master_template_priv));
     if (!template_master) {
         OSA_ERROR("Failed to allocate pdm_master.\n");
         return -ENOMEM;
