@@ -216,14 +216,6 @@ const struct device_type pdm_device_type = {
     .uevent = pdm_device_uevent,
 };
 
-
-/**
- * @brief PDM 设备类
- */
-static struct class pdm_device_class = {
-    .name = "pdm_device",
-};
-
 /**
  * @brief 将 PDM 设备转换为实际的设备指针
  *
@@ -387,8 +379,6 @@ struct pdm_device *pdm_device_alloc(void)
     device_initialize(&pdmdev->dev);
     pdmdev->dev.bus = &pdm_bus_type;
     pdmdev->dev.type = &pdm_device_type;
-    // TODO: 设置class后会和bus冲突，导致设备创建失败，具体原因后续定位
-    // pdmdev->dev.class = &pdm_device_class;
     pdmdev->dev.release = pdm_device_release;
 
     return pdmdev;
@@ -587,13 +577,6 @@ int pdm_device_init(void)
     struct pdm_subdriver_register_params params;
     int status;
 
-    status = class_register(&pdm_device_class);
-    if (status < 0) {
-        OSA_ERROR("Failed to register PDM Device Class, error: %d.\n", status);
-        return status;
-    }
-    OSA_DEBUG("PDM Device Class registered.\n");
-
     INIT_LIST_HEAD(&pdm_device_driver_list);
 
     params.drivers = pdm_device_drivers;
@@ -603,15 +586,11 @@ int pdm_device_init(void)
     status = pdm_subdriver_register(&params);
     if (status < 0) {
         OSA_ERROR("Failed to register PDM Device Drivers, error: %d.\n", status);
-        goto err_class_unregister;
+    return status;
     }
 
     OSA_DEBUG("Initialize PDM Device OK.\n");
     return 0;
-
-err_class_unregister:
-    class_unregister(&pdm_device_class);
-    return status;
 }
 
 /**
@@ -625,7 +604,6 @@ err_class_unregister:
 void pdm_device_exit(void)
 {
     pdm_subdriver_unregister(&pdm_device_driver_list);
-    class_unregister(&pdm_device_class);
     OSA_DEBUG("PDM Device Exit.\n");
 }
 
