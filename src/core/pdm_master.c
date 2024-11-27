@@ -1,6 +1,7 @@
 #include "pdm.h"
 #include "pdm_driver_manager.h"
 #include "pdm_master_template.h"
+#include "pdm_master_led.h"
 
 /**
  * @brief PDM 主设备列表
@@ -34,6 +35,12 @@ static struct pdm_subdriver pdm_master_drivers[] = {
         .name = "Template Master",
         .init = pdm_master_template_driver_init,
         .exit = pdm_master_template_driver_exit,
+    },
+    {
+        .status = true,
+        .name = "Led Master",
+        .init = pdm_master_led_driver_init,
+        .exit = pdm_master_led_driver_exit,
     },
 };
 

@@ -77,11 +77,8 @@ static void pdm_master_led_remove(struct pdm_device *pdmdev)
  * 该表定义了支持的设备树兼容属性。
  */
 static const struct of_device_id of_pdm_master_led_match[] = {
-    { .compatible = "led,pdm-device-spi", },
-    { .compatible = "led,pdm-device-i2c", },
     { .compatible = "led,pdm-device-pwm", },
     { .compatible = "led,pdm-device-gpio", },
-    { .compatible = "led,pdm-device-adc", },
     {},
 };
 MODULE_DEVICE_TABLE(of, of_pdm_master_led_match);
