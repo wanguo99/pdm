@@ -9,12 +9,6 @@
  */
 
 /**
- * @brief PDM 主控制器的ID范围
- */
-#define PDM_MASTER_CLIENT_IDR_START 0
-#define PDM_MASTER_CLIENT_IDR_END 1024
-
-/**
  * @brief PDM 主控制器结构体
  */
 struct pdm_master {
@@ -23,35 +17,12 @@ struct pdm_master {
     dev_t devno;                         /**< 设备号 */
     struct cdev cdev;                    /**< 字符设备结构体 */
     struct file_operations fops;         /**< 文件操作结构体，每个主控制器内部单独实现一套文件操作 */
-    struct idr device_idr;               /**< 用于给子设备分配ID的IDR */
-    struct mutex idr_mutex_lock;         /**< 用于保护IDR的互斥锁 */
     struct rw_semaphore rwlock;          /**< 读写锁，用于sysfs读写主控制器属性时使用 */
     unsigned int init_done : 1;          /**< 初始化标志 */
     struct list_head entry;              /**< 挂载到bus的链表节点 */
     struct list_head client_list;        /**< 子设备列表 */
     struct mutex client_list_mutex_lock; /**< 用于保护子设备列表的互斥锁 */
 };
-
-/**
- * @brief 分配 PDM 设备ID
- *
- * 该函数用于分配 PDM 设备ID。
- *
- * @param master PDM 主控制器结构体指针
- * @param pdmdev PDM 设备结构体指针
- * @return 成功返回 0，失败返回负错误码
- */
-int pdm_master_client_id_alloc(struct pdm_master *master, struct pdm_device *pdmdev);
-
-/**
- * @brief 释放 PDM 设备ID
- *
- * 该函数用于释放 PDM 设备ID。
- *
- * @param master PDM 主控制器结构体指针
- * @param pdmdev PDM 设备结构体指针
- */
-void pdm_master_client_id_free(struct pdm_master *master, struct pdm_device *pdmdev);
 
 /**
  * @brief 显示所有已注册的 PDM 设备列表

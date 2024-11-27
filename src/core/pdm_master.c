@@ -188,61 +188,6 @@ static long pdm_master_fops_default_ioctl(struct file *filp, unsigned int cmd, u
 }
 
 /**
- * @brief 为PDM设备分配ID
- * @master: PDM主控制器
- * @pdmdev: PDM设备
- *
- * 返回值:
- * 0 - 成功
- * -EINVAL - 参数无效
- * -EBUSY - 没有可用的ID
- * 其他负值 - 其他错误码
- */
-int pdm_master_client_id_alloc(struct pdm_master *master, struct pdm_device *pdmdev)
-{
-    int id;
-
-    if (!master || !pdmdev) {
-        OSA_ERROR("Invalid input parameters (master: %p, pdmdev: %p).\n", master, pdmdev);
-        return -EINVAL;
-    }
-
-    mutex_lock(&master->idr_mutex_lock);
-    id = idr_alloc(&master->device_idr, pdmdev, PDM_MASTER_CLIENT_IDR_START, PDM_MASTER_CLIENT_IDR_END, GFP_KERNEL);
-    mutex_unlock(&master->idr_mutex_lock);
-
-    if (id < 0) {
-        if (id == -ENOSPC) {
-            OSA_ERROR("No available IDs in the range.\n");
-            return -EBUSY;
-        } else {
-            OSA_ERROR("Failed to allocate ID: %d.\n", id);
-            return id;
-        }
-    }
-
-    pdmdev->id = id;
-    return 0;
-}
-
-/**
- * @brief 释放PDM设备的ID
- * @master: PDM主控制器
- * @pdmdev: PDM设备
- */
-void pdm_master_client_id_free(struct pdm_master *master, struct pdm_device *pdmdev)
-{
-    if (!master || !pdmdev) {
-        OSA_ERROR("Invalid input parameters (master: %p, pdmdev: %p).\n", master, pdmdev);
-        return;
-    }
-
-    mutex_lock(&master->idr_mutex_lock);
-    idr_remove(&master->device_idr, pdmdev->id);
-    mutex_unlock(&master->idr_mutex_lock);
-}
-
-/**
  * @brief 显示所有已注册的 PDM 设备列表
  *
  * 该函数用于显示当前已注册的所有 PDM 设备的名称。
@@ -474,8 +419,6 @@ struct pdm_master *pdm_master_alloc(unsigned int data_size)
 
     INIT_LIST_HEAD(&master->client_list);
     mutex_init(&master->client_list_mutex_lock);
-    mutex_init(&master->idr_mutex_lock);
-    idr_init(&master->device_idr);
 
     return master;
 }
@@ -577,10 +520,6 @@ void pdm_master_unregister(struct pdm_master *master)
     mutex_lock(&pdm_master_device_list_mutex_lock);
     list_del(&master->entry);
     mutex_unlock(&pdm_master_device_list_mutex_lock);
-
-    mutex_lock(&master->idr_mutex_lock);
-    idr_destroy(&master->device_idr);
-    mutex_unlock(&master->idr_mutex_lock);
 
     pdm_master_cdev_delete(master);
     device_unregister(&master->dev);
