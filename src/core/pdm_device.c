@@ -261,10 +261,8 @@ static void pdm_device_release(struct device *dev)
 {
     struct pdm_device *pdmdev = dev_to_pdm_device(dev);
     if (pdmdev) {
-        OSA_DEBUG("PDM device released: %p\n", pdmdev);
+        OSA_DEBUG("PDM Device Released: %s\n", dev_name(dev));
         kfree(pdmdev);
-    }else {
-        OSA_ERROR("pdmdev is null\n");
     }
 }
 
@@ -424,7 +422,7 @@ static int pdm_device_physical_info_check(struct device *dev, void *data) {
     if ((pdmdev->physical_info.type == (*checked_pdmdev)->physical_info.type) &&
         (pdmdev->physical_info.device == (*checked_pdmdev)->physical_info.device)) {
         *checked_pdmdev = pdmdev;
-        OSA_DEBUG("Found pdmdev: (%p) \n", pdmdev);
+        OSA_DEBUG("Found pdmdev: %s \n", dev_name(&pdmdev->dev));
         return 1;
     }
 
