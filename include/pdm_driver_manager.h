@@ -1,8 +1,6 @@
 #ifndef _PDM_DRIVER_MANAGER_H_
 #define _PDM_DRIVER_MANAGER_H_
 
-#include "pdm.h"
-
 /**
  * @file pdm_driver_manager.h
  * @brief PDM 驱动管理接口

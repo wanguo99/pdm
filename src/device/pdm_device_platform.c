@@ -1,4 +1,5 @@
 #include <linux/platform_device.h>
+
 #include "pdm.h"
 
 struct pdm_device_platform_data {

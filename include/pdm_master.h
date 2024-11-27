@@ -1,17 +1,6 @@
 #ifndef _PDM_MASTER_H_
 #define _PDM_MASTER_H_
 
-#include <linux/version.h>
-#include <linux/string.h>
-#include <linux/fs.h>
-#include <linux/cdev.h>
-#include <linux/idr.h>
-#include <linux/device.h>
-#include <linux/of.h>
-#include <linux/mod_devicetable.h>
-
-#include "pdm_device.h"
-
 /**
  * @file pdm_master.h
  * @brief PDM 主控制器模块头文件

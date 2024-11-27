@@ -1,10 +1,6 @@
 #ifndef _PDM_DEVICE_H_
 #define _PDM_DEVICE_H_
 
-#include <linux/i2c.h>
-#include <linux/i3c/master.h>
-#include <linux/spi/spi.h>
-
 
 /**
  * @brief PDM 设备类型
