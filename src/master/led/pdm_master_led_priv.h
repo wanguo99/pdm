@@ -18,8 +18,8 @@
  * 该结构体定义了 PDM 模板设备的操作函数，包括读取和写入寄存器。
  */
 struct pdm_device_led_operations {
-    int (*turn_on)(void);      /**< 开灯 */
-    int (*turn_off)(void);     /**< 关灯 */
+    int (*turn_on)(struct pdm_device *pdmdev);      /**< 开灯 */
+    int (*turn_off)(struct pdm_device *pdmdev);     /**< 关灯 */
 };
 
 /**

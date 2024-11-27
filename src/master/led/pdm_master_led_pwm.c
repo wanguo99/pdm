@@ -2,13 +2,13 @@
 #include "pdm_master_led.h"
 #include "pdm_master_led_priv.h"
 
-static int pdm_master_led_pwm_turn_on(void)
+static int pdm_master_led_pwm_turn_on(struct pdm_device *pdmdev)
 {
     OSA_INFO("PWM LED Turn ON\n");
     return 0;
 }
 
-static int pdm_master_led_pwm_turn_off(void)
+static int pdm_master_led_pwm_turn_off(struct pdm_device *pdmdev)
 {
     OSA_INFO("PWM LED Turn OFF\n");
     return 0;
