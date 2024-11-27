@@ -1,5 +1,5 @@
-#ifndef _PDM_TEMPLATE_H_
-#define _PDM_TEMPLATE_H_
+#ifndef _PDM_MASTER_TEMPLATE_H_
+#define _PDM_MASTER_TEMPLATE_H_
 
 /**
  * @file pdm_template.h
@@ -77,4 +77,4 @@ int pdm_master_template_driver_init(void);
  */
 void pdm_master_template_driver_exit(void);
 
-#endif /* _PDM_TEMPLATE_H_ */
+#endif /* _PDM_MASTER_TEMPLATE_H_ */

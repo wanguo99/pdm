@@ -1,5 +1,3 @@
-#include <linux/spi/spi.h>
-
 #include "pdm.h"
 #include "pdm_master_template.h"
 

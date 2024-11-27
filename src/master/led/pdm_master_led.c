@@ -1,9 +1,9 @@
-#include <linux/spi/spi.h>
-
 #include "pdm.h"
 #include "pdm_master_led.h"
+#include "pdm_master_led_priv.h"
 
 static struct pdm_master *led_master = NULL;
+
 
 /**
  * @brief 模板 PDM 设备探测函数
@@ -16,7 +16,6 @@ static struct pdm_master *led_master = NULL;
 static int pdm_master_led_probe(struct pdm_device *pdmdev)
 {
     int status;
-    struct pdm_device_led_priv *data;
 
     status = pdm_master_client_add(led_master, pdmdev);
     if (status) {
@@ -30,15 +29,32 @@ static int pdm_master_led_probe(struct pdm_device *pdmdev)
         goto err_client_del;
     }
 
-    data = (struct pdm_device_led_priv *)pdm_device_devdata_get(pdmdev);
-    if (!data)
+    switch (pdmdev->physical_info.type)
     {
-        OSA_ERROR("Get Device Private Data Failed, status=%d.\n", status);
+        case PDM_DEVICE_INTERFACE_TYPE_GPIO:
+        {
+            status = pdm_master_led_gpio_init(pdmdev);
+            break;
+        }
+        case PDM_DEVICE_INTERFACE_TYPE_PWM:
+        {
+            status = pdm_master_led_pwm_init(pdmdev);
+            break;
+        }
+        default:
+        {
+            OSA_ERROR("Unsupport LED Type: %d\n", pdmdev->physical_info.type);
+            status = -ENOTSUPP;
+            break;
+        }
+    }
+    if (status)
+    {
+        OSA_DEBUG("LED PDM Device Probed.\n");
         goto err_devdata_free;
     }
-    data->ops = NULL;
 
-    OSA_DEBUG("led PDM Device Probed.\n");
+    OSA_DEBUG("LED PDM Device Probed.\n");
     return 0;
 
 err_devdata_free:
