@@ -90,8 +90,31 @@ static long pdm_master_led_ioctl(struct file *file, unsigned int cmd, unsigned l
 
 static ssize_t pdm_master_led_write(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
 {
-    OSA_INFO("fops_default_read.\n");
-    if (pdm_master_led_status_set(0, PDM_MASTER_LED_STATE_ON)) {
+    int index;
+    char kernel_buf[5];
+    ssize_t bytes_read;
+
+    OSA_INFO("Called pdm_master_led_write.\n");
+
+    // 从用户空间复制数据到内核空间
+    if (count > sizeof(kernel_buf) - 1) {  // 确保有足够的空间存储数据
+        count = sizeof(kernel_buf) - 1;
+    }
+
+    if ((bytes_read = copy_from_user(kernel_buf, buf, count)) != 0) {
+        OSA_ERROR("Failed to copy data from user space: %zd\n", bytes_read);
+        return -EFAULT;
+    }
+
+    // 打印接收到的数据（用于调试）
+    OSA_INFO("Received data: %s\n", kernel_buf);
+    if (sscanf(kernel_buf, "%d", &index) != 1) {
+        OSA_ERROR("Invalid data: %s\n", kernel_buf);
+        return -EINVAL;
+    }
+
+    OSA_INFO("Target LED index: %d\n", index);
+    if (pdm_master_led_status_set(index, PDM_MASTER_LED_STATE_ON)) {
         OSA_ERROR("pdm_master_led_status_set failed.\n");
     }
     return count;
@@ -109,6 +132,7 @@ static ssize_t pdm_master_led_write(struct file *filp, const char __user *buf, s
 static int pdm_master_led_device_probe(struct pdm_device *pdmdev)
 {
     int status;
+    struct pdm_device_led_priv *data;
 
     status = pdm_master_client_add(led_master, pdmdev);
     if (status) {
@@ -143,6 +167,14 @@ static int pdm_master_led_device_probe(struct pdm_device *pdmdev)
         OSA_ERROR("Setup Failed: %d\n", status);
         goto err_devdata_free;
     }
+
+    data = (struct pdm_device_led_priv *)pdm_device_devdata_get(pdmdev);
+    if (!data)
+    {
+        OSA_ERROR("Get Device Private Data Failed, status=%d.\n", status);
+        goto err_devdata_free;
+    }
+    data->index = pdmdev->id;
 
     OSA_DEBUG("LED PDM Device Probed.\n");
 

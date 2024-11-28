@@ -141,6 +141,7 @@ MODULE_DEVICE_TABLE(platform, pdm_device_platform_ids);
 
 static const struct of_device_id pdm_device_platform_of_match[] = {
     { .compatible = "led,pdm-device-gpio" },
+    { .compatible = "led,pdm-device-pwm" },
     { }
 };
 
