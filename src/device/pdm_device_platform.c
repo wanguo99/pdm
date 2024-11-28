@@ -33,13 +33,27 @@ static int pdm_device_platform_probe(struct platform_device *pdev) {
     int status;
     struct pdm_device_platform_data *pdata = dev_get_platdata(&pdev->dev);
 
+    OSA_DEBUG("PDM Device PLATFORM Device Probe.\n");
+
     pdmdev = pdm_device_alloc();
     if (!pdmdev) {
         OSA_ERROR("Failed to allocate pdm_device.\n");
         return -ENOMEM;
     }
 
-    physical_info.type = pdata ? pdata->type : PDM_DEVICE_INTERFACE_TYPE_UNDEFINED;
+    // 分开处理使用id_table和compatible匹配的设备
+    if (pdata) {
+        physical_info.type = pdata->type;
+    } else {
+        if (of_device_is_compatible(pdev->dev.of_node, "led,pdm-device-gpio")) {
+            dev_info(&pdev->dev, "Device is compatible with led,pdm-device-gpio\n");
+            physical_info.type = PDM_DEVICE_INTERFACE_TYPE_GPIO;
+        } else {
+            dev_err(&pdev->dev, "Device is not compatible with led,pdm-device-gpio\n");
+            physical_info.type = PDM_DEVICE_INTERFACE_TYPE_UNDEFINED;
+        }
+    }
+
     physical_info.device = pdev;
     physical_info.of_node = pdev->dev.of_node;
     status = pdm_device_physical_info_set(pdmdev, &physical_info);
@@ -114,11 +128,19 @@ static const struct platform_device_id pdm_device_platform_ids[] = {
 };
 MODULE_DEVICE_TABLE(platform, pdm_device_platform_ids);
 
+static const struct of_device_id pdm_device_platform_of_match[] = {
+    { .compatible = "led,pdm-device-gpio" },
+    { }
+};
+
+MODULE_DEVICE_TABLE(of, pdm_device_platform_of_match);
+
 static struct platform_driver pdm_device_platform_driver = {
     .probe = pdm_device_platform_probe,
     .remove = pdm_device_platform_remove,
     .driver = {
         .name = "pdm-device-platform",
+        .of_match_table = pdm_device_platform_of_match,
     },
     .id_table = pdm_device_platform_ids,
 };
