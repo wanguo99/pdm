@@ -53,7 +53,7 @@ int pdm_bus_device_id_alloc(struct pdm_device *pdmdev)
         }
     }
 
-    pdmdev->id = id;
+    pdmdev->device_id = id;
     return 0;
 }
 
@@ -70,7 +70,7 @@ void pdm_bus_device_id_free(struct pdm_device *pdmdev)
     }
 
     mutex_lock(&pdm_bus_priv_data.idr_mutex_lock);
-    idr_remove(&pdm_bus_priv_data.device_idr, pdmdev->id);
+    idr_remove(&pdm_bus_priv_data.device_idr, pdmdev->device_id);
     mutex_unlock(&pdm_bus_priv_data.idr_mutex_lock);
 }
 

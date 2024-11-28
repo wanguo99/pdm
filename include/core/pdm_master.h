@@ -8,6 +8,9 @@
  * 本文件定义了 PDM 主控制器模块的公共数据类型、结构体和函数声明。
  */
 
+#define PDM_MASTER_CLIENT_IDR_START        (0)
+#define PDM_MASTER_CLIENT_IDR_END          (1024)
+
 /**
  * @brief PDM 主控制器结构体
  */
@@ -22,6 +25,8 @@ struct pdm_master {
     struct list_head entry;              /**< 挂载到bus的链表节点 */
     struct list_head client_list;        /**< 子设备列表 */
     struct mutex client_list_mutex_lock; /**< 用于保护子设备列表的互斥锁 */
+    struct idr device_idr;               /**< 用于给client分配ID的IDR */
+    struct mutex idr_mutex_lock;         /**< 用于保护IDR的互斥锁 */
 };
 
 /**

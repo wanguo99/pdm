@@ -99,9 +99,7 @@ static int pdm_device_uevent(const struct device *dev, struct kobj_uevent_env *e
     }
 
     OSA_DEBUG("Generating MODALIAS for device %s\n", dev_name(dev));
-
-    return add_uevent_var(env, "MODALIAS=pdm:pdm_master_%s-%04X",
-                                                pdmdev->master->name, pdmdev->id);
+    return add_uevent_var(env, "MODALIAS=pdm:%04X", pdmdev->device_id);
 }
 
 /**
@@ -113,7 +111,7 @@ static int pdm_device_uevent(const struct device *dev, struct kobj_uevent_env *e
  * 返回值:
  * 实际写入的字节数
  */
-static ssize_t id_show(struct device *dev, struct device_attribute *da, char *buf)
+static ssize_t name_show(struct device *dev, struct device_attribute *da, char *buf)
 {
     struct pdm_device *pdmdev = NULL;
 
@@ -127,11 +125,11 @@ static ssize_t id_show(struct device *dev, struct device_attribute *da, char *bu
         return -EINVAL;
     }
 
-    OSA_INFO("Showing ID for device %s\n", dev_name(dev));
+    OSA_INFO("Showing Name for device %s\n", dev_name(dev));
 
-    return sysfs_emit(buf, "%d\n", pdmdev->id);
+    return sysfs_emit(buf, "%s\n", pdmdev->name);
 }
-static DEVICE_ATTR_RO(id);
+static DEVICE_ATTR_RO(name);
 
 /**
  * compatible_show - 显示设备兼容性字符串
@@ -200,7 +198,7 @@ static DEVICE_ATTR_RO(master_name);
  * 使用 `ATTRIBUTE_GROUPS` 宏将属性数组转换为属性组，以便在设备模型中注册。
  */
 static struct attribute *pdm_device_attrs[] = {
-    &dev_attr_id.attr,
+    &dev_attr_name.attr,
     &dev_attr_compatible.attr,
     &dev_attr_master_name.attr,
     NULL,
@@ -418,9 +416,7 @@ static int pdm_device_physical_info_check(struct device *dev, void *data) {
         OSA_INFO("Invalid argument. \n");
         goto unmatch;
     }
-    OSA_DEBUG("pdmdev->type: %d, device: (%p)\n", pdmdev->physical_info.type, pdmdev->physical_info.device);
-    OSA_DEBUG("pdmdev->type: %d, device: (%p)\n", (*checked_pdmdev)->physical_info.type,
-                                                    (*checked_pdmdev)->physical_info.device);
+
     if ((pdmdev->physical_info.type == (*checked_pdmdev)->physical_info.type) &&
         (pdmdev->physical_info.device == (*checked_pdmdev)->physical_info.device)) {
         *checked_pdmdev = pdmdev;
@@ -525,7 +521,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
         goto err_free_id;
     }
 
-    dev_set_name(&pdmdev->dev, "pdmdev-%d", pdmdev->id);
+    dev_set_name(&pdmdev->dev, "pdmdev-%d", pdmdev->device_id);
     status = device_add(&pdmdev->dev);
     if (status < 0) {
         OSA_ERROR("Can't add %s, status %d\n", dev_name(&pdmdev->dev), status);

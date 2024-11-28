@@ -16,8 +16,7 @@ static int pdm_master_led_status_set(int index, int state)
 
     found_dev = 0;
     list_for_each_entry(pdmdev, &led_master->client_list, entry) {
-        led_priv = pdm_device_devdata_get(pdmdev);
-        if ((led_priv) && (led_priv->index == index)) {
+        if (pdmdev->client_index == index) {
             OSA_INFO("Found target Led device.\n");
             found_dev = 1;
             break;
@@ -130,7 +129,6 @@ static ssize_t pdm_master_led_write(struct file *filp, const char __user *buf, s
 static int pdm_master_led_device_probe(struct pdm_device *pdmdev)
 {
     int status;
-    struct pdm_device_led_priv *data;
 
     status = pdm_master_client_add(led_master, pdmdev);
     if (status) {
@@ -146,12 +144,12 @@ static int pdm_master_led_device_probe(struct pdm_device *pdmdev)
 
     switch (pdmdev->physical_info.type) {
         case PDM_DEVICE_INTERFACE_TYPE_GPIO: {
-            OSA_INFO("pdmdev->physical_info.type: %d\n", pdmdev->physical_info.type);
+            OSA_DEBUG("pdmdev->physical_info.type: %d\n", pdmdev->physical_info.type);
             status = pdm_master_led_gpio_setup(pdmdev);
             break;
         }
         case PDM_DEVICE_INTERFACE_TYPE_PWM: {
-            OSA_INFO("pdmdev->physical_info.type: %d\n", pdmdev->physical_info.type);
+            OSA_DEBUG("pdmdev->physical_info.type: %d\n", pdmdev->physical_info.type);
             status = pdm_master_led_pwm_setup(pdmdev);
             break;
         }
@@ -165,14 +163,6 @@ static int pdm_master_led_device_probe(struct pdm_device *pdmdev)
         OSA_ERROR("Setup Failed: %d\n", status);
         goto err_devdata_free;
     }
-
-    data = (struct pdm_device_led_priv *)pdm_device_devdata_get(pdmdev);
-    if (!data)
-    {
-        OSA_ERROR("Get Device Private Data Failed, status=%d.\n", status);
-        goto err_devdata_free;
-    }
-    data->index = pdmdev->id;
 
     OSA_DEBUG("LED PDM Device Probed.\n");
 

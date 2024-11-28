@@ -49,8 +49,7 @@ static int pdm_master_sensor_get_current(int index, int *value)
 
     found_dev = 0;
     list_for_each_entry(pdmdev, &sensor_master->client_list, entry) {
-        sensor_priv = pdm_device_devdata_get(pdmdev);
-        if ((sensor_priv) && (sensor_priv->index == index)) {
+        if (pdmdev->client_index == index) {
             OSA_INFO("Found target Sensor device.\n");
             found_dev = 1;
             break;
@@ -119,7 +118,7 @@ static ssize_t pdm_master_sensor_write(struct file *filp, const char __user *buf
     ssize_t bytes_read;
     int value;
 
-    OSA_INFO("Calsensor pdm_master_sensor_write.\n");
+    OSA_INFO("Called sensor pdm_master_sensor_write.\n");
 
     if (count > sizeof(kernel_buf) - 1) {
         count = sizeof(kernel_buf) - 1;
@@ -155,7 +154,6 @@ static ssize_t pdm_master_sensor_write(struct file *filp, const char __user *buf
 static int pdm_master_sensor_device_probe(struct pdm_device *pdmdev)
 {
     int status;
-    struct pdm_device_sensor_priv *data;
 
     status = pdm_master_client_add(sensor_master, pdmdev);
     if (status) {
@@ -171,12 +169,12 @@ static int pdm_master_sensor_device_probe(struct pdm_device *pdmdev)
 
     switch (pdmdev->physical_info.type) {
         case PDM_DEVICE_INTERFACE_TYPE_I2C: {
-            OSA_INFO("pdmdev->physical_info.type: %d\n", pdmdev->physical_info.type);
+            OSA_DEBUG("pdmdev->physical_info.type: %d\n", pdmdev->physical_info.type);
             status = pdm_master_sensor_i2c_setup(pdmdev);
             break;
         }
         case PDM_DEVICE_INTERFACE_TYPE_ADC: {
-            OSA_INFO("pdmdev->physical_info.type: %d\n", pdmdev->physical_info.type);
+            OSA_DEBUG("pdmdev->physical_info.type: %d\n", pdmdev->physical_info.type);
             status = pdm_master_sensor_adc_setup(pdmdev);
             break;
         }
@@ -190,14 +188,6 @@ static int pdm_master_sensor_device_probe(struct pdm_device *pdmdev)
         OSA_ERROR("Setup Faisensor: %d\n", status);
         goto err_devdata_free;
     }
-
-    data = (struct pdm_device_sensor_priv *)pdm_device_devdata_get(pdmdev);
-    if (!data)
-    {
-        OSA_ERROR("Get Device Private Data Faisensor, status=%d.\n", status);
-        goto err_devdata_free;
-    }
-    data->index = pdmdev->id;
 
     OSA_DEBUG("SENSOR PDM Device Probed.\n");
 
