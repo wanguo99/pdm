@@ -119,12 +119,12 @@ static int pdm_master_led_probe(struct pdm_device *pdmdev)
     {
         case PDM_DEVICE_INTERFACE_TYPE_GPIO:
         {
-            status = pdm_master_led_gpio_init(pdmdev);
+            status = pdm_master_led_gpio_setup(pdmdev);
             break;
         }
         case PDM_DEVICE_INTERFACE_TYPE_PWM:
         {
-            status = pdm_master_led_pwm_init(pdmdev);
+            status = pdm_master_led_pwm_setup(pdmdev);
             break;
         }
         default:

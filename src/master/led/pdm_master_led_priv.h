@@ -45,7 +45,7 @@ struct pdm_device_led_priv {
 };
 
 
-int pdm_master_led_gpio_init(struct pdm_device *pdmdev);
-int pdm_master_led_pwm_init(struct pdm_device *pdmdev);
+int pdm_master_led_gpio_setup(struct pdm_device *pdmdev);
+int pdm_master_led_pwm_setup(struct pdm_device *pdmdev);
 
 #endif /* _PDM_MASTER_LED_PRIV_H_ */

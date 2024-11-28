@@ -19,7 +19,7 @@ static struct pdm_device_led_operations pdm_device_led_ops_pwm = {
     .turn_off = pdm_master_led_pwm_turn_off,
 };
 
-int pdm_master_led_pwm_init(struct pdm_device *pdmdev)
+int pdm_master_led_pwm_setup(struct pdm_device *pdmdev)
 {
     struct pdm_device_led_priv *data;
     int status;
