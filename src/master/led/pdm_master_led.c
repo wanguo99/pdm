@@ -96,8 +96,7 @@ static ssize_t pdm_master_led_write(struct file *filp, const char __user *buf, s
 
     OSA_INFO("Called pdm_master_led_write.\n");
 
-    // 从用户空间复制数据到内核空间
-    if (count > sizeof(kernel_buf) - 1) {  // 确保有足够的空间存储数据
+    if (count > sizeof(kernel_buf) - 1) {
         count = sizeof(kernel_buf) - 1;
     }
 
@@ -106,7 +105,6 @@ static ssize_t pdm_master_led_write(struct file *filp, const char __user *buf, s
         return -EFAULT;
     }
 
-    // 打印接收到的数据（用于调试）
     OSA_INFO("Received data: %s\n", kernel_buf);
     if (sscanf(kernel_buf, "%d", &index) != 1) {
         OSA_ERROR("Invalid data: %s\n", kernel_buf);

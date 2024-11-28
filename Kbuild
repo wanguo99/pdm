@@ -18,6 +18,9 @@ $(MODULE_NAME)-objs +=	src/master/led/pdm_master_led.o \
 						src/master/led/pdm_master_led_gpio.o \
 						src/master/led/pdm_master_led_pwm.o
 
+$(MODULE_NAME)-objs +=	src/master/sensor/pdm_master_sensor.o \
+						src/master/sensor/pdm_master_sensor_adc.o \
+						src/master/sensor/pdm_master_sensor_i2c.o
 
 # 添加头文件路径
 ccflags-y += 	-I$(src)/include \

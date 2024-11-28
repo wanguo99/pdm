@@ -2,6 +2,7 @@
 #include "pdm_driver_manager.h"
 #include "pdm_master_template.h"
 #include "pdm_master_led.h"
+#include "pdm_master_sensor.h"
 
 /**
  * @brief PDM 主设备列表
@@ -31,7 +32,7 @@ static struct list_head pdm_master_driver_list;
  */
 static struct pdm_subdriver pdm_master_drivers[] = {
     {
-        .status = false,
+        .status = true,
         .name = "Template Master",
         .init = pdm_master_template_driver_init,
         .exit = pdm_master_template_driver_exit,
@@ -41,6 +42,12 @@ static struct pdm_subdriver pdm_master_drivers[] = {
         .name = "LED Master",
         .init = pdm_master_led_driver_init,
         .exit = pdm_master_led_driver_exit,
+    },
+    {
+        .status = true,
+        .name = "Sensor Master",
+        .init = pdm_master_sensor_driver_init,
+        .exit = pdm_master_sensor_driver_exit,
     },
 };
 
