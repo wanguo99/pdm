@@ -12,7 +12,7 @@ static struct pdm_master *template_master = NULL;
  * @param pdmdev PDM 设备指针
  * @return 成功返回 0，失败返回负错误码
  */
-static int pdm_master_template_probe(struct pdm_device *pdmdev)
+static int pdm_master_template_device_probe(struct pdm_device *pdmdev)
 {
     int status;
     struct pdm_device_template_priv *data;
@@ -55,7 +55,7 @@ err_client_del:
  *
  * @param pdmdev PDM 设备指针
  */
-static void pdm_master_template_remove(struct pdm_device *pdmdev)
+static void pdm_master_template_device_remove(struct pdm_device *pdmdev)
 {
     int status;
 
@@ -91,8 +91,8 @@ MODULE_DEVICE_TABLE(of, of_pdm_master_template_match);
  * 该结构体定义了模板 PDM 驱动的基本信息和操作函数。
  */
 static struct pdm_driver pdm_master_template_driver = {
-    .probe = pdm_master_template_probe,
-    .remove = pdm_master_template_remove,
+    .probe = pdm_master_template_device_probe,
+    .remove = pdm_master_template_device_remove,
     .driver = {
         .name = "pdm-device-template",
         .of_match_table = of_pdm_master_template_match,
