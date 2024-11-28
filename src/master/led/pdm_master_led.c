@@ -10,26 +10,25 @@ static int pdm_master_led_status_set(int index, int state)
     struct pdm_device_led_priv *led_priv;
     struct pdm_device *pdmdev;
     int status;
-    int found;
+    int found_dev;
 
     mutex_lock(&led_master->client_list_mutex_lock);
 
-    found = 0;
+    found_dev = 0;
     list_for_each_entry(pdmdev, &led_master->client_list, entry) {
         led_priv = pdm_device_devdata_get(pdmdev);
         if ((led_priv) && (led_priv->index)) {
             OSA_INFO("Found target Led device.\n");
-            found = 1;
+            found_dev = 1;
             break;
         }
     }
-    if (!found) {
+    if (!found_dev) {
         mutex_lock(&led_master->client_list_mutex_lock);
         return -ENODEV;
     }
 
-    switch (state)
-    {
+    switch (state) {
         case PDM_MASTER_LED_STATE_OFF:
             status = led_priv->ops->turn_off(pdmdev);
             break;
@@ -54,10 +53,9 @@ static long pdm_master_led_ioctl(struct file *file, unsigned int cmd, unsigned l
 
     OSA_INFO("Called pdm_master_led_ioctl\n");
 
-	dev_dbg(&led_master->dev, "ioctl, cmd=0x%02x, arg=0x%02lx\n", cmd, arg);
+    dev_dbg(&led_master->dev, "ioctl, cmd=0x%02x, arg=0x%02lx\n", cmd, arg);
     switch (cmd) {
-        case PDM_MASTER_LED_TURN_ON:
-        {
+        case PDM_MASTER_LED_TURN_ON: {
             int32_t index;
             if (copy_from_user(&index, (int32_t __user *)arg, sizeof(int32_t))) {
                 return -EFAULT;
@@ -68,8 +66,7 @@ static long pdm_master_led_ioctl(struct file *file, unsigned int cmd, unsigned l
             break;
         }
 
-        case PDM_MASTER_LED_TURN_OFF:
-        {
+        case PDM_MASTER_LED_TURN_OFF: {
             int32_t index;
             if (copy_from_user(&index, (int32_t __user *)arg, sizeof(int32_t))) {
                 return -EFAULT;
@@ -87,7 +84,7 @@ static long pdm_master_led_ioctl(struct file *file, unsigned int cmd, unsigned l
         OSA_ERROR("pdm_master_led_ioctl error.\n");
     }
 
-	return status;
+    return status;
 }
 
 
@@ -105,7 +102,7 @@ static int pdm_master_led_probe(struct pdm_device *pdmdev)
 
     status = pdm_master_client_add(led_master, pdmdev);
     if (status) {
-        OSA_ERROR("led Master Add Device Failed, status=%d.\n", status);
+        OSA_ERROR("LED Master Add Device Failed, status=%d.\n", status);
         return status;
     }
 
@@ -115,28 +112,22 @@ static int pdm_master_led_probe(struct pdm_device *pdmdev)
         goto err_client_del;
     }
 
-    switch (pdmdev->physical_info.type)
-    {
-        case PDM_DEVICE_INTERFACE_TYPE_GPIO:
-        {
+    switch (pdmdev->physical_info.type) {
+        case PDM_DEVICE_INTERFACE_TYPE_GPIO: {
             status = pdm_master_led_gpio_setup(pdmdev);
             break;
         }
-        case PDM_DEVICE_INTERFACE_TYPE_PWM:
-        {
+        case PDM_DEVICE_INTERFACE_TYPE_PWM: {
             status = pdm_master_led_pwm_setup(pdmdev);
             break;
         }
-        default:
-        {
+        default: {
             OSA_ERROR("Unsupport LED Type: %d\n", pdmdev->physical_info.type);
             status = -ENOTSUPP;
             break;
         }
     }
-    if (status)
-    {
-        OSA_DEBUG("LED PDM Device Probed.\n");
+    if (status) {
         goto err_devdata_free;
     }
 
@@ -148,6 +139,7 @@ err_devdata_free:
 
 err_client_del:
     pdm_master_client_delete(led_master, pdmdev);
+    OSA_DEBUG("LED PDM Device Probe Failed.\n");
     return status;
 }
 
@@ -166,11 +158,11 @@ static void pdm_master_led_remove(struct pdm_device *pdmdev)
 
     status = pdm_master_client_delete(led_master, pdmdev);
     if (status) {
-        OSA_ERROR("led Master Delete Device Failed, status=%d.\n", status);
+        OSA_ERROR("LED Master Delete Device Failed, status=%d.\n", status);
         return;
     }
 
-    OSA_DEBUG("led PDM Device Removed.\n");
+    OSA_DEBUG("LED PDM Device Removed.\n");
 }
 
 /**
@@ -219,19 +211,19 @@ int pdm_master_led_driver_init(void)
     strncpy(led_master->name, PDM_MASTER_LED_NAME, strlen(PDM_MASTER_LED_NAME));
     status = pdm_master_register(led_master);
     if (status) {
-        OSA_ERROR("Failed to register led PDM Master, status=%d.\n", status);
+        OSA_ERROR("Failed to register LED PDM Master, status=%d.\n", status);
         goto err_master_free;
     }
 
     status = pdm_bus_register_driver(THIS_MODULE, &pdm_master_led_driver);
     if (status) {
-        OSA_ERROR("Failed to register led PDM Master Driver, status=%d.\n", status);
+        OSA_ERROR("Failed to register LED PDM Master Driver, status=%d.\n", status);
         goto err_master_unregister;
     }
 
     led_master->fops->unlocked_ioctl = pdm_master_led_ioctl;
 
-    OSA_INFO("led PDM Master Driver Initialized.\n");
+    OSA_INFO("LED PDM Master Driver Initialized.\n");
     return 0;
 
 err_master_unregister:
@@ -251,9 +243,9 @@ void pdm_master_led_driver_exit(void)
     pdm_bus_unregister_driver(&pdm_master_led_driver);
     pdm_master_unregister(led_master);
     pdm_master_free(led_master);
-    OSA_INFO("led PDM Master Driver Exited.\n");
+    OSA_INFO("LED PDM Master Driver Exited.\n");
 }
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("<guohaoprc@163.com>");
-MODULE_DESCRIPTION("led PDM Device Driver");
+MODULE_DESCRIPTION("LED PDM Master Driver");
