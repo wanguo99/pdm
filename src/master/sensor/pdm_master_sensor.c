@@ -280,8 +280,8 @@ int pdm_master_sensor_driver_init(void)
         goto err_master_unregister;
     }
 
-    sensor_master->fops->unlocked_ioctl = pdm_master_sensor_ioctl;
-    sensor_master->fops->write = pdm_master_sensor_write;
+    sensor_master->fops.unlocked_ioctl = pdm_master_sensor_ioctl;
+    sensor_master->fops.write = pdm_master_sensor_write;
 
     OSA_INFO("SENSOR PDM Master Driver Initialized.\n");
     return 0;

@@ -255,8 +255,8 @@ int pdm_master_led_driver_init(void)
         goto err_master_unregister;
     }
 
-    led_master->fops->unlocked_ioctl = pdm_master_led_ioctl;
-    led_master->fops->write = pdm_master_led_write;
+    led_master->fops.unlocked_ioctl = pdm_master_led_ioctl;
+    led_master->fops.write = pdm_master_led_write;
 
     OSA_INFO("LED PDM Master Driver Initialized.\n");
     return 0;

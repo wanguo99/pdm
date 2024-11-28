@@ -19,7 +19,7 @@ struct pdm_master {
     struct device dev;                   /**< 设备结构体 */
     dev_t devno;                         /**< 设备号 */
     struct cdev cdev;                    /**< 字符设备结构体 */
-    struct file_operations *fops;        /**< 文件操作结构体，每个主控制器内部单独实现一套文件操作 */
+    struct file_operations fops;        /**< 文件操作结构体，每个主控制器内部单独实现一套文件操作 */
     struct rw_semaphore rwlock;          /**< 读写锁，用于sysfs读写主控制器属性时使用 */
     unsigned int init_done : 1;          /**< 初始化标志 */
     struct list_head entry;              /**< 挂载到bus的链表节点 */
