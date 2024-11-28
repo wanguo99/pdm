@@ -255,7 +255,7 @@ static struct pdm_driver pdm_master_sensor_driver = {
     .probe = pdm_master_sensor_device_probe,
     .remove = pdm_master_sensor_device_remove,
     .driver = {
-        .name = "pdm-device-sensor",
+        .name = "pdm-master-sensor",
         .of_match_table = of_pdm_master_sensor_match,
     },
 };

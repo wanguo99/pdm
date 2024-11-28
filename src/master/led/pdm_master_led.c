@@ -237,7 +237,7 @@ static struct pdm_driver pdm_master_led_driver = {
     .probe = pdm_master_led_device_probe,
     .remove = pdm_master_led_device_remove,
     .driver = {
-        .name = "pdm-device-led",
+        .name = "pdm-master-led",
         .of_match_table = of_pdm_master_led_match,
     },
 };

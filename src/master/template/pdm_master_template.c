@@ -94,7 +94,7 @@ static struct pdm_driver pdm_master_template_driver = {
     .probe = pdm_master_template_device_probe,
     .remove = pdm_master_template_device_remove,
     .driver = {
-        .name = "pdm-device-template",
+        .name = "pdm-master-template",
         .of_match_table = of_pdm_master_template_match,
     },
 };
