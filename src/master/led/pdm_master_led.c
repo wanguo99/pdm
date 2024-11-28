@@ -17,14 +17,15 @@ static int pdm_master_led_status_set(int index, int state)
     found_dev = 0;
     list_for_each_entry(pdmdev, &led_master->client_list, entry) {
         led_priv = pdm_device_devdata_get(pdmdev);
-        if ((led_priv) && (led_priv->index)) {
+        if ((led_priv) && (led_priv->index == index)) {
             OSA_INFO("Found target Led device.\n");
             found_dev = 1;
             break;
         }
     }
     if (!found_dev) {
-        mutex_lock(&led_master->client_list_mutex_lock);
+        OSA_ERROR("Cannot find target LED device");
+        mutex_unlock(&led_master->client_list_mutex_lock);
         return -ENODEV;
     }
 
@@ -42,7 +43,7 @@ static int pdm_master_led_status_set(int index, int state)
     if (status) {
         OSA_ERROR("PDM Led Turn ON Failed.\n");
     }
-    mutex_lock(&led_master->client_list_mutex_lock);
+    mutex_unlock(&led_master->client_list_mutex_lock);
     return 0;
 }
 
@@ -87,6 +88,15 @@ static long pdm_master_led_ioctl(struct file *file, unsigned int cmd, unsigned l
     return status;
 }
 
+static ssize_t pdm_master_led_write(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
+{
+    OSA_INFO("fops_default_read.\n");
+    if (pdm_master_led_status_set(0, PDM_MASTER_LED_STATE_ON)) {
+        OSA_ERROR("pdm_master_led_status_set failed.\n");
+    }
+    return count;
+}
+
 
 /**
  * @brief 模板 PDM 设备探测函数
@@ -114,10 +124,12 @@ static int pdm_master_led_device_probe(struct pdm_device *pdmdev)
 
     switch (pdmdev->physical_info.type) {
         case PDM_DEVICE_INTERFACE_TYPE_GPIO: {
+            OSA_INFO("pdmdev->physical_info.type: %d\n", pdmdev->physical_info.type);
             status = pdm_master_led_gpio_setup(pdmdev);
             break;
         }
         case PDM_DEVICE_INTERFACE_TYPE_PWM: {
+            OSA_INFO("pdmdev->physical_info.type: %d\n", pdmdev->physical_info.type);
             status = pdm_master_led_pwm_setup(pdmdev);
             break;
         }
@@ -128,10 +140,12 @@ static int pdm_master_led_device_probe(struct pdm_device *pdmdev)
         }
     }
     if (status) {
+        OSA_ERROR("Setup Failed: %d\n", status);
         goto err_devdata_free;
     }
 
     OSA_DEBUG("LED PDM Device Probed.\n");
+
     return 0;
 
 err_devdata_free:
@@ -222,6 +236,7 @@ int pdm_master_led_driver_init(void)
     }
 
     led_master->fops->unlocked_ioctl = pdm_master_led_ioctl;
+    led_master->fops->write = pdm_master_led_write;
 
     OSA_INFO("LED PDM Master Driver Initialized.\n");
     return 0;

@@ -418,7 +418,9 @@ static int pdm_device_physical_info_check(struct device *dev, void *data) {
         OSA_INFO("Invalid argument. \n");
         goto unmatch;
     }
-
+    OSA_DEBUG("pdmdev->type: %d, device: (%p)\n", pdmdev->physical_info.type, pdmdev->physical_info.device);
+    OSA_DEBUG("pdmdev->type: %d, device: (%p)\n", (*checked_pdmdev)->physical_info.type,
+                                                    (*checked_pdmdev)->physical_info.device);
     if ((pdmdev->physical_info.type == (*checked_pdmdev)->physical_info.type) &&
         (pdmdev->physical_info.device == (*checked_pdmdev)->physical_info.device)) {
         *checked_pdmdev = pdmdev;

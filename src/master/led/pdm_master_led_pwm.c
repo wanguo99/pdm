@@ -24,6 +24,7 @@ int pdm_master_led_pwm_setup(struct pdm_device *pdmdev)
     struct pdm_device_led_priv *data;
     int status;
 
+    OSA_INFO("pdm_master_led_pwm_setup\n");
     data = (struct pdm_device_led_priv *)pdm_device_devdata_get(pdmdev);
     if (!data)
     {

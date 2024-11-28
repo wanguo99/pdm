@@ -31,7 +31,7 @@ static struct list_head pdm_master_driver_list;
  */
 static struct pdm_subdriver pdm_master_drivers[] = {
     {
-        .status = true,
+        .status = false,
         .name = "Template Master",
         .init = pdm_master_template_driver_init,
         .exit = pdm_master_template_driver_exit,

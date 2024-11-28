@@ -19,6 +19,26 @@ static struct pdm_device_platform_data pdm_device_platform_data_tty = {
     .type = PDM_DEVICE_INTERFACE_TYPE_TTY,
 };
 
+static int pdm_device_platform_get_dev_type(struct platform_device *pdev)
+{
+    struct pdm_device_platform_data *pdata;
+    int dev_type;
+
+    pdata = dev_get_platdata(&pdev->dev);
+    if (pdata) {
+        return pdata->type;
+    }
+
+    // 后续需要删掉，pdm_device_platform不对外支持compatible匹配
+    if (of_device_is_compatible(pdev->dev.of_node, "led,pdm-device-gpio")) {
+        dev_type = PDM_DEVICE_INTERFACE_TYPE_GPIO;
+    } else if (of_device_is_compatible(pdev->dev.of_node, "led,pdm-device-pwm")) {
+        dev_type = PDM_DEVICE_INTERFACE_TYPE_PWM;
+    } else {
+        dev_type = PDM_DEVICE_INTERFACE_TYPE_UNDEFINED;
+    }
+    return dev_type;
+}
 /**
  * @brief PLATFORM 设备探测函数
  *
@@ -31,7 +51,6 @@ static int pdm_device_platform_probe(struct platform_device *pdev) {
     struct pdm_device_physical_info physical_info;
     struct pdm_device *pdmdev;
     int status;
-    struct pdm_device_platform_data *pdata = dev_get_platdata(&pdev->dev);
 
     OSA_DEBUG("PDM Device PLATFORM Device Probe.\n");
 
@@ -41,19 +60,7 @@ static int pdm_device_platform_probe(struct platform_device *pdev) {
         return -ENOMEM;
     }
 
-    // 分开处理使用id_table和compatible匹配的设备
-    if (pdata) {
-        physical_info.type = pdata->type;
-    } else {
-        if (of_device_is_compatible(pdev->dev.of_node, "led,pdm-device-gpio")) {
-            dev_info(&pdev->dev, "Device is compatible with led,pdm-device-gpio\n");
-            physical_info.type = PDM_DEVICE_INTERFACE_TYPE_GPIO;
-        } else {
-            dev_err(&pdev->dev, "Device is not compatible with led,pdm-device-gpio\n");
-            physical_info.type = PDM_DEVICE_INTERFACE_TYPE_UNDEFINED;
-        }
-    }
-
+    physical_info.type = pdm_device_platform_get_dev_type(pdev);
     physical_info.device = pdev;
     physical_info.of_node = pdev->dev.of_node;
     status = pdm_device_physical_info_set(pdmdev, &physical_info);
@@ -88,7 +95,7 @@ static int pdm_device_platform_real_remove(struct platform_device *pdev) {
     struct pdm_device_physical_info physical_info;
     struct pdm_device *pdmdev;
 
-    physical_info.type = PDM_DEVICE_INTERFACE_TYPE_PLATFORM;
+    physical_info.type = pdm_device_platform_get_dev_type(pdev);
     physical_info.device= pdev;
     pdmdev = pdm_device_physical_info_match(&physical_info);
     if (!pdmdev) {
@@ -115,7 +122,11 @@ static int pdm_device_platform_remove(struct platform_device *pdev) {
 }
 #else
 static void pdm_device_platform_remove(struct platform_device *pdev) {
-    (void)pdm_device_platform_real_remove(pdev);
+    int status;
+    status = pdm_device_platform_real_remove(pdev);
+    if (status) {
+        OSA_ERROR("pdm_device_platform_real_remove failed.\n");
+    }
 }
 #endif
 

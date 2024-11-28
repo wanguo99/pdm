@@ -24,12 +24,14 @@ int pdm_master_led_gpio_setup(struct pdm_device *pdmdev)
     struct pdm_device_led_priv *data;
     int status;
 
+    OSA_INFO("pdm_master_led_gpio_setup\n");
     data = (struct pdm_device_led_priv *)pdm_device_devdata_get(pdmdev);
     if (!data)
     {
         OSA_ERROR("Get Device Private Data Failed, status=%d.\n", status);
         return -ENOMEM;
     }
+
     data->ops = &pdm_device_led_ops_gpio;
     return 0;
 }
