@@ -21,8 +21,10 @@ $(MODULE_NAME)-objs +=	src/master/led/pdm_master_led.o \
 
 # 添加头文件路径
 ccflags-y += 	-I$(src)/include \
+				-I$(src)/include/osa \
 				-I$(src)/include/core \
-				-I$(src)/include/master
+				-I$(src)/include/master \
+				-I$(src)/include/uapi
 
 
 # 指定额外的头文件和符号表文件

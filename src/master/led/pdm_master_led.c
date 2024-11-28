@@ -1,8 +1,94 @@
 #include "pdm.h"
 #include "pdm_master_led.h"
 #include "pdm_master_led_priv.h"
+#include "pdm_master_led_ioctl.h"
 
 static struct pdm_master *led_master = NULL;
+
+static int pdm_master_led_status_set(int index, int state)
+{
+    struct pdm_device_led_priv *led_priv;
+    struct pdm_device *pdmdev;
+    int status;
+    int found;
+
+    mutex_lock(&led_master->client_list_mutex_lock);
+
+    found = 0;
+    list_for_each_entry(pdmdev, &led_master->client_list, entry) {
+        led_priv = pdm_device_devdata_get(pdmdev);
+        if ((led_priv) && (led_priv->index)) {
+            OSA_INFO("Found target Led device.\n");
+            found = 1;
+            break;
+        }
+    }
+    if (!found) {
+        mutex_lock(&led_master->client_list_mutex_lock);
+        return -ENODEV;
+    }
+
+    switch (state)
+    {
+        case PDM_MASTER_LED_STATE_OFF:
+            status = led_priv->ops->turn_off(pdmdev);
+            break;
+        case PDM_MASTER_LED_STATE_ON:
+            status = led_priv->ops->turn_on(pdmdev);
+            break;
+        default:
+            status = -EINVAL;
+    }
+
+    if (status) {
+        OSA_ERROR("PDM Led Turn ON Failed.\n");
+    }
+    mutex_lock(&led_master->client_list_mutex_lock);
+    return 0;
+}
+
+
+static long pdm_master_led_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+    int status;
+
+    OSA_INFO("Called pdm_master_led_ioctl\n");
+
+	dev_dbg(&led_master->dev, "ioctl, cmd=0x%02x, arg=0x%02lx\n", cmd, arg);
+    switch (cmd) {
+        case PDM_MASTER_LED_TURN_ON:
+        {
+            int32_t index;
+            if (copy_from_user(&index, (int32_t __user *)arg, sizeof(int32_t))) {
+                return -EFAULT;
+            }
+
+            printk(KERN_INFO "PDM_MASTER_LED TURN ON with value: %d\n", index);
+            status = pdm_master_led_status_set(index, PDM_MASTER_LED_STATE_ON);
+            break;
+        }
+
+        case PDM_MASTER_LED_TURN_OFF:
+        {
+            int32_t index;
+            if (copy_from_user(&index, (int32_t __user *)arg, sizeof(int32_t))) {
+                return -EFAULT;
+            }
+
+            printk(KERN_INFO "PDM_MASTER_LED TURN OFF with value: %d\n", index);
+            status = pdm_master_led_status_set(index, PDM_MASTER_LED_STATE_ON);
+            break;
+        }
+
+        default:
+            return -ENOTTY;
+    }
+    if (status) {
+        OSA_ERROR("pdm_master_led_ioctl error.\n");
+    }
+
+	return status;
+}
 
 
 /**
@@ -142,6 +228,8 @@ int pdm_master_led_driver_init(void)
         OSA_ERROR("Failed to register led PDM Master Driver, status=%d.\n", status);
         goto err_master_unregister;
     }
+
+    led_master->fops->unlocked_ioctl = pdm_master_led_ioctl;
 
     OSA_INFO("led PDM Master Driver Initialized.\n");
     return 0;

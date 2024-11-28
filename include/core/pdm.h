@@ -11,8 +11,9 @@
 #include <linux/mod_devicetable.h>
 
 #include "osa/osa_log.h"
-#include "pdm_device.h"
-#include "pdm_master.h"
+#include "core/pdm_device.h"
+#include "core/pdm_master.h"
+#include "core/pdm_driver_manager.h"
 
 /**
  * @file pdm.h

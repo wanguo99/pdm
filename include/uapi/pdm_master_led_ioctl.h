@@ -1,0 +1,16 @@
+#ifndef _PDM_MASTER_LED_IOCTL_H_
+#define _PDM_MASTER_LED_IOCTL_H_
+
+#define PDM_MASTER_LED_STATE_OFF       (0)
+#define PDM_MASTER_LED_STATE_ON        (1)
+
+/* IOCTL commands */
+
+#define PDM_MASTER_LED_IOC_MAGIC		'l'
+
+
+#define PDM_MASTER_LED_TURN_ON			_IOW(PDM_MASTER_LED_IOC_MAGIC, 0, int32_t)
+#define PDM_MASTER_LED_TURN_OFF			_IOW(PDM_MASTER_LED_IOC_MAGIC, 1, int32_t)
+
+
+#endif /* _PDM_MASTER_LED_IOCTL_H_ */

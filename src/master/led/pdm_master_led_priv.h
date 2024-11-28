@@ -40,6 +40,7 @@ struct pdm_master_led_priv {
  */
 struct pdm_device_led_priv {
     // 可以根据需要添加device的私有数据
+    int index;
     struct pdm_device_led_operations *ops;  /**< 操作函数回调 */
 };
 
