@@ -28,15 +28,33 @@ static int pdm_master_led_status_set(int index, int state)
         return -ENODEV;
     }
 
+    led_priv = pdm_device_devdata_get(pdmdev);
+    if ((!led_priv) || (!led_priv->ops)) {
+        mutex_unlock(&led_master->client_list_mutex_lock);
+        return -EINVAL;
+    }
+
     switch (state) {
         case PDM_MASTER_LED_STATE_OFF:
+            if (!led_priv->ops->turn_off) {
+                OSA_ERROR("ENOTSUPP.\n");
+                status = -ENOTSUPP;
+                break;
+            }
             status = led_priv->ops->turn_off(pdmdev);
             break;
         case PDM_MASTER_LED_STATE_ON:
+            if (!led_priv->ops->turn_on) {
+                OSA_ERROR("ENOTSUPP.\n");
+                status = -ENOTSUPP;
+                break;
+            }
             status = led_priv->ops->turn_on(pdmdev);
             break;
         default:
+            OSA_ERROR("ENOTSUPP.\n");
             status = -EINVAL;
+            break;
     }
 
     if (status) {
@@ -104,7 +122,6 @@ static ssize_t pdm_master_led_write(struct file *filp, const char __user *buf, s
         return -EFAULT;
     }
 
-    OSA_INFO("Received data: %s\n", kernel_buf);
     if (sscanf(kernel_buf, "%d", &index) != 1) {
         OSA_ERROR("Invalid data: %s\n", kernel_buf);
         return -EINVAL;

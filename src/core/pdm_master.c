@@ -233,9 +233,13 @@ int pdm_master_client_show(struct pdm_master *master)
     return 0;
 }
 
-static int pdm_master_client_id_alloc(struct pdm_master *master)
+static int pdm_master_client_id_alloc(struct pdm_master *master, struct pdm_device *pdmdev)
 {
     int id;
+    if (!pdmdev) {
+        OSA_ERROR("Invalid input parameters (pdmdev: %p).\n", pdmdev);
+        return -EINVAL;
+    }
 
     mutex_lock(&master->idr_mutex_lock);
     id = idr_alloc(&master->device_idr, NULL, PDM_MASTER_CLIENT_IDR_START, PDM_MASTER_CLIENT_IDR_END, GFP_KERNEL);
@@ -243,23 +247,27 @@ static int pdm_master_client_id_alloc(struct pdm_master *master)
     if (id < 0) {
         if (id == -ENOSPC) {
             OSA_ERROR("No available IDs in the range.\n");
+            return -EBUSY;
         } else {
             OSA_ERROR("Failed to allocate ID: %d.\n", id);
+            return id;
         }
     }
 
-    return id;
+    pdmdev->client_index = id;
+    return 0;
 }
+
 
 /**
  * @brief 释放PDM设备的ID
  * @master: PDM主控制器
  * @pdmdev: PDM设备
  */
-static void pdm_master_client_id_free(struct pdm_master *master, int id)
+static void pdm_master_client_id_free(struct pdm_master *master, struct pdm_device *pdmdev)
 {
     mutex_lock(&master->idr_mutex_lock);
-    idr_remove(&master->device_idr, id);
+    idr_remove(&master->device_idr, pdmdev->client_index);
     mutex_unlock(&master->idr_mutex_lock);
 }
 
@@ -274,7 +282,7 @@ static void pdm_master_client_id_free(struct pdm_master *master, int id)
  */
 int pdm_master_client_add(struct pdm_master *master, struct pdm_device *pdmdev)
 {
-    int id;
+    int status;
 
     if (!master || !pdmdev) {
         OSA_ERROR("Invalid input parameters (master: %p, pdmdev: %p).\n", master, pdmdev);
@@ -282,14 +290,14 @@ int pdm_master_client_add(struct pdm_master *master, struct pdm_device *pdmdev)
     }
 
     pdmdev->master = master;
-    id = pdm_master_client_id_alloc(master);
-    if (id < 0)
+    status = pdm_master_client_id_alloc(master, pdmdev);
+    if (status)
     {
-        OSA_ERROR("Alloc id for client failed: %d\n", id);
-        return id;
+        OSA_ERROR("Alloc id for client failed: %d\n", status);
+        return status;
     }
 
-    snprintf(pdmdev->name, PDM_DEVICE_NAME_SIZE, "pdm_%s_client.%d", master->name, id);
+    snprintf(pdmdev->name, PDM_DEVICE_NAME_SIZE, "pdm_%s_client.%d", master->name, pdmdev->client_index);
 
     mutex_lock(&master->client_list_mutex_lock);
     list_add_tail(&pdmdev->entry, &master->client_list);
@@ -316,7 +324,7 @@ int pdm_master_client_delete(struct pdm_master *master, struct pdm_device *pdmde
     mutex_lock(&master->client_list_mutex_lock);
     list_del(&pdmdev->entry);
     mutex_unlock(&master->client_list_mutex_lock);
-    pdm_master_client_id_free(master, pdmdev->client_index);
+    pdm_master_client_id_free(master, pdmdev);
     OSA_DEBUG("Device %s removed from %s master.\n", dev_name(&pdmdev->dev), master->name);
     return 0;
 }

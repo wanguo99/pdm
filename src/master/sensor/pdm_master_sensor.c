@@ -29,6 +29,11 @@ static int pdm_master_sensor_get_voltage(int index, int *value)
         return -ENODEV;
     }
 
+    sensor_priv = pdm_device_devdata_get(pdmdev);
+    if ((!sensor_priv) || (!sensor_priv->ops) || (!sensor_priv->ops->get_current)) {
+        mutex_unlock(&sensor_master->client_list_mutex_lock);
+        return -EINVAL;
+    }
     status = sensor_priv->ops->get_voltage(pdmdev, value);
     if (status) {
         OSA_ERROR("PDM Sensor get_voltage Faisensor.\n");
@@ -61,6 +66,11 @@ static int pdm_master_sensor_get_current(int index, int *value)
         return -ENODEV;
     }
 
+    sensor_priv = pdm_device_devdata_get(pdmdev);
+    if ((!sensor_priv) || (!sensor_priv->ops) || (!sensor_priv->ops->get_current)) {
+        mutex_unlock(&sensor_master->client_list_mutex_lock);
+        return -EINVAL;
+    }
     status = sensor_priv->ops->get_current(pdmdev, value);
     if (status) {
         OSA_ERROR("PDM Sensor get_current Faisensor.\n");
