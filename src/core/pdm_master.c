@@ -1,8 +1,6 @@
 #include "pdm.h"
 #include "pdm_driver_manager.h"
-#include "pdm_master_template.h"
-#include "pdm_master_led.h"
-#include "pdm_master_sensor.h"
+#include "pdm_master_drivers.h"
 
 /**
  * @brief PDM 主设备列表

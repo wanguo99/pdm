@@ -1,5 +1,4 @@
 #include "pdm.h"
-#include "pdm_master_sensor.h"
 #include "pdm_master_sensor_priv.h"
 
 static int pdm_master_sensor_i2c_get_current(struct pdm_device *pdmdev, int *value)

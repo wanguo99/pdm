@@ -6,7 +6,9 @@ obj-m := $(MODULE_NAME).o
 $(MODULE_NAME)-objs := 	src/core/pdm_core.o \
 						src/core/pdm_device.o \
 						src/core/pdm_master.o \
-						src/core/pdm_driver_manager.o
+						src/core/pdm_driver_manager.o \
+						src/core/pdm_device_drivers.o \
+						src/core/pdm_master_drivers.o 
 
 $(MODULE_NAME)-objs += 	src/device/pdm_device_i2c.o \
 						src/device/pdm_device_platform.o \

@@ -1,5 +1,4 @@
 #include "pdm.h"
-#include "pdm_master_led.h"
 #include "pdm_master_led_priv.h"
 
 static int pdm_master_led_pwm_turn_on(struct pdm_device *pdmdev)
