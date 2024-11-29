@@ -49,6 +49,7 @@ struct pdm_device_physical_info {
  */
 struct pdm_device {
     int device_id;                              /**< PDM 总线上的设备 ID */
+    bool force_dts_id;                          /**< 是否强制从dts内指定ID */
     int client_index;                           /**< 主控制器上的设备 ID */
     char name[PDM_DEVICE_NAME_SIZE];            /**< 设备名称 */
     struct device dev;                          /**< 设备结构体 */

@@ -122,18 +122,21 @@ static int pdm_master_client_id_alloc(struct pdm_master *master, struct pdm_devi
         return -EINVAL;
     }
 
-    // 默认从dts中读取index
-    if (!of_property_read_s32(pdmdev->physical_info.of_node, "index", &dts_index)) {
-        pdmdev->client_index = dts_index;
+    if (of_property_read_s32(pdmdev->physical_info.of_node, "index", &dts_index)) {
+        if (pdmdev->force_dts_id) {
+            OSA_ERROR("Cannot get index from dts, force_dts_id was set\n");
+            return -EINVAL;
+        }
+        OSA_DEBUG("Cannot get index from dts\n");
     }
 
-    if (pdmdev->client_index < 0) {
+    if (dts_index < 0) {
         OSA_ERROR("Invalid client index: %d.\n", pdmdev->client_index);
         return -EINVAL;
     }
 
     mutex_lock(&master->idr_mutex_lock);
-    id = idr_alloc(&master->device_idr, NULL, pdmdev->client_index, PDM_MASTER_CLIENT_IDR_END, GFP_KERNEL);
+    id = idr_alloc(&master->device_idr, NULL, dts_index, PDM_MASTER_CLIENT_IDR_END, GFP_KERNEL);
     mutex_unlock(&master->idr_mutex_lock);
 
     if (id < 0) {
