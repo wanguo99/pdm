@@ -115,14 +115,25 @@ int pdm_master_client_show(struct pdm_master *master)
 static int pdm_master_client_id_alloc(struct pdm_master *master, struct pdm_device *pdmdev)
 {
     int id;
+    int dts_index = 0;
 
     if (!pdmdev) {
-        OSA_ERROR("Invalid input parameters (pdmdev: %p).\n", pdmdev);
+        OSA_ERROR("Invalid input parameters.\n");
+        return -EINVAL;
+    }
+
+    // 默认从dts中读取index
+    if (!of_property_read_s32(pdmdev->physical_info.of_node, "index", &dts_index)) {
+        pdmdev->client_index = dts_index;
+    }
+
+    if (pdmdev->client_index < 0) {
+        OSA_ERROR("Invalid client index: %d.\n", pdmdev->client_index);
         return -EINVAL;
     }
 
     mutex_lock(&master->idr_mutex_lock);
-    id = idr_alloc(&master->device_idr, NULL, PDM_MASTER_CLIENT_IDR_START, PDM_MASTER_CLIENT_IDR_END, GFP_KERNEL);
+    id = idr_alloc(&master->device_idr, NULL, pdmdev->client_index, PDM_MASTER_CLIENT_IDR_END, GFP_KERNEL);
     mutex_unlock(&master->idr_mutex_lock);
 
     if (id < 0) {
@@ -173,6 +184,7 @@ int pdm_master_client_add(struct pdm_master *master, struct pdm_device *pdmdev)
     }
 
     pdmdev->master = pdm_master_get(master);
+
     status = pdm_master_client_id_alloc(master, pdmdev);
     if (status) {
         OSA_ERROR("Alloc id for client failed: %d\n", status);

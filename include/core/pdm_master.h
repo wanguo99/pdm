@@ -7,8 +7,6 @@
  *
  * 本文件定义了 PDM 主控制器模块的公共数据类型、结构体和函数声明。
  */
-
-#define PDM_MASTER_CLIENT_IDR_START        (0)
 #define PDM_MASTER_CLIENT_IDR_END          (1024)
 
 /**
