@@ -14,7 +14,15 @@ int device_match_of_node(struct device *dev, const void *data)
     return (pdmdev->physical_info.of_node == of_node) ? 1 : 0;
 }
 
-
+/**
+ * @brief 根据of_node值在pdm_bus_type 总线上查找设备
+ *
+ * 该函数遍历 `pdm_bus_type` 总线上的所有设备，找到of_node值匹配的设备。
+ *
+ * @param data 传递给回调函数的数据
+ * @param fn 回调函数指针，用于处理每个设备
+ * @return 返回遍历结果，0 表示成功，非零值表示失败
+ */
 struct pdm_device *pdm_bus_find_device_by_of_node(struct device_node *of_node)
 {
     struct device *dev = bus_find_device(&pdm_bus_type, NULL, of_node, device_match_of_node);
