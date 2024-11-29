@@ -25,7 +25,7 @@ static struct mutex pdm_master_device_list_mutex_lock;
  * 返回值:
  * 指向PDM主控制器的指针，或NULL（失败）
  */
-struct pdm_master *pdm_master_get(struct pdm_master *master)
+static struct pdm_master *pdm_master_get(struct pdm_master *master)
 {
     if (!master || !get_device(master->dev)) {
         OSA_ERROR("Invalid input parameter or unable to get device reference (master: %p).\n", master);
@@ -39,11 +39,24 @@ struct pdm_master *pdm_master_get(struct pdm_master *master)
  * @brief 释放PDM主控制器的引用
  * @master: PDM主控制器
  */
-void pdm_master_put(struct pdm_master *master)
+static void pdm_master_put(struct pdm_master *master)
 {
     if (master) {
         put_device(master->dev);
     }
+}
+
+struct pdm_master *dev_to_pdm_master(struct device *dev)
+{
+    struct pdm_master *master;
+
+    if (!dev) {
+        OSA_ERROR("Invalid input parameter.\n");
+        return NULL;
+    }
+
+    master = (struct pdm_master *)dev_get_drvdata(dev);
+    return master;
 }
 
 /**
@@ -366,6 +379,7 @@ static int pdm_master_device_register(struct pdm_master *master)
     }
 
     master->dev = master_dev;
+    dev_set_drvdata(master->dev, master);   // 保存master地址至dev_drvdata
     OSA_DEBUG("PDM Master %s Device Registered.\n", master->name);
 
     return 0;
@@ -414,7 +428,7 @@ static void pdm_master_device_unregister(struct pdm_master *master)
 void *pdm_master_priv_data_get(struct pdm_master *master)
 {
     if (!master) {
-        OSA_ERROR("Invalid input parameter (master: %p).\n", master);
+        OSA_ERROR("Invalid input parameter.\n");
         return NULL;
     }
 

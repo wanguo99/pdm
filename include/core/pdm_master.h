@@ -62,6 +62,9 @@ int pdm_master_client_add(struct pdm_master *master, struct pdm_device *pdmdev);
  */
 int pdm_master_client_delete(struct pdm_master *master, struct pdm_device *pdmdev);
 
+struct pdm_master *dev_to_pdm_master(struct device *dev);
+
+
 /**
  * @brief 获取 PDM 主控制器的私有数据
  *
@@ -71,25 +74,6 @@ int pdm_master_client_delete(struct pdm_master *master, struct pdm_device *pdmde
  * @return 私有数据指针
  */
 void *pdm_master_priv_data_get(struct pdm_master *master);
-
-/**
- * @brief 获取 PDM 主控制器的引用
- *
- * 该函数用于获取 PDM 主控制器的引用。
- *
- * @param master PDM 主控制器结构体指针
- * @return 成功返回 PDM 主控制器结构体指针，失败返回 NULL
- */
-struct pdm_master *pdm_master_get(struct pdm_master *master);
-
-/**
- * @brief 释放 PDM 主控制器的引用
- *
- * 该函数用于释放 PDM 主控制器的引用。
- *
- * @param master PDM 主控制器结构体指针
- */
-void pdm_master_put(struct pdm_master *master);
 
 /**
  * @brief 分配 PDM 主控制器结构体
