@@ -9,17 +9,19 @@ $(MODULE_NAME)-objs := 	src/core/pdm_core.o \
 						src/core/pdm_driver_manager.o \
 						src/core/pdm_device_drivers.o \
 						src/core/pdm_master_drivers.o 
-
+# pdm_device_drivers
 $(MODULE_NAME)-objs += 	src/device/pdm_device_i2c.o \
 						src/device/pdm_device_platform.o \
 						src/device/pdm_device_spi.o
 
+# pdm_master_template
 $(MODULE_NAME)-objs += src/master/template/pdm_master_template.o 
 
+# pdm_master_led
 $(MODULE_NAME)-objs +=	src/master/led/pdm_master_led.o \
 						src/master/led/pdm_master_led_gpio.o \
 						src/master/led/pdm_master_led_pwm.o
-
+# pdm_master_sensor
 $(MODULE_NAME)-objs +=	src/master/sensor/pdm_master_sensor.o \
 						src/master/sensor/pdm_master_sensor_adc.o \
 						src/master/sensor/pdm_master_sensor_i2c.o

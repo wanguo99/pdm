@@ -3,10 +3,8 @@
 #include <linux/spi/spi.h>
 #include <linux/platform_device.h>
 
-
 #include "pdm.h"
 #include "pdm_device.h"
-#include "pdm_driver_manager.h"
 #include "pdm_device_drivers.h"
 
 /**
