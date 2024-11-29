@@ -9,8 +9,12 @@
 #define PDM_MASTER_LED_IOC_MAGIC		'l'
 
 
-#define PDM_MASTER_LED_TURN_ON			_IOW(PDM_MASTER_LED_IOC_MAGIC, 0, int32_t)
-#define PDM_MASTER_LED_TURN_OFF			_IOW(PDM_MASTER_LED_IOC_MAGIC, 1, int32_t)
+struct pdm_master_led_ioctl_args {
+    int index;
+    int state;
+};
+
+#define PDM_MASTER_LED_SET_STATE		_IOW(PDM_MASTER_LED_IOC_MAGIC, 0, struct pdm_master_led_ioctl_args *)
 
 
 #endif /* _PDM_MASTER_LED_IOCTL_H_ */
