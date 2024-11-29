@@ -185,7 +185,40 @@
     OSA_PRINTK(KERN_ERR, "", fmt, ##__VA_ARGS__)
 
 /**
- * @brief 标准日志打印接口（错误级别）
+ * @brief 标准日志打印接口（EMERG：紧急事件，一般是内核崩溃）
+ *
+ * 该宏用于错误日志打印，包含文件名、行号和函数名。
+ *
+ * @param fmt 日志格式字符串
+ * @param ... 可变参数列表
+ */
+#define OSA_EMERG(fmt, ...) \
+    OSA_PRINTK(KERN_EMERG, "[EMERG] ", fmt, ##__VA_ARGS__)
+
+/**
+ * @brief 标准日志打印接口（ALERT：必须立即采取行动）
+ *
+ * 该宏用于错误日志打印，包含文件名、行号和函数名。
+ *
+ * @param fmt 日志格式字符串
+ * @param ... 可变参数列表
+ */
+#define OSA_ALERT(fmt, ...) \
+    OSA_PRINTK(KERN_ALERT, "[ALERT] ", fmt, ##__VA_ARGS__)
+
+/**
+ * @brief 标准日志打印接口（CRIT：临界条件，比如严重的软件或硬件错误）
+ *
+ * 该宏用于错误日志打印，包含文件名、行号和函数名。
+ *
+ * @param fmt 日志格式字符串
+ * @param ... 可变参数列表
+ */
+#define OSA_CRIT(fmt, ...) \
+    OSA_PRINTK(KERN_CRIT, "[CRIT] ", fmt, ##__VA_ARGS__)
+
+/**
+ * @brief 标准日志打印接口（ERROR：错误状态，一般设备驱动程序中使用ERROR报告硬件错误）
  *
  * 该宏用于错误日志打印，包含文件名、行号和函数名。
  *
@@ -196,7 +229,7 @@
     OSA_PRINTK(KERN_ERR, "[ERROR] ", fmt, ##__VA_ARGS__)
 
 /**
- * @brief 标准日志打印接口（警告级别）
+ * @brief 标准日志打印接口（WARNING：警告级别，不会对系统造成严重影响）
  *
  * 该宏用于警告日志打印，包含文件名、行号和函数名。
  *
@@ -207,7 +240,18 @@
     OSA_PRINTK(KERN_WARNING, "[WARNING] ", fmt, ##__VA_ARGS__)
 
 /**
- * @brief 标准日志打印接口（信息级别）
+ * @brief 标准日志打印接口（NOTICE：有必要进行提示的一些信息）
+ *
+ * 该宏用于信息日志打印，包含文件名、行号和函数名。
+ *
+ * @param fmt 日志格式字符串
+ * @param ... 可变参数列表
+ */
+#define OSA_NOTICE(fmt, ...) \
+    OSA_PRINTK(KERN_NOTICE, "[NOTICE] ", fmt, ##__VA_ARGS__)
+
+/**
+ * @brief 标准日志打印接口（INFO：提示性的信息）
  *
  * 该宏用于信息日志打印，包含文件名、行号和函数名。
  *
@@ -218,7 +262,7 @@
     OSA_PRINTK(KERN_INFO, "[INFO] ", fmt, ##__VA_ARGS__)
 
 /**
- * @brief 标准日志打印接口（调试级别）
+ * @brief 标准日志打印接口（DEBUG：调试信息）
  *
  * 该宏用于调试日志打印，包含文件名、行号和函数名。
  *
