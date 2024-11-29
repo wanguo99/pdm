@@ -180,6 +180,15 @@ const struct device_type pdm_device_type = {
     .uevent = pdm_device_uevent,
 };
 
+static void pdm_device_root_release(struct device *dev) {
+    OSA_INFO("PDM Device Root Released.\n");
+}
+
+static struct device pdm_device_root = {
+    .init_name  = "pdm",
+    .release    = pdm_device_root_release,
+};
+
 /**
  * @brief 将 PDM 设备转换为实际的设备指针
  *
@@ -331,6 +340,7 @@ void pdm_device_devdata_free(struct pdm_device *pdmdev)
 struct pdm_device *pdm_device_alloc(void)
 {
     struct pdm_device *pdmdev;
+    int status;
 
     pdmdev = kzalloc(sizeof(struct pdm_device), GFP_KERNEL);
     if (!pdmdev) {
@@ -338,9 +348,16 @@ struct pdm_device *pdm_device_alloc(void)
         return NULL;
     }
 
+    status = pdm_bus_device_id_alloc(pdmdev);
+    if (status) {
+        OSA_ERROR("id_alloc failed, status %d\n", status);
+        kfree(pdmdev);
+    }
+
     device_initialize(&pdmdev->dev);
     pdmdev->dev.bus = &pdm_bus_type;
     pdmdev->dev.type = &pdm_device_type;
+    pdmdev->dev.parent = &pdm_device_root;
     pdmdev->dev.release = pdm_device_release;
 
     return pdmdev;
@@ -358,6 +375,7 @@ void pdm_device_free(struct pdm_device *pdmdev)
 {
     if (pdmdev) {
         put_device(&pdmdev->dev);
+        pdm_bus_device_id_free(pdmdev);
     }
 }
 
@@ -476,12 +494,6 @@ int pdm_device_register(struct pdm_device *pdmdev)
         return -EINVAL;
     }
 
-    status = pdm_bus_device_id_alloc(pdmdev);
-    if (status) {
-        OSA_ERROR("id_alloc failed, status %d\n", status);
-        return -ENOMEM;
-    }
-
     if (pdm_device_physical_info_match(&pdmdev->physical_info)) {
         OSA_ERROR("Device %s already exists\n", dev_name(&pdmdev->dev));
         goto err_free_id;
@@ -518,9 +530,7 @@ void pdm_device_unregister(struct pdm_device *pdmdev)
     }
 
     OSA_DEBUG("Device %s unregistered.\n", dev_name(&pdmdev->dev));
-
     device_unregister(&pdmdev->dev);
-    pdm_bus_device_id_free(pdmdev);
 }
 
 /**
@@ -538,10 +548,17 @@ int pdm_device_init(void)
 {
     int status;
 
+	status = device_register(&pdm_device_root);
+	if (status) {
+		put_device(&pdm_device_root);
+		return status;
+	}
+
     status = pdm_device_drivers_register();
     if (status < 0) {
         OSA_ERROR("Failed to register PDM Device Drivers, error: %d.\n", status);
-    return status;
+        device_unregister(&pdm_device_root);
+        return status;
     }
 
     OSA_DEBUG("Initialize PDM Device OK.\n");
@@ -559,6 +576,7 @@ int pdm_device_init(void)
 void pdm_device_exit(void)
 {
     pdm_device_drivers_unregister();
+    device_unregister(&pdm_device_root);
     OSA_DEBUG("PDM Device Exit.\n");
 }
 
