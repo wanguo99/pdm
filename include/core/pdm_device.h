@@ -1,7 +1,6 @@
 #ifndef _PDM_DEVICE_H_
 #define _PDM_DEVICE_H_
 
-
 /**
  * @brief PDM 设备类型
  *
@@ -9,47 +8,54 @@
  */
 extern const struct device_type pdm_device_type;
 
-#define PDM_DEVICE_NAME_SIZE        (64)        // 定义设备名称的最大长度
+/**
+ * @brief 设备名称的最大长度
+ */
+#define PDM_DEVICE_NAME_SIZE (64)
 
-typedef enum tagPDM_DEVICE_INTERFACE_TYPE
-{
-    PDM_DEVICE_INTERFACE_TYPE_UNDEFINED     = 0x00,
-    PDM_DEVICE_INTERFACE_TYPE_I2C           = 0x02,
-    PDM_DEVICE_INTERFACE_TYPE_I3C           = 0x03,
-    PDM_DEVICE_INTERFACE_TYPE_SPI           = 0x04,
-    PDM_DEVICE_INTERFACE_TYPE_GPIO          = 0x05,
-    PDM_DEVICE_INTERFACE_TYPE_PWM           = 0x06,
-    PDM_DEVICE_INTERFACE_TYPE_TTY           = 0x07,
-    PDM_DEVICE_INTERFACE_TYPE_PLATFORM      = 0x08,
-    PDM_DEVICE_INTERFACE_TYPE_ADC           = 0x09,
-    PDM_DEVICE_INTERFACE_TYPE_INVALID       = 0xFF,
-}PDM_DEVICE_INTERFACE_TYPE;
+/**
+ * @brief PDM 设备接口类型枚举
+ *
+ * 该枚举定义了 PDM 设备支持的不同接口类型。
+ */
+typedef enum tagPDM_DEVICE_INTERFACE_TYPE {
+    PDM_DEVICE_INTERFACE_TYPE_UNDEFINED = 0x00, /**< 未定义 */
+    PDM_DEVICE_INTERFACE_TYPE_I2C       = 0x02, /**< I2C 接口 */
+    PDM_DEVICE_INTERFACE_TYPE_I3C       = 0x03, /**< I3C 接口 */
+    PDM_DEVICE_INTERFACE_TYPE_SPI       = 0x04, /**< SPI 接口 */
+    PDM_DEVICE_INTERFACE_TYPE_GPIO      = 0x05, /**< GPIO 接口 */
+    PDM_DEVICE_INTERFACE_TYPE_PWM       = 0x06, /**< PWM 接口 */
+    PDM_DEVICE_INTERFACE_TYPE_TTY       = 0x07, /**< TTY 接口 */
+    PDM_DEVICE_INTERFACE_TYPE_PLATFORM  = 0x08, /**< 平台设备 */
+    PDM_DEVICE_INTERFACE_TYPE_ADC       = 0x09, /**< ADC 接口 */
+    PDM_DEVICE_INTERFACE_TYPE_INVALID   = 0xFF, /**< 无效类型 */
+} PDM_DEVICE_INTERFACE_TYPE;
 
 /**
  * @brief 物理设备信息结构体
+ *
+ * 该结构体用于存储物理设备的信息。
  */
 struct pdm_device_physical_info {
     int type;                              /**< 设备物理接口类型, PDM_DEVICE_INTERFACE_TYPE */
     void *device;                          /**< 指向实际的设备结构体 */
-    struct device_node	*of_node;          /**< 设备树节点信息 */
+    struct device_node *of_node;           /**< 设备树节点信息 */
 };
 
 /**
  * @brief PDM 设备结构体
+ *
+ * 该结构体定义了 PDM 设备的基本信息。
  */
 struct pdm_device {
-    int device_id;                              /**< pdm总线上的设备ID */
-    int client_index;                           /**< master上的设备ID */
-    char name[PDM_DEVICE_NAME_SIZE];     /**< 设备名称 */
+    int device_id;                              /**< PDM 总线上的设备 ID */
+    int client_index;                           /**< 主控制器上的设备 ID */
+    char name[PDM_DEVICE_NAME_SIZE];            /**< 设备名称 */
     struct device dev;                          /**< 设备结构体 */
-    struct pdm_master *master;                  /**< 指向所属的PDM主控制器 */
+    struct pdm_master *master;                  /**< 指向所属的 PDM 主控制器 */
     struct list_head entry;                     /**< 设备链表节点 */
-    struct pdm_device_physical_info physical_info;     /**< 物理设备信息 */
+    struct pdm_device_physical_info physical_info; /**< 物理设备信息 */
 };
-
-/*
- * PDM device 相关函数
- */
 
 /**
  * @brief 将 PDM 设备转换为实际的设备指针
@@ -64,10 +70,10 @@ struct device *pdm_device_to_physical_dev(struct pdm_device *pdmdev);
 /**
  * @brief 将 device 转换为 pdm_device
  *
- * 该宏用于将 device 转换为 pdm_device。
+ * 该宏用于将 `device` 结构体指针转换为 `pdm_device` 结构体指针。
  *
- * @param __dev device 结构体指针
- * @return pdm_device 结构体指针
+ * @param __dev `device` 结构体指针
+ * @return `pdm_device` 结构体指针
  */
 #define dev_to_pdm_device(__dev) container_of(__dev, struct pdm_device, dev)
 
@@ -145,6 +151,7 @@ struct pdm_device *pdm_device_physical_info_match(struct pdm_device_physical_inf
  *
  * 该函数用于设置 PDM 设备的物理设备信息。
  *
+ * @param pdmdev PDM 设备结构体指针
  * @param physical_info 要设置的物理设备信息
  * @return 成功返回 0，失败返回负错误码
  */
@@ -170,18 +177,19 @@ int pdm_device_register(struct pdm_device *pdmdev);
 void pdm_device_unregister(struct pdm_device *pdmdev);
 
 /**
- * pdm_device_init - 初始化PDM设备
+ * @brief 初始化 PDM 设备模块
  *
- * 返回值:
- * 0 - 成功
- * 负值 - 失败
+ * 该函数用于初始化 PDM 设备模块。
+ *
+ * @return 成功返回 0，失败返回负错误码
  */
 int pdm_device_init(void);
 
 /**
- * pdm_device_exit - 卸载PDM设备
+ * @brief 卸载 PDM 设备模块
+ *
+ * 该函数用于卸载 PDM 设备模块。
  */
 void pdm_device_exit(void);
-
 
 #endif /* _PDM_DEVICE_H_ */

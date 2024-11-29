@@ -38,13 +38,13 @@ static struct pdm_subdriver pdm_master_drivers[] = {
     },
 };
 
-
 /**
- * @brief 初始化PDM主控制器模块
+ * @brief 初始化 PDM 主控制器模块
  *
- * 返回值:
- * 0 - 成功
- * 负值 - 失败
+ * 该函数用于初始化 PDM 主控制器模块，并注册所有 PDM 主驱动程序。
+ *
+ * @return 0 - 成功
+ *         负值 - 失败
  */
 int pdm_master_drivers_register(void)
 {
@@ -61,17 +61,20 @@ int pdm_master_drivers_register(void)
         return status;
     }
 
-    OSA_DEBUG("Initialize PDM Master OK.\n");
+    OSA_DEBUG("PDM Master Drivers Registered OK.\n");
     return 0;
 }
 
 /**
- * @brief 卸载PDM主控制器模块
+ * @brief 卸载 PDM 主控制器模块
+ *
+ * 该函数用于卸载 PDM 主控制器模块，并注销所有 PDM 主驱动程序。
  */
 void pdm_master_drivers_unregister(void)
 {
     pdm_subdriver_unregister(&pdm_master_driver_list);
-    OSA_DEBUG("PDM Master Class unregistered.\n");
+
+    OSA_DEBUG("PDM Master Drivers Unregistered.\n");
 }
 
 MODULE_LICENSE("GPL");

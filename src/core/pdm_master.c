@@ -17,13 +17,13 @@ static struct list_head pdm_master_device_list;
  */
 static struct mutex pdm_master_device_list_mutex_lock;
 
-
 /**
  * @brief 获取PDM主控制器的引用
- * @master: PDM主控制器
  *
- * 返回值:
- * 指向PDM主控制器的指针，或NULL（失败）
+ * 该函数用于获取 PDM 主控制器的引用计数。
+ *
+ * @param master PDM主控制器
+ * @return 指向PDM主控制器的指针，或NULL（失败）
  */
 static struct pdm_master *pdm_master_get(struct pdm_master *master)
 {
@@ -37,7 +37,10 @@ static struct pdm_master *pdm_master_get(struct pdm_master *master)
 
 /**
  * @brief 释放PDM主控制器的引用
- * @master: PDM主控制器
+ *
+ * 该函数用于释放 PDM 主控制器的引用计数。
+ *
+ * @param master PDM主控制器
  */
 static void pdm_master_put(struct pdm_master *master)
 {
@@ -46,6 +49,14 @@ static void pdm_master_put(struct pdm_master *master)
     }
 }
 
+/**
+ * @brief 从设备结构转换为PDM主控制器
+ *
+ * 该函数用于从给定的设备结构中提取关联的 PDM 主控制器。
+ *
+ * @param dev 设备结构
+ * @return 指向PDM主控制器的指针，或NULL（失败）
+ */
 struct pdm_master *dev_to_pdm_master(struct device *dev)
 {
     struct pdm_master *master;
@@ -65,6 +76,7 @@ struct pdm_master *dev_to_pdm_master(struct device *dev)
  * 该函数用于显示当前已注册的所有 PDM 设备的名称。
  * 如果主设备未初始化，则会返回错误。
  *
+ * @param master PDM主控制器
  * @return 成功返回 0，失败返回负错误码
  */
 int pdm_master_client_show(struct pdm_master *master)
@@ -91,9 +103,19 @@ int pdm_master_client_show(struct pdm_master *master)
     return 0;
 }
 
+/**
+ * @brief 分配PDM设备ID
+ *
+ * 该函数用于分配一个唯一的ID给PDM设备。
+ *
+ * @param master PDM主控制器
+ * @param pdmdev PDM设备
+ * @return 成功返回 0，失败返回负错误码
+ */
 static int pdm_master_client_id_alloc(struct pdm_master *master, struct pdm_device *pdmdev)
 {
     int id;
+
     if (!pdmdev) {
         OSA_ERROR("Invalid input parameters (pdmdev: %p).\n", pdmdev);
         return -EINVAL;
@@ -102,6 +124,7 @@ static int pdm_master_client_id_alloc(struct pdm_master *master, struct pdm_devi
     mutex_lock(&master->idr_mutex_lock);
     id = idr_alloc(&master->device_idr, NULL, PDM_MASTER_CLIENT_IDR_START, PDM_MASTER_CLIENT_IDR_END, GFP_KERNEL);
     mutex_unlock(&master->idr_mutex_lock);
+
     if (id < 0) {
         if (id == -ENOSPC) {
             OSA_ERROR("No available IDs in the range.\n");
@@ -116,11 +139,13 @@ static int pdm_master_client_id_alloc(struct pdm_master *master, struct pdm_devi
     return 0;
 }
 
-
 /**
  * @brief 释放PDM设备的ID
- * @master: PDM主控制器
- * @pdmdev: PDM设备
+ *
+ * 该函数用于释放PDM设备的ID。
+ *
+ * @param master PDM主控制器
+ * @param pdmdev PDM设备
  */
 static void pdm_master_client_id_free(struct pdm_master *master, struct pdm_device *pdmdev)
 {
@@ -131,12 +156,12 @@ static void pdm_master_client_id_free(struct pdm_master *master, struct pdm_devi
 
 /**
  * @brief 向PDM主控制器添加设备
- * @master: PDM主控制器
- * @pdmdev: 要添加的PDM设备
  *
- * 返回值:
- * 0 - 成功
- * -EINVAL - 参数无效
+ * 该函数用于向PDM主控制器添加一个新的PDM设备。
+ *
+ * @param master PDM主控制器
+ * @param pdmdev 要添加的PDM设备
+ * @return 成功返回 0，参数无效返回 -EINVAL
  */
 int pdm_master_client_add(struct pdm_master *master, struct pdm_device *pdmdev)
 {
@@ -149,8 +174,7 @@ int pdm_master_client_add(struct pdm_master *master, struct pdm_device *pdmdev)
 
     pdmdev->master = pdm_master_get(master);
     status = pdm_master_client_id_alloc(master, pdmdev);
-    if (status)
-    {
+    if (status) {
         OSA_ERROR("Alloc id for client failed: %d\n", status);
         return status;
     }
@@ -166,12 +190,12 @@ int pdm_master_client_add(struct pdm_master *master, struct pdm_device *pdmdev)
 
 /**
  * @brief 从PDM主控制器删除设备
- * @master: PDM主控制器
- * @pdmdev: 要删除的PDM设备
  *
- * 返回值:
- * 0 - 成功
- * -EINVAL - 参数无效
+ * 该函数用于从PDM主控制器中删除一个PDM设备。
+ *
+ * @param master PDM主控制器
+ * @param pdmdev 要删除的PDM设备
+ * @return 成功返回 0，参数无效返回 -EINVAL
  */
 int pdm_master_client_delete(struct pdm_master *master, struct pdm_device *pdmdev)
 {
@@ -190,14 +214,14 @@ int pdm_master_client_delete(struct pdm_master *master, struct pdm_device *pdmde
     return 0;
 }
 
-
 /**
  * @brief 默认打开函数
- * @inode: inode 结构
- * @filp: 文件结构
  *
- * 返回值:
- * 0 - 成功
+ * 该函数是默认的文件打开操作。
+ *
+ * @param inode inode 结构
+ * @param filp 文件结构
+ * @return 成功返回 0
  */
 static int pdm_master_fops_default_open(struct inode *inode, struct file *filp)
 {
@@ -218,11 +242,12 @@ static int pdm_master_fops_default_open(struct inode *inode, struct file *filp)
 
 /**
  * @brief 默认释放函数
- * @inode: inode 结构
- * @filp: 文件结构
  *
- * 返回值:
- * 0 - 成功
+ * 该函数是默认的文件释放操作。
+ *
+ * @param inode inode 结构
+ * @param filp 文件结构
+ * @return 成功返回 0
  */
 static int pdm_master_fops_default_release(struct inode *inode, struct file *filp)
 {
@@ -232,13 +257,14 @@ static int pdm_master_fops_default_release(struct inode *inode, struct file *fil
 
 /**
  * @brief 默认读取函数
- * @filp: 文件结构
- * @buf: 用户空间缓冲区
- * @count: 要读取的字节数
- * @ppos: 当前文件位置
  *
- * 返回值:
- * 0 - 成功
+ * 该函数是默认的文件读取操作。
+ *
+ * @param filp 文件结构
+ * @param buf 用户空间缓冲区
+ * @param count 要读取的字节数
+ * @param ppos 当前文件位置
+ * @return 成功返回 0
  */
 static ssize_t pdm_master_fops_default_read(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
 {
@@ -258,13 +284,14 @@ static ssize_t pdm_master_fops_default_read(struct file *filp, char __user *buf,
 
 /**
  * @brief 默认写入函数
- * @filp: 文件结构
- * @buf: 用户空间缓冲区
- * @count: 要写入的字节数
- * @ppos: 当前文件位置
  *
- * 返回值:
- * 0 - 成功
+ * 该函数是默认的文件写入操作。
+ *
+ * @param filp 文件结构
+ * @param buf 用户空间缓冲区
+ * @param count 要写入的字节数
+ * @param ppos 当前文件位置
+ * @return 成功返回写入的字节数
  */
 static ssize_t pdm_master_fops_default_write(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
 {
@@ -274,12 +301,13 @@ static ssize_t pdm_master_fops_default_write(struct file *filp, const char __use
 
 /**
  * @brief 默认ioctl函数
- * @filp: 文件结构
- * @cmd: ioctl命令
- * @arg: 命令参数
  *
- * 返回值:
- * -ENOTSUPP - 不支持的ioctl操作
+ * 该函数是默认的ioctl操作。
+ *
+ * @param filp 文件结构
+ * @param cmd ioctl命令
+ * @param arg 命令参数
+ * @return -ENOTSUPP - 不支持的ioctl操作
  */
 static long pdm_master_fops_default_unlocked_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
@@ -288,6 +316,16 @@ static long pdm_master_fops_default_unlocked_ioctl(struct file *filp, unsigned i
     return -ENOTSUPP;
 }
 
+/**
+ * @brief 兼容层ioctl函数
+ *
+ * 该函数处理兼容层的ioctl操作。
+ *
+ * @param filp 文件结构
+ * @param cmd ioctl命令
+ * @param arg 命令参数
+ * @return 返回底层unlocked_ioctl的结果
+ */
 static long pdm_master_fops_default_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
     OSA_INFO("pdm_master_fops_default_compat_ioctl.\n");
@@ -300,13 +338,14 @@ static long pdm_master_fops_default_compat_ioctl(struct file *filp, unsigned int
 }
 
 /**
- * name_show - 显示设备名称
- * @dev: 设备结构
- * @da: 设备属性结构
- * @buf: 输出缓冲区
+ * @brief 显示设备名称
  *
- * 返回值:
- * 实际写入的字节数
+ * 该函数用于在sysfs中显示设备名称。
+ *
+ * @param dev 设备结构
+ * @param da 设备属性结构
+ * @param buf 输出缓冲区
+ * @return 实际写入的字节数
  */
 static ssize_t name_show(struct device *dev, struct device_attribute *da, char *buf)
 {
@@ -323,6 +362,8 @@ ATTRIBUTE_GROUPS(pdm_master_device);
 
 /**
  * @brief PDM 主控制器类
+ *
+ * 该类用于管理PDM主控制器设备。
  */
 static struct class pdm_master_class = {
     .name = "pdm_master",
@@ -331,11 +372,11 @@ static struct class pdm_master_class = {
 
 /**
  * @brief 添加PDM主控制器字符设备
- * @master: PDM主控制器
  *
- * 返回值:
- * 0 - 成功
- * 负值 - 失败
+ * 该函数用于注册PDM主控制器字符设备。
+ *
+ * @param master PDM主控制器
+ * @return 成功返回 0，失败返回负错误码
  */
 static int pdm_master_device_register(struct pdm_master *master)
 {
@@ -394,14 +435,16 @@ err_out:
 
 /**
  * @brief 删除PDM主控制器字符设备
- * @master: PDM主控制器
+ *
+ * 该函数用于注销PDM主控制器字符设备。
+ *
+ * @param master PDM主控制器
  */
 static void pdm_master_device_unregister(struct pdm_master *master)
 {
     if (!master) {
         OSA_ERROR("Invalid input parameter.\n");
     }
-
 
     if (master->dev) {
         device_destroy(&pdm_master_class, master->devno);
@@ -420,10 +463,11 @@ static void pdm_master_device_unregister(struct pdm_master *master)
 
 /**
  * @brief 获取PDM主控制器的私有数据
- * @master: PDM主控制器
  *
- * 返回值:
- * 指向私有数据的指针
+ * 该函数用于获取PDM主控制器的私有数据。
+ *
+ * @param master PDM主控制器
+ * @return 指向私有数据的指针
  */
 void *pdm_master_priv_data_get(struct pdm_master *master)
 {
@@ -437,10 +481,11 @@ void *pdm_master_priv_data_get(struct pdm_master *master)
 
 /**
  * @brief 分配PDM主控制器结构
- * @data_size: 私有数据的大小
  *
- * 返回值:
- * 指向分配的PDM主控制器的指针，或NULL（失败）
+ * 该函数用于分配PDM主控制器结构及其私有数据。
+ *
+ * @param data_size 私有数据的大小
+ * @return 指向分配的PDM主控制器的指针，或NULL（失败）
  */
 struct pdm_master *pdm_master_alloc(unsigned int data_size)
 {
@@ -462,7 +507,10 @@ struct pdm_master *pdm_master_alloc(unsigned int data_size)
 
 /**
  * @brief 释放PDM主控制器结构
- * @master: PDM主控制器
+ *
+ * 该函数用于释放PDM主控制器结构。
+ *
+ * @param master PDM主控制器
  */
 void pdm_master_free(struct pdm_master *master)
 {
@@ -472,15 +520,15 @@ void pdm_master_free(struct pdm_master *master)
 }
 
 /**
- * @brief 注册PDM主控制器
- * @master: PDM主控制器
+ * @brief 注册 PDM 主控制器
  *
- * 返回值:
- * 0 - 成功
- * -EINVAL - 参数无效
- * -EBUSY - 设备已存在
- * -EEXIST - 主控制器名称已存在
- * 其他负值 - 其他错误码
+ * 该函数用于注册 PDM 主控制器，并将其添加到主控制器列表中。
+ *
+ * @param master PDM 主控制器指针
+ * @return 0 - 成功
+ *         -EINVAL - 参数无效
+ *         -EEXIST - 主控制器名称已存在
+ *         其他负值 - 其他错误码
  */
 int pdm_master_register(struct pdm_master *master)
 {
@@ -522,8 +570,11 @@ int pdm_master_register(struct pdm_master *master)
 }
 
 /**
- * @brief 注销PDM主控制器
- * @master: PDM主控制器
+ * @brief 注销 PDM 主控制器
+ *
+ * 该函数用于注销 PDM 主控制器，并从主控制器列表中移除。
+ *
+ * @param master PDM 主控制器指针
  */
 void pdm_master_unregister(struct pdm_master *master)
 {
@@ -543,11 +594,12 @@ void pdm_master_unregister(struct pdm_master *master)
 }
 
 /**
- * @brief 初始化PDM主控制器模块
+ * @brief 初始化 PDM 主控制器模块
  *
- * 返回值:
- * 0 - 成功
- * 负值 - 失败
+ * 该函数用于初始化 PDM 主控制器模块，包括注册类和驱动。
+ *
+ * @return 0 - 成功
+ *         负值 - 失败
  */
 int pdm_master_init(void)
 {
@@ -574,11 +626,16 @@ int pdm_master_init(void)
 }
 
 /**
- * @brief 卸载PDM主控制器模块
+ * @brief 卸载 PDM 主控制器模块
+ *
+ * 该函数用于卸载 PDM 主控制器模块，包括注销类和驱动。
  */
 void pdm_master_exit(void)
 {
+    // 注销 PDM 主控制器驱动
     pdm_master_drivers_unregister();
+
+    // 注销 PDM 主控制器类
     class_unregister(&pdm_master_class);
     OSA_DEBUG("PDM Master Class unregistered.\n");
 }

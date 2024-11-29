@@ -2,10 +2,20 @@
 
 #include "pdm.h"
 
+/**
+ * @brief PLATFORM 设备平台数据结构体
+ *
+ * 该结构体用于存储 PLATFORM 设备的平台数据。
+ */
 struct pdm_device_platform_data {
-    PDM_DEVICE_INTERFACE_TYPE type;
+    PDM_DEVICE_INTERFACE_TYPE type;  /**< 设备接口类型 */
 };
 
+/**
+ * @brief PLATFORM 设备平台数据实例
+ *
+ * 这些变量定义了不同类型的 PLATFORM 设备的平台数据。
+ */
 static struct pdm_device_platform_data pdm_device_platform_data_plat = {
     .type = PDM_DEVICE_INTERFACE_TYPE_PLATFORM,
 };
@@ -19,8 +29,15 @@ static struct pdm_device_platform_data pdm_device_platform_data_tty = {
     .type = PDM_DEVICE_INTERFACE_TYPE_TTY,
 };
 
-static int pdm_device_platform_get_dev_type(struct platform_device *pdev)
-{
+/**
+ * @brief 获取 PLATFORM 设备类型
+ *
+ * 该函数从设备树或平台数据中获取 PLATFORM 设备的类型。
+ *
+ * @param pdev 指向 PLATFORM 设备的指针
+ * @return 返回设备类型
+ */
+static int pdm_device_platform_get_dev_type(struct platform_device *pdev) {
     struct pdm_device_platform_data *pdata;
     int dev_type;
 
@@ -39,6 +56,7 @@ static int pdm_device_platform_get_dev_type(struct platform_device *pdev)
     }
     return dev_type;
 }
+
 /**
  * @brief PLATFORM 设备探测函数
  *
@@ -96,7 +114,7 @@ static int pdm_device_platform_real_remove(struct platform_device *pdev) {
     struct pdm_device *pdmdev;
 
     physical_info.type = pdm_device_platform_get_dev_type(pdev);
-    physical_info.device= pdev;
+    physical_info.device = pdev;
     pdmdev = pdm_device_physical_info_match(&physical_info);
     if (!pdmdev) {
         OSA_ERROR("Failed to find pdm device from bus.\n");
@@ -130,23 +148,37 @@ static void pdm_device_platform_remove(struct platform_device *pdev) {
 }
 #endif
 
+/**
+ * @brief PLATFORM 设备 ID 表
+ *
+ * 该表定义了支持的 PLATFORM 设备 ID。
+ */
 static const struct platform_device_id pdm_device_platform_ids[] = {
     { .name = "pdm-device-platform", .driver_data = (kernel_ulong_t)&pdm_device_platform_data_plat, },
     { .name = "pdm-device-gpio", .driver_data = (kernel_ulong_t)&pdm_device_platform_data_gpio, },
     { .name = "pdm-device-pwm", .driver_data = (kernel_ulong_t)&pdm_device_platform_data_pwm, },
     { .name = "pdm-device-tty", .driver_data = (kernel_ulong_t)&pdm_device_platform_data_tty, },
-    {},
+    { },  // 终止符
 };
 MODULE_DEVICE_TABLE(platform, pdm_device_platform_ids);
 
+/**
+ * @brief DEVICE_TREE 匹配表
+ *
+ * 该表定义了支持的 DEVICE_TREE 兼容性字符串。
+ */
 static const struct of_device_id pdm_device_platform_of_match[] = {
     { .compatible = "led,pdm-device-gpio" },
     { .compatible = "led,pdm-device-pwm" },
-    { }
+    { },  // 终止符
 };
-
 MODULE_DEVICE_TABLE(of, pdm_device_platform_of_match);
 
+/**
+ * @brief PLATFORM 驱动结构体
+ *
+ * 该结构体定义了 PLATFORM 驱动的基本信息和操作函数。
+ */
 static struct platform_driver pdm_device_platform_driver = {
     .probe = pdm_device_platform_probe,
     .remove = pdm_device_platform_remove,
@@ -160,7 +192,7 @@ static struct platform_driver pdm_device_platform_driver = {
 /**
  * @brief 初始化 PLATFORM 驱动
  *
- * 该函数用于初始化 PLATFORM 驱动，注册 PLATFORM 驱动到系统。
+ * 该函数用于初始化 PLATFORM 驱动，并将其注册到系统中。
  *
  * @return 成功返回 0，失败返回负错误码
  */
@@ -179,7 +211,7 @@ int pdm_device_platform_driver_init(void) {
 /**
  * @brief 退出 PLATFORM 驱动
  *
- * 该函数用于退出 PLATFORM 驱动，注销 PLATFORM 驱动。
+ * 该函数用于退出 PLATFORM 驱动，并将其从系统中注销。
  */
 void pdm_device_platform_driver_exit(void) {
     platform_driver_unregister(&pdm_device_platform_driver);

@@ -57,7 +57,6 @@ free_pdmdev:
     return status;
 }
 
-
 /**
  * @brief 实际的 I2C 移除函数
  *
@@ -71,7 +70,7 @@ static int pdm_device_i2c_real_remove(struct i2c_client *client) {
     struct pdm_device *pdmdev;
 
     physical_info.type = PDM_DEVICE_INTERFACE_TYPE_I2C;
-    physical_info.device= client;
+    physical_info.device = client;
     pdmdev = pdm_device_physical_info_match(&physical_info);
     if (!pdmdev) {
         OSA_ERROR("Failed to find pdm device from bus.\n");
@@ -127,7 +126,7 @@ static void pdm_device_i2c_remove(struct i2c_client *client) {
  */
 static const struct i2c_device_id pdm_device_i2c_id[] = {
     { "pdm-device-i2c", 0 },
-    { }
+    { }  // 终止符
 };
 MODULE_DEVICE_TABLE(i2c, pdm_device_i2c_id);
 
@@ -149,7 +148,7 @@ static struct i2c_driver pdm_device_i2c_driver = {
 /**
  * @brief 初始化 I2C 驱动
  *
- * 该函数用于初始化 I2C 驱动，注册 I2C 驱动到系统。
+ * 该函数用于初始化 I2C 驱动，并将其注册到系统中。
  *
  * @return 成功返回 0，失败返回负错误码
  */
@@ -168,7 +167,7 @@ int pdm_device_i2c_driver_init(void) {
 /**
  * @brief 退出 I2C 驱动
  *
- * 该函数用于退出 I2C 驱动，注销 I2C 驱动。
+ * 该函数用于退出 I2C 驱动，并将其从系统中注销。
  */
 void pdm_device_i2c_driver_exit(void) {
     i2c_del_driver(&pdm_device_i2c_driver);

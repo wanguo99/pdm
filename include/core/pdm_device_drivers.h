@@ -1,25 +1,26 @@
 #ifndef _PDM_DEVICE_DRIVERS_H_
 #define _PDM_DEVICE_DRIVERS_H_
 
-
 /**
- * pdm_device_init - 初始化PDM设备
+ * @brief 初始化 PDM 设备驱动
  *
- * 返回值:
- * 0 - 成功
- * 负值 - 失败
+ * 该函数用于初始化 PDM 设备驱动，包括注册设备类和设备驱动。
+ *
+ * @return 成功返回 0，失败返回负错误码
  */
 int pdm_device_drivers_register(void);
 
 /**
- * pdm_device_exit - 卸载PDM设备
+ * @brief 卸载 PDM 设备驱动
+ *
+ * 该函数用于卸载 PDM 设备驱动，包括注销设备驱动。
  */
 void pdm_device_drivers_unregister(void);
 
 /**
  * @brief 初始化 I2C 驱动
  *
- * 该函数用于初始化 I2C 驱动，注册 I2C 驱动到系统。
+ * 该函数用于初始化 I2C 驱动并将其注册到系统中。
  *
  * @return 成功返回 0，失败返回负错误码
  */
@@ -28,14 +29,14 @@ int pdm_device_i2c_driver_init(void);
 /**
  * @brief 退出 I2C 驱动
  *
- * 该函数用于退出 I2C 驱动，注销 I2C 驱动。
+ * 该函数用于退出 I2C 驱动并将其从系统中注销。
  */
 void pdm_device_i2c_driver_exit(void);
 
 /**
  * @brief 初始化 PLATFORM 驱动
  *
- * 该函数用于初始化 PLATFORM 驱动，注册 PLATFORM 驱动到系统。
+ * 该函数用于初始化 PLATFORM 驱动并将其注册到系统中。
  *
  * @return 成功返回 0，失败返回负错误码
  */
@@ -44,14 +45,14 @@ int pdm_device_platform_driver_init(void);
 /**
  * @brief 退出 PLATFORM 驱动
  *
- * 该函数用于退出 PLATFORM 驱动，注销 PLATFORM 驱动。
+ * 该函数用于退出 PLATFORM 驱动并将其从系统中注销。
  */
- void pdm_device_platform_driver_exit(void);
+void pdm_device_platform_driver_exit(void);
 
 /**
  * @brief 初始化 SPI 驱动
  *
- * 该函数用于初始化 SPI 驱动，注册 SPI 驱动到系统。
+ * 该函数用于初始化 SPI 驱动并将其注册到系统中。
  *
  * @return 成功返回 0，失败返回负错误码
  */
@@ -60,7 +61,7 @@ int pdm_device_spi_driver_init(void);
 /**
  * @brief 退出 SPI 驱动
  *
- * 该函数用于退出 SPI 驱动，注销 SPI 驱动。
+ * 该函数用于退出 SPI 驱动并将其从系统中注销。
  */
 void pdm_device_spi_driver_exit(void);
 

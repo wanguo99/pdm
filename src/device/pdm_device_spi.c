@@ -56,7 +56,7 @@ static void pdm_device_spi_remove(struct spi_device *spi) {
     struct pdm_device *pdmdev;
 
     physical_info.type = PDM_DEVICE_INTERFACE_TYPE_SPI;
-    physical_info.device= spi;
+    physical_info.device = spi;
     pdmdev = pdm_device_physical_info_match(&physical_info);
     if (!pdmdev) {
         OSA_ERROR("Failed to find pdm device from bus.\n");
@@ -66,15 +66,24 @@ static void pdm_device_spi_remove(struct spi_device *spi) {
     pdm_device_unregister(pdmdev);
 
     OSA_DEBUG("PDM SPI Device Removed.\n");
-    return;
 }
 
+/**
+ * @brief SPI 设备 ID 表
+ *
+ * 该表定义了支持的 SPI 设备 ID。
+ */
 static const struct spi_device_id pdm_device_spi_ids[] = {
     { .name = "pdm-device-spi" },
-    { }
+    { }  // 终止符
 };
 MODULE_DEVICE_TABLE(spi, pdm_device_spi_ids);
 
+/**
+ * @brief SPI 驱动结构体
+ *
+ * 该结构体定义了 SPI 驱动的基本信息和操作函数。
+ */
 static struct spi_driver pdm_device_spi_driver = {
     .probe = pdm_device_spi_probe,
     .remove = pdm_device_spi_remove,
@@ -87,7 +96,7 @@ static struct spi_driver pdm_device_spi_driver = {
 /**
  * @brief 初始化 PDM 设备 SPI 驱动
  *
- * 该函数用于初始化 PDM 设备 SPI 驱动，注册 PDM 设备 SPI 驱动到系统。
+ * 该函数用于初始化 PDM 设备 SPI 驱动，并将其注册到系统中。
  *
  * @return 成功返回 0，失败返回负错误码
  */
@@ -106,7 +115,7 @@ int pdm_device_spi_driver_init(void) {
 /**
  * @brief 退出 PDM 设备 SPI 驱动
  *
- * 该函数用于退出 PDM 设备 SPI 驱动，注销 PDM 设备 SPI 驱动。
+ * 该函数用于退出 PDM 设备 SPI 驱动，并将其从系统中注销。
  */
 void pdm_device_spi_driver_exit(void) {
     spi_unregister_driver(&pdm_device_spi_driver);

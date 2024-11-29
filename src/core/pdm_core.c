@@ -74,7 +74,15 @@ void pdm_bus_device_id_free(struct pdm_device *pdmdev)
     mutex_unlock(&pdm_bus_priv_data.idr_mutex_lock);
 }
 
-
+/**
+ * @brief 注册PDM驱动程序
+ * @owner: 模块所有者
+ * @driver: PDM驱动程序
+ *
+ * 返回值:
+ * 0 - 成功
+ * 非零值 - 失败
+ */
 int pdm_bus_register_driver(struct module *owner, struct pdm_driver *driver)
 {
     int status;
@@ -91,6 +99,10 @@ int pdm_bus_register_driver(struct module *owner, struct pdm_driver *driver)
     return 0;
 }
 
+/**
+ * @brief 注销PDM驱动程序
+ * @driver: PDM驱动程序
+ */
 void pdm_bus_unregister_driver(struct pdm_driver *driver)
 {
     if (driver)
@@ -268,14 +280,17 @@ static int pdm_bus_init(void)
 
     memset(&pdm_bus_priv_data, 0, sizeof(struct pdm_bus_private_data));
     mutex_init(&pdm_bus_priv_data.idr_mutex_lock);
-    idr_init(&pdm_bus_priv_data.device_idr);
+    if (idr_init(&pdm_bus_priv_data.device_idr) < 0) {
+        OSA_ERROR("Failed to initialize IDR\n");
+        bus_unregister(&pdm_bus_type);
+        return -ENOMEM;
+    }
 
     pdm_bus_debug_fs_init();
 
     OSA_DEBUG("PDM bus initialized\n");
     return 0;
 }
-
 
 /**
  * @brief 卸载 PDM 总线
