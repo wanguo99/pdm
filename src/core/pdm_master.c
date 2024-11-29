@@ -1,3 +1,5 @@
+#include "linux/compat.h"
+
 #include "pdm.h"
 #include "pdm_driver_manager.h"
 #include "pdm_master_drivers.h"
@@ -196,11 +198,24 @@ static ssize_t pdm_master_fops_default_write(struct file *filp, const char __use
  * 返回值:
  * -ENOTSUPP - 不支持的ioctl操作
  */
-static long pdm_master_fops_default_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+static long pdm_master_fops_default_unlocked_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
-    OSA_INFO("This master does not support ioctl operations.\n");
+    OSA_INFO("Called pdm_master_fops_default_unlocked_ioctl\n");
+
     return -ENOTSUPP;
 }
+
+static long pdm_master_fops_default_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+{
+    OSA_INFO("pdm_master_fops_default_compat_ioctl.\n");
+
+    if (_IOC_DIR(cmd) & (_IOC_READ | _IOC_WRITE)) {
+        arg = (unsigned long)compat_ptr(arg);
+    }
+
+    return filp->f_op->unlocked_ioctl(filp, cmd, arg);
+}
+
 
 /**
  * @brief 显示所有已注册的 PDM 设备列表
@@ -357,7 +372,8 @@ static int pdm_master_cdev_add(struct pdm_master *master)
     master->fops.release = pdm_master_fops_default_release;
     master->fops.read = pdm_master_fops_default_read;
     master->fops.write = pdm_master_fops_default_write;
-    master->fops.unlocked_ioctl = pdm_master_fops_default_ioctl;
+    master->fops.unlocked_ioctl = pdm_master_fops_default_unlocked_ioctl;
+    master->fops.compat_ioctl =  pdm_master_fops_default_compat_ioctl;
     cdev_init(&master->cdev, &master->fops);
     master->cdev.owner = THIS_MODULE;
     status = cdev_add(&master->cdev, master->devno, 1);
