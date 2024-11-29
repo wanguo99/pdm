@@ -16,6 +16,7 @@
  */
 struct pdm_subdriver {
     bool status;                /**< 驱动是否加载，默认为false，设置为true后开启 */
+    bool ignore_failures;       /**< 是否忽略驱动初始化失败 */
     const char *name;           /**< 子驱动的名称 */
     int (*init)(void);          /**< 子驱动的初始化函数 */
     void (*exit)(void);         /**< 子驱动的退出函数 */
@@ -30,7 +31,6 @@ struct pdm_subdriver {
 struct pdm_subdriver_register_params {
     struct pdm_subdriver *drivers;      /**< 要注册的子驱动数组 */
     int count;                          /**< 子驱动数组的长度 */
-    bool ignore_failures;               /**< 是否忽略某些驱动初始化失败 */
     struct list_head *list;             /**< 子驱动链表头指针 */
 };
 

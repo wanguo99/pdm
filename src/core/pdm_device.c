@@ -22,20 +22,23 @@ static struct list_head pdm_device_driver_list;
  */
 static struct pdm_subdriver pdm_device_drivers[] = {
     {
-        .status = true,
         .name = "PDM SPI Device",
+        .status = true,
+        .ignore_failures = true,
         .init = pdm_device_spi_driver_init,
         .exit = pdm_device_spi_driver_exit
     },
     {
-        .status = true,
         .name = "PDM I2C Device",
+        .status = true,
+        .ignore_failures = true,
         .init = pdm_device_i2c_driver_init,
         .exit = pdm_device_i2c_driver_exit
     },
     {
-        .status = true,
         .name = "PDM PLATFORM Device",
+        .status = true,
+        .ignore_failures = true,
         .init = pdm_device_platform_driver_init,
         .exit = pdm_device_platform_driver_exit
     },
@@ -577,7 +580,6 @@ int pdm_device_init(void)
 
     params.drivers = pdm_device_drivers;
     params.count = ARRAY_SIZE(pdm_device_drivers);
-    params.ignore_failures = true;
     params.list = &pdm_device_driver_list;
     status = pdm_subdriver_register(&params);
     if (status < 0) {

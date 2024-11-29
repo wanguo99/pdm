@@ -16,8 +16,12 @@ static int pdm_subdriver_register_single(struct pdm_subdriver *driver, struct li
     if (driver->status && driver->init) {
         status = driver->init();
         if (status) {
-            OSA_ERROR("Failed to register driver %s, status = %d.\n", driver->name ? driver->name : "Unknown", status);
-            return status;
+            if (driver->ignore_failures) {
+                OSA_WARN("Failed to register driver %s, status = %d.\n", driver->name ? driver->name : "Unknown", status);
+            } else {
+                OSA_ERROR("Failed to register driver %s, status = %d.\n", driver->name ? driver->name : "Unknown", status);
+                return status;
+            }
         }
     }
 
@@ -81,10 +85,9 @@ int pdm_subdriver_register(struct pdm_subdriver_register_params *params) {
         if (status) {
             OSA_ERROR("Failed to register driver %s at index %d, status = %d.\n",
                       params->drivers[i].name ? params->drivers[i].name : "Unknown", i, status);
-            if (!params->ignore_failures) {
-                pdm_subdriver_unregister(params->list);
-                return status;
-            }
+            pdm_subdriver_unregister(params->list);
+            return status;
+
         }
     }
 

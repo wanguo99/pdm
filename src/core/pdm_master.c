@@ -32,20 +32,23 @@ static struct list_head pdm_master_driver_list;
  */
 static struct pdm_subdriver pdm_master_drivers[] = {
     {
-        .status = true,
         .name = "Template Master",
+        .status = true,
+        .ignore_failures = true,
         .init = pdm_master_template_driver_init,
         .exit = pdm_master_template_driver_exit,
     },
     {
-        .status = true,
         .name = "LED Master",
+        .status = true,
+        .ignore_failures = true,
         .init = pdm_master_led_driver_init,
         .exit = pdm_master_led_driver_exit,
     },
     {
-        .status = true,
         .name = "Sensor Master",
+        .status = true,
+        .ignore_failures = true,
         .init = pdm_master_sensor_driver_init,
         .exit = pdm_master_sensor_driver_exit,
     },
@@ -616,7 +619,6 @@ int pdm_master_init(void)
     INIT_LIST_HEAD(&pdm_master_driver_list);
     params.drivers = pdm_master_drivers;
     params.count = ARRAY_SIZE(pdm_master_drivers);
-    params.ignore_failures = true;
     params.list = &pdm_master_driver_list;
     status = pdm_subdriver_register(&params);
     if (status < 0) {
