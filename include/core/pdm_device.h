@@ -1,6 +1,12 @@
 #ifndef _PDM_DEVICE_H_
 #define _PDM_DEVICE_H_
 
+#include <linux/i2c.h>
+#include <linux/i3c/master.h>
+#include <linux/spi/spi.h>
+#include <linux/platform_device.h>
+
+
 /**
  * @brief PDM 设备类型
  *
@@ -38,8 +44,13 @@ typedef enum tagPDM_DEVICE_INTERFACE_TYPE {
  */
 struct pdm_device_physical_info {
     int type;                              /**< 设备物理接口类型, PDM_DEVICE_INTERFACE_TYPE */
-    void *device;                          /**< 指向实际的设备结构体 */
-    struct device_node *of_node;           /**< 设备树节点信息 */
+    union {
+        struct i2c_client *i2cdev;
+        struct i3c_device *i3cdev;
+        struct spi_device *spidev;
+        struct platform_device *pdev;
+    }device;                                /**< 指向实际的设备结构体 */
+    struct device_node *of_node;            /**< 设备树节点信息 */
 };
 
 /**

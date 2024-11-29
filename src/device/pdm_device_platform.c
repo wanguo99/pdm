@@ -66,7 +66,6 @@ static int pdm_device_platform_get_dev_type(struct platform_device *pdev) {
  * @return 成功返回 0，失败返回负错误码
  */
 static int pdm_device_platform_probe(struct platform_device *pdev) {
-    struct pdm_device_physical_info physical_info;
     struct pdm_device *pdmdev;
     int status;
 
@@ -78,15 +77,9 @@ static int pdm_device_platform_probe(struct platform_device *pdev) {
         return -ENOMEM;
     }
 
-    physical_info.type = pdm_device_platform_get_dev_type(pdev);
-    physical_info.device = pdev;
-    physical_info.of_node = pdev->dev.of_node;
-    status = pdm_device_physical_info_set(pdmdev, &physical_info);
-    if (status) {
-        OSA_ERROR("Failed to set pdm device physical info, status=%d.\n", status);
-        goto free_pdmdev;
-    }
-
+    pdmdev->physical_info.type = pdm_device_platform_get_dev_type(pdev);
+    pdmdev->physical_info.device.pdev = pdev;
+    pdmdev->physical_info.of_node = pdev->dev.of_node;
     status = pdm_device_register(pdmdev);
     if (status) {
         OSA_ERROR("Failed to register pdm device, status=%d.\n", status);

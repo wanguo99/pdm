@@ -24,7 +24,6 @@ struct i2c_device_id {
  * @return 成功返回 0，失败返回负错误码
  */
 static int pdm_device_i2c_real_probe(struct i2c_client *client, const struct i2c_device_id *id) {
-    struct pdm_device_physical_info physical_info;
     struct pdm_device *pdmdev;
     int status;
 
@@ -34,15 +33,9 @@ static int pdm_device_i2c_real_probe(struct i2c_client *client, const struct i2c
         return -ENOMEM;
     }
 
-    physical_info.type = PDM_DEVICE_INTERFACE_TYPE_I2C;
-    physical_info.device = client;
-    physical_info.of_node = client->dev.of_node;
-    status = pdm_device_physical_info_set(pdmdev, &physical_info);
-    if (status) {
-        OSA_ERROR("Failed to set pdm device physical info, status=%d.\n", status);
-        goto free_pdmdev;
-    }
-
+    pdmdev->physical_info.type = PDM_DEVICE_INTERFACE_TYPE_I2C;
+    pdmdev->physical_info.device.i2cdev = client;
+    pdmdev->physical_info.of_node = client->dev.of_node;
     status = pdm_device_register(pdmdev);
     if (status) {
         OSA_ERROR("Failed to register pdm device, status=%d.\n", status);

@@ -1,8 +1,3 @@
-#include <linux/i2c.h>
-#include <linux/i3c/master.h>
-#include <linux/spi/spi.h>
-#include <linux/platform_device.h>
-
 #include "pdm.h"
 #include "pdm_device.h"
 #include "pdm_device_drivers.h"
@@ -23,11 +18,6 @@ static int pdm_device_verify(struct pdm_device *pdmdev)
     if ((pdmdev->physical_info.type <= PDM_DEVICE_INTERFACE_TYPE_UNDEFINED)
         || (pdmdev->physical_info.type >= PDM_DEVICE_INTERFACE_TYPE_INVALID)) {
         OSA_ERROR("physical_info type is invalid\n");
-        return -EINVAL;
-    }
-
-    if (!pdmdev->physical_info.device) {
-        OSA_ERROR("physical_info device is invalid\n");
         return -EINVAL;
     }
 
@@ -190,40 +180,6 @@ static struct device pdm_device_root = {
 };
 
 /**
- * @brief 将 PDM 设备转换为实际的设备指针
- *
- * 该函数根据 PDM 设备的接口类型，返回相应的实际设备指针。
- *
- * @param pdmdev 指向 PDM 设备的指针
- * @return 成功返回实际的设备指针，失败返回 NULL
- */
-struct device *pdm_device_to_physical_dev(struct pdm_device *pdmdev)
-{
-    struct device *dev = NULL;
-
-    if (pdm_device_verify(pdmdev)) {
-        return NULL;
-    }
-
-    switch (pdmdev->physical_info.type) {
-        case PDM_DEVICE_INTERFACE_TYPE_I2C:
-            dev = &((struct i2c_client *)pdmdev->physical_info.device)->dev;
-            break;
-        case PDM_DEVICE_INTERFACE_TYPE_I3C:
-            dev = &((struct i3c_device *)pdmdev->physical_info.device)->dev;
-            break;
-        case PDM_DEVICE_INTERFACE_TYPE_SPI:
-            dev = &((struct spi_device *)pdmdev->physical_info.device)->dev;
-            break;
-        default:
-            pr_err("Unsupported interface type %d\n", pdmdev->physical_info.type);
-            return NULL;
-    }
-
-    return dev;
-}
-
-/**
  * @brief 释放 PDM 设备资源
  *
  * 该函数用于释放 PDM 设备的资源，主要是释放设备结构体本身。
@@ -377,31 +333,6 @@ void pdm_device_free(struct pdm_device *pdmdev)
         put_device(&pdmdev->dev);
         pdm_bus_device_id_free(pdmdev);
     }
-}
-
-/**
- * @brief 设置 PDM 设备的物理设备信息
- *
- * 该函数用于设置 PDM 设备的物理设备信息。
- *
- * // TODO: 后续增加对of_node信息的解析
- *
- * @param physical_info 要设置的物理设备信息
- * @return 成功返回 0，失败返回负错误码
- */
-int pdm_device_physical_info_set(struct pdm_device *pdmdev, struct pdm_device_physical_info *physical_info)
-{
-    if (!pdmdev || !physical_info) {
-        OSA_ERROR("pdmdev or physical_info is null\n");
-        return -EINVAL;
-    }
-
-    memset(&pdmdev->physical_info, 0, sizeof(struct pdm_device_physical_info));
-    pdmdev->physical_info.type = physical_info->type;
-    pdmdev->physical_info.device = physical_info->device;
-    pdmdev->physical_info.of_node = physical_info->of_node;
-
-    return 0;
 }
 
 /**
