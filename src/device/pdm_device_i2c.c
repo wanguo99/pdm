@@ -66,15 +66,14 @@ free_pdmdev:
  * @return 成功返回 0，失败返回负错误码
  */
 static int pdm_device_i2c_real_remove(struct i2c_client *client) {
-    struct pdm_device_physical_info physical_info;
     struct pdm_device *pdmdev;
 
-    physical_info.type = PDM_DEVICE_INTERFACE_TYPE_I2C;
-    physical_info.device = client;
-    pdmdev = pdm_device_physical_info_match(&physical_info);
+    pdmdev = pdm_bus_find_device_by_of_node(client->dev.of_node);
     if (!pdmdev) {
         OSA_ERROR("Failed to find pdm device from bus.\n");
         return -ENODEV;
+    } else {
+        OSA_DEBUG("Found SPI PDM Device: %s", dev_name(&pdmdev->dev));
     }
 
     pdm_device_unregister(pdmdev);

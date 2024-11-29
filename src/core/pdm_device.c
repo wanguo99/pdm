@@ -380,75 +380,6 @@ void pdm_device_free(struct pdm_device *pdmdev)
 }
 
 /**
- * @brief 检查设备是否匹配给定的物理信息
- *
- * 该函数用于检查给定的 PDM 设备是否匹配指定的物理信息。
- *
- * @param dev 当前遍历到的设备
- * @param data 传递给回调函数的数据，包含要匹配的物理信息
- * @return 返回遍历结果，1 表示匹配并停止遍历，0 表示不匹配并继续遍历
- */
-static int pdm_device_physical_info_check(struct device *dev, void *data) {
-    struct pdm_device *pdmdev = dev_to_pdm_device(dev);
-    struct pdm_device **checked_pdmdev = (struct pdm_device **)data;
-
-    if (pdm_device_verify(pdmdev)) {
-        goto unmatch;
-    }
-
-    if (!checked_pdmdev || !*checked_pdmdev) {
-        OSA_INFO("Invalid argument. \n");
-        goto unmatch;
-    }
-
-    if ((pdmdev->physical_info.type == (*checked_pdmdev)->physical_info.type) &&
-        (pdmdev->physical_info.device == (*checked_pdmdev)->physical_info.device)) {
-        *checked_pdmdev = pdmdev;
-        OSA_DEBUG("Found pdmdev: %s \n", dev_name(&pdmdev->dev));
-        return 1;
-    }
-
-unmatch:
-    return 0;
-}
-
-/**
- * @brief 查找与给定物理信息匹配的 PDM 设备
- *
- * 该函数用于查找与给定物理信息匹配的 PDM 设备。
- *
- * @param physical_info 要匹配的物理设备信息
- * @return 返回匹配的设备指针，如果没有找到则返回 NULL
- */
-struct pdm_device *pdm_device_physical_info_match(struct pdm_device_physical_info *physical_info)
-{
-    struct pdm_device *check_pdmdev;
-    struct pdm_device *target_pdmdev_ptr;
-
-    if (!physical_info) {
-        OSA_ERROR("Invalid physical info.\n");
-        return NULL;
-    }
-
-    check_pdmdev = kzalloc(sizeof(struct pdm_device), GFP_KERNEL);
-    if (!check_pdmdev) {
-        OSA_ERROR("Failed to allocate memory for pdm device.\n");
-        return NULL;
-    }
-
-    check_pdmdev->physical_info.type = physical_info->type;
-    check_pdmdev->physical_info.device = physical_info->device;
-    target_pdmdev_ptr = check_pdmdev;
-    pdm_bus_for_each_dev(&target_pdmdev_ptr, pdm_device_physical_info_check);
-    if (target_pdmdev_ptr == check_pdmdev) {
-        target_pdmdev_ptr = NULL;
-    }
-
-    kfree(check_pdmdev);
-    return target_pdmdev_ptr;
-}
-
-/**
  * @brief 设置 PDM 设备的物理设备信息
  *
  * 该函数用于设置 PDM 设备的物理设备信息。
@@ -494,7 +425,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
         return -EINVAL;
     }
 
-    if (pdm_device_physical_info_match(&pdmdev->physical_info)) {
+    if (pdm_bus_find_device_by_of_node(pdmdev->physical_info.of_node)) {
         OSA_ERROR("Device %s already exists\n", dev_name(&pdmdev->dev));
         goto err_free_id;
     }

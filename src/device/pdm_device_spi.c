@@ -52,15 +52,14 @@ free_pdmdev:
  * @param spi 指向 SPI 设备的指针
  */
 static void pdm_device_spi_remove(struct spi_device *spi) {
-    struct pdm_device_physical_info physical_info;
     struct pdm_device *pdmdev;
 
-    physical_info.type = PDM_DEVICE_INTERFACE_TYPE_SPI;
-    physical_info.device = spi;
-    pdmdev = pdm_device_physical_info_match(&physical_info);
+    pdmdev = pdm_bus_find_device_by_of_node(spi->dev.of_node);
     if (!pdmdev) {
         OSA_ERROR("Failed to find pdm device from bus.\n");
         return;
+    } else {
+        OSA_DEBUG("Found SPI PDM Device: %s", dev_name(&pdmdev->dev));
     }
 
     pdm_device_unregister(pdmdev);

@@ -87,6 +87,17 @@ int pdm_bus_device_id_alloc(struct pdm_device *pdmdev);
 void pdm_bus_device_id_free(struct pdm_device *pdmdev);
 
 /**
+ * @brief 根据of_node值在pdm_bus_type 总线上查找设备
+ *
+ * 该函数遍历 `pdm_bus_type` 总线上的所有设备，找到of_node值匹配的设备。
+ *
+ * @param data 传递给回调函数的数据
+ * @param fn 回调函数指针，用于处理每个设备
+ * @return 返回遍历结果，0 表示成功，非零值表示失败
+ */
+struct pdm_device *pdm_bus_find_device_by_of_node(struct device_node *of_node);
+
+/**
  * @brief 遍历 pdm_bus_type 总线上的所有设备
  *
  * 该函数遍历 `pdm_bus_type` 总线上的所有设备，并对每个设备调用指定的回调函数。

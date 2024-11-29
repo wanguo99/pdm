@@ -6,6 +6,25 @@
 
 static struct pdm_bus_private_data pdm_bus_priv_data;
 
+
+int device_match_of_node(struct device *dev, const void *data)
+{
+    struct pdm_device *pdmdev = dev_to_pdm_device(dev);
+    struct device_node *of_node = (struct device_node *)data;
+    return (pdmdev->physical_info.of_node == of_node) ? 1 : 0;
+}
+
+
+struct pdm_device *pdm_bus_find_device_by_of_node(struct device_node *of_node)
+{
+    struct device *dev = bus_find_device(&pdm_bus_type, NULL, of_node, device_match_of_node);
+    if (!dev) {
+        return NULL;
+    }
+    return dev_to_pdm_device(dev);
+}
+
+
 /**
  * @brief 遍历 pdm_bus_type 总线上的所有设备
  *

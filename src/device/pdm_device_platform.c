@@ -110,15 +110,14 @@ free_pdmdev:
  * @return 成功返回 0，失败返回负错误码
  */
 static int pdm_device_platform_real_remove(struct platform_device *pdev) {
-    struct pdm_device_physical_info physical_info;
     struct pdm_device *pdmdev;
 
-    physical_info.type = pdm_device_platform_get_dev_type(pdev);
-    physical_info.device = pdev;
-    pdmdev = pdm_device_physical_info_match(&physical_info);
+    pdmdev = pdm_bus_find_device_by_of_node(pdev->dev.of_node);
     if (!pdmdev) {
         OSA_ERROR("Failed to find pdm device from bus.\n");
         return -ENODEV;
+    } else {
+        OSA_DEBUG("Found SPI PDM Device: %s", dev_name(&pdmdev->dev));
     }
 
     pdm_device_unregister(pdmdev);
