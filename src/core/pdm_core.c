@@ -264,6 +264,7 @@ static int pdm_bus_init(void)
         OSA_ERROR("Failed to register PDM bus, error %d\n", status);
         return status;
     }
+    OSA_DEBUG("PDM bus registered\n");
 
     memset(&pdm_bus_priv_data, 0, sizeof(struct pdm_bus_private_data));
     mutex_init(&pdm_bus_priv_data.idr_mutex_lock);
