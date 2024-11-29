@@ -280,12 +280,7 @@ static int pdm_bus_init(void)
 
     memset(&pdm_bus_priv_data, 0, sizeof(struct pdm_bus_private_data));
     mutex_init(&pdm_bus_priv_data.idr_mutex_lock);
-    if (idr_init(&pdm_bus_priv_data.device_idr) < 0) {
-        OSA_ERROR("Failed to initialize IDR\n");
-        bus_unregister(&pdm_bus_type);
-        return -ENOMEM;
-    }
-
+    idr_init(&pdm_bus_priv_data.device_idr);
     pdm_bus_debug_fs_init();
 
     OSA_DEBUG("PDM bus initialized\n");
