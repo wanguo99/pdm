@@ -84,9 +84,7 @@ static long pdm_master_sensor_ioctl(struct file *file, unsigned int cmd, unsigne
     int status;
     int value;
 
-    OSA_INFO("Calsensor pdm_master_sensor_ioctl\n");
-
-    dev_dbg(&sensor_master->dev, "ioctl, cmd=0x%02x, arg=0x%02lx\n", cmd, arg);
+    OSA_DEBUG("ioctl, cmd=0x%02x, arg=0x%02lx\n", cmd, arg);
     switch (cmd) {
         case PDM_MASTER_SENSOR_GET_VOLTAGE: {
             int32_t index;

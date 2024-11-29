@@ -68,9 +68,8 @@ static long pdm_master_led_ioctl(struct file *file, unsigned int cmd, unsigned l
 {
     int status;
 
-    OSA_INFO("Called pdm_master_led_ioctl\n");
+    OSA_DEBUG("ioctl, cmd=0x%02x, arg=0x%02lx\n", cmd, arg);
 
-    dev_dbg(&led_master->dev, "ioctl, cmd=0x%02x, arg=0x%02lx\n", cmd, arg);
     switch (cmd) {
         case PDM_MASTER_LED_TURN_ON: {
             int32_t index;
