@@ -115,14 +115,14 @@ int pdm_master_client_show(struct pdm_master *master)
 static int pdm_master_client_id_alloc(struct pdm_master *master, struct pdm_device *pdmdev)
 {
     int id;
-    int dts_index = 0;
+    int client_index = 0;
 
     if (!pdmdev) {
         OSA_ERROR("Invalid input parameters.\n");
         return -EINVAL;
     }
 
-    if (of_property_read_s32(pdmdev->physical_info.of_node, "index", &dts_index)) {
+    if (of_property_read_s32(pdmdev->physical_info.of_node, "client-index", &client_index)) {
         if (pdmdev->force_dts_id) {
             OSA_ERROR("Cannot get index from dts, force_dts_id was set\n");
             return -EINVAL;
@@ -130,13 +130,13 @@ static int pdm_master_client_id_alloc(struct pdm_master *master, struct pdm_devi
         OSA_DEBUG("Cannot get index from dts\n");
     }
 
-    if (dts_index < 0) {
+    if (client_index < 0) {
         OSA_ERROR("Invalid client index: %d.\n", pdmdev->client_index);
         return -EINVAL;
     }
 
     mutex_lock(&master->idr_mutex_lock);
-    id = idr_alloc(&master->device_idr, NULL, dts_index, PDM_MASTER_CLIENT_IDR_END, GFP_KERNEL);
+    id = idr_alloc(&master->device_idr, NULL, client_index, PDM_MASTER_CLIENT_IDR_END, GFP_KERNEL);
     mutex_unlock(&master->idr_mutex_lock);
 
     if (id < 0) {

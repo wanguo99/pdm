@@ -506,6 +506,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
         goto err_free_id;
     }
     pdmdev->dev.of_node = pdmdev->physical_info.of_node;
+    pdmdev->force_dts_id = true;
 
     OSA_DEBUG("Device %s registered.\n", dev_name(&pdmdev->dev));
     return 0;
