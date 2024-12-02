@@ -44,13 +44,13 @@ free_pdmdev:
  *
  * @param spi 指向 SPI 设备的指针
  */
-static void pdm_device_spi_remove(struct spi_device *spi) {
+static int pdm_device_spi_real_remove(struct spi_device *spi) {
     struct pdm_device *pdmdev;
 
     pdmdev = pdm_bus_find_device_by_of_node(spi->dev.of_node);
     if (!pdmdev) {
         OSA_ERROR("Failed to find pdm device from bus.\n");
-        return;
+        return -ENODEV;
     } else {
         OSA_DEBUG("Found SPI PDM Device: %s", dev_name(&pdmdev->dev));
     }
@@ -58,7 +58,30 @@ static void pdm_device_spi_remove(struct spi_device *spi) {
     pdm_device_unregister(pdmdev);
 
     OSA_DEBUG("PDM SPI Device Removed.\n");
+    return 0;
 }
+
+/**
+ * @brief 兼容旧内核版本的 SPI 移除函数
+ *
+ * 该函数用于兼容 Linux 内核版本低于 5.17.0 的情况。
+ *
+ * 该函数在 SPI 设备被移除时调用，负责注销和释放 PDM 设备。
+ *
+ * @param spi 指向 SPI 设备的指针
+ */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 17, 0)
+static int pdm_device_spi_remove(struct spi_device *spi) {
+    return pdm_device_spi_real_remove(spi);
+}
+#else
+static void pdm_device_spi_remove(struct spi_device *spi) {
+    if (pdm_device_spi_real_remove(spi)) {
+        OSA_ERROR("pdm_device_spi_real_remove failed.\n");
+    }
+    return;
+}
+#endif
 
 /**
  * @brief SPI 设备 ID 表
