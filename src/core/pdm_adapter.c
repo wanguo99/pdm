@@ -97,6 +97,71 @@ void pdm_adapter_devdata_set(struct pdm_adapter *master, void *data)
 
 
 /**
+ * @brief 分配PDM设备ID
+ *
+ * 该函数用于分配一个唯一的ID给PDM设备。
+ *
+ * @param adapter PDM Adapter
+ * @param pdmdev PDM设备
+ * @return 成功返回 0，失败返回负错误码
+ */
+int pdm_adapter_id_alloc(struct pdm_adapter *adapter, struct pdm_client *client)
+{
+    int id;
+    int client_index = 0;
+
+    if (!client) {
+        OSA_ERROR("Invalid input parameters.\n");
+        return -EINVAL;
+    }
+
+    if (of_property_read_s32(client->pdmdev->dev.parent->of_node, "client-index", &client_index)) {
+        if (client->force_dts_id) {
+            OSA_ERROR("Cannot get index from dts, force_dts_id was set\n");
+            return -EINVAL;
+        }
+        OSA_DEBUG("Cannot get index from dts\n");
+    }
+
+    if (client_index < 0) {
+        OSA_ERROR("Invalid client index: %d.\n", client->index);
+        return -EINVAL;
+    }
+
+    mutex_lock(&adapter->idr_mutex_lock);
+    id = idr_alloc(&adapter->device_idr, NULL, client_index, PDM_ADAPTER_CLIENT_IDR_END, GFP_KERNEL);
+    mutex_unlock(&adapter->idr_mutex_lock);
+
+    if (id < 0) {
+        if (id == -ENOSPC) {
+            OSA_ERROR("No available IDs in the range.\n");
+            return -EBUSY;
+        } else {
+            OSA_ERROR("Failed to allocate ID: %d.\n", id);
+            return id;
+        }
+    }
+
+    client->index = id;
+    return 0;
+}
+
+/**
+ * @brief 释放 PDM Client 的ID
+ *
+ * 该函数用于释放 PDM Client 的ID。
+ *
+ * @param adapter PDM Adapter
+ * @param client PDM Client
+ */
+void pdm_adapter_id_free(struct pdm_adapter *adapter, struct pdm_client *client)
+{
+    mutex_lock(&adapter->idr_mutex_lock);
+    idr_remove(&adapter->device_idr, client->index);
+    mutex_unlock(&adapter->idr_mutex_lock);
+}
+
+/**
  * @brief 获取PDM主控制器的引用
  * @master: PDM主控制器
  *

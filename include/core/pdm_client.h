@@ -64,4 +64,21 @@ struct pdm_client *pdm_client_alloc(unsigned int data_size);
  */
 void pdm_client_free(struct pdm_client *client);
 
+
+/**
+ * @brief 初始化 PDM Client
+ *
+ * 该函数用于初始化 PDM Client。
+ *
+ * @return 成功返回 0，失败返回负错误码
+ */
+int pdm_client_init(void);
+
+/**
+ * @brief 退出 PDM Client
+ *
+ * 该函数用于退出 PDM Client。
+ */
+void pdm_client_exit(void);
+
 #endif /* _PDM_CLIENT_H_ */

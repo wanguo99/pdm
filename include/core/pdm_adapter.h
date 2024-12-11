@@ -64,6 +64,28 @@ void pdm_adapter_devdata_set(struct pdm_adapter *adapter, void *data);
  */
 struct pdm_adapter *pdm_adapter_get(struct pdm_adapter *adapter);
 
+
+/**
+ * @brief 分配PDM设备ID
+ *
+ * 该函数用于分配一个唯一的ID给PDM设备。
+ *
+ * @param adapter PDM Adapter
+ * @param pdmdev PDM设备
+ * @return 成功返回 0，失败返回负错误码
+ */
+int pdm_adapter_id_alloc(struct pdm_adapter *adapter, struct pdm_client *client);
+
+/**
+ * @brief 释放 PDM Client 的ID
+ *
+ * 该函数用于释放 PDM Client 的ID。
+ *
+ * @param adapter PDM Adapter
+ * @param client PDM Client
+ */
+void pdm_adapter_id_free(struct pdm_adapter *adapter, struct pdm_client *client);
+
 /**
  * @brief 释放 PDM Adapter 的引用
  *
