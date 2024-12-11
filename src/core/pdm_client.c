@@ -152,6 +152,16 @@ static void pdm_client_device_release(struct device *dev)
     kfree(client);
 }
 
+static inline void *pdm_client_get_devdata(struct pdm_client *client)
+{
+    return dev_get_drvdata(&client->dev);
+}
+
+static inline void pdm_client_set_devdata(struct pdm_client *client, void *data)
+{
+    dev_set_drvdata(&client->dev, data);
+}
+
 /**
  * @brief 添加 PDM Client 字符设备
  *
@@ -180,12 +190,13 @@ static int pdm_client_device_register(struct pdm_client *client)
     }
 
     dev_no = minor;
-    dev_set_name(&client->dev, "pdm_%s%d", client->adapter->name, dev_no);
+    dev_set_name(&client->dev, "%s%d", dev_name(&client->adapter->dev), dev_no);
 
     client->dev.devt = MKDEV(pdm_client_major, minor);
     client->dev.class = &pdm_client_class;
     client->dev.parent = &client->pdmdev->dev;
     client->dev.release = pdm_client_device_release;
+    device_initialize(&client->dev);
 
     client->fops.open = pdm_client_fops_default_open;
     client->fops.release = pdm_client_fops_default_release;
@@ -200,6 +211,8 @@ static int pdm_client_device_register(struct pdm_client *client)
         OSA_ERROR("Failed to add char device for %s, error: %d.\n", dev_name(&client->dev), status);
         goto err_free_minor;
     }
+
+    pdm_client_set_devdata(client, (void *)(client + sizeof(struct pdm_client)));
 
     OSA_DEBUG("PDM Client %s Device Registered.\n", dev_name(&client->dev));
 
@@ -254,6 +267,7 @@ int pdm_client_register(struct pdm_adapter *adapter, struct pdm_client *client)
         return status;
     }
 
+    client->adapter = adapter;
     status = pdm_client_device_register(client);
     if (status) {
         OSA_ERROR("Failed to add cdev, error: %d.\n", status);
@@ -296,16 +310,6 @@ void pdm_client_unregister(struct pdm_adapter *adapter, struct pdm_client *clien
     return;
 }
 
-static inline void *pdm_client_get_devdata(struct pdm_client *client)
-{
-    return dev_get_drvdata(&client->pdmdev->dev);
-}
-
-static inline void pdm_client_set_devdata(struct pdm_client *client, void *data)
-{
-    dev_set_drvdata(&client->pdmdev->dev, data);
-}
-
 /**
  * @brief 分配PDM Client 结构
  *
@@ -317,15 +321,12 @@ static inline void pdm_client_set_devdata(struct pdm_client *client, void *data)
 struct pdm_client *pdm_client_alloc(unsigned int data_size)
 {
     struct pdm_client *client;
-    size_t client_size = sizeof(struct pdm_client);
 
-    client = kzalloc(client_size + data_size, GFP_KERNEL);
+    client = kzalloc(sizeof(struct pdm_client) + data_size, GFP_KERNEL);
     if (!client) {
         OSA_ERROR("Failed to allocate memory for pdm_client.\n");
         return NULL;
     }
-
-    pdm_client_set_devdata(client, (void *)client + client_size);
 
     return client;
 }

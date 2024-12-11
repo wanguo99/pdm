@@ -90,8 +90,6 @@ int pdm_component_register(struct pdm_component_params *params) {
 
         }
     }
-
-    OSA_DEBUG("PDM Component Register OK.\n");
     return 0;
 }
 

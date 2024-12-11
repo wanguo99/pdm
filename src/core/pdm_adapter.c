@@ -173,14 +173,14 @@ void pdm_adapter_devdata_set(struct pdm_adapter *master, void *data)
 int pdm_adapter_id_alloc(struct pdm_adapter *adapter, struct pdm_client *client)
 {
     int id;
-    int client_index = 0;
+    int index = 0;
 
     if (!client) {
         OSA_ERROR("Invalid input parameters.\n");
         return -EINVAL;
     }
 
-    if (of_property_read_s32(client->pdmdev->dev.parent->of_node, "client-index", &client_index)) {
+    if (of_property_read_s32(client->pdmdev->dev.parent->of_node, "index", &index)) {
         if (client->force_dts_id) {
             OSA_ERROR("Cannot get index from dts, force_dts_id was set\n");
             return -EINVAL;
@@ -188,13 +188,13 @@ int pdm_adapter_id_alloc(struct pdm_adapter *adapter, struct pdm_client *client)
         OSA_DEBUG("Cannot get index from dts\n");
     }
 
-    if (client_index < 0) {
+    if (index < 0) {
         OSA_ERROR("Invalid client index: %d.\n", client->index);
         return -EINVAL;
     }
 
     mutex_lock(&adapter->idr_mutex_lock);
-    id = idr_alloc(&adapter->device_idr, NULL, client_index, PDM_ADAPTER_CLIENT_IDR_END, GFP_KERNEL);
+    id = idr_alloc(&adapter->device_idr, NULL, index, PDM_ADAPTER_CLIENT_IDR_END, GFP_KERNEL);
     mutex_unlock(&adapter->idr_mutex_lock);
 
     if (id < 0) {
@@ -286,7 +286,7 @@ int pdm_adapter_register(struct pdm_adapter *adapter, const char *name)
     mutex_unlock(&pdm_adapter_list_mutex_lock);
 
     adapter->dev.type = &pdm_adapter_device_type;
-    dev_set_name(&adapter->dev, "pdm_adapter_%s", name);
+    dev_set_name(&adapter->dev, "pdm_%s", name);
     status = device_add(&adapter->dev);
     if (status) {
         OSA_ERROR("Failed to add device: %s, error: %d.\n", dev_name(&adapter->dev), status);
@@ -300,7 +300,7 @@ int pdm_adapter_register(struct pdm_adapter *adapter, const char *name)
     mutex_init(&adapter->idr_mutex_lock);
     idr_init(&adapter->device_idr);
 
-    OSA_DEBUG("PDM Adapter Registered: %s.\n", name);
+    OSA_DEBUG("PDM Adapter %s Registered\n", name);
 
     return 0;
 

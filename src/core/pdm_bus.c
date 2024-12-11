@@ -181,13 +181,12 @@ static void pdm_bus_device_remove(struct device *dev)
  * @return 匹配成功返回 1，失败返回 0
  */
 static int pdm_bus_device_real_match(struct device *dev, const struct device_driver *drv) {
-
     if (dev->type != &pdm_device_type) {
         return 0;
     }
 
     /* Attempt an OF style match */
-    if (of_driver_match_device(dev, drv)) {
+    if (of_driver_match_device(dev->parent, drv)) {
         return 1;
     }
 

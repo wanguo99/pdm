@@ -154,13 +154,13 @@ static int pdm_led_device_probe(struct pdm_device *pdmdev)
     struct pdm_client *client;
 
     client = pdm_client_alloc(sizeof(void *));
-    if (client) {
+    if (!client) {
         OSA_ERROR("LED Client Alloc Failed, status=%d\n", status);
         return -ENOMEM;
     }
 
-    pdmdev->client = client;
     client->pdmdev = pdmdev;
+    pdmdev->client = client;
     status = pdm_client_register(led_adapter, client);
     if (status) {
         OSA_ERROR("LED Adapter Add Device Failed, status=%d\n", status);
