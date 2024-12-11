@@ -80,7 +80,6 @@ static struct list_head pdm_adapter_list;
  */
 static struct mutex pdm_adapter_list_mutex_lock;
 
-
 /**
  * name_show - 显示设备名称
  * @dev: 设备结构
@@ -112,10 +111,11 @@ static struct attribute *pdm_adapter_device_attrs[] = {
 ATTRIBUTE_GROUPS(pdm_adapter_device);
 
 /**
- * @brief PDM 主控制器设备类型
+ * @brief PDM Adapter 类
  */
-static const struct device_type pdm_adapter_device_type = {
-    .groups = pdm_adapter_device_groups,
+static struct class pdm_adapter_class = {
+    .name = "pdm_adapter",
+    .dev_groups = pdm_adapter_device_groups,
 };
 
 /**
@@ -285,7 +285,7 @@ int pdm_adapter_register(struct pdm_adapter *adapter, const char *name)
     }
     mutex_unlock(&pdm_adapter_list_mutex_lock);
 
-    adapter->dev.type = &pdm_adapter_device_type;
+    adapter->dev.class = &pdm_adapter_class;
     dev_set_name(&adapter->dev, "pdm_%s", name);
     status = device_add(&adapter->dev);
     if (status) {
@@ -387,12 +387,19 @@ int pdm_adapter_init(void)
 {
     int status;
 
+    status = class_register(&pdm_adapter_class);
+    if (status < 0) {
+        OSA_ERROR("Failed to register PDM Client Class, error: %d.\n", status);
+        return status;
+    }
+    OSA_DEBUG("PDM Client Class registered.\n");
+
     INIT_LIST_HEAD(&pdm_adapter_list);
     mutex_init(&pdm_adapter_list_mutex_lock);
-
     status = pdm_adapter_drivers_register();
     if (status < 0) {
         OSA_ERROR("Failed to register PDM Adapter Drivers, error: %d.\n", status);
+        class_unregister(&pdm_adapter_class);
         return status;
     }
 
@@ -408,6 +415,7 @@ int pdm_adapter_init(void)
 void pdm_adapter_exit(void)
 {
     pdm_adapter_drivers_unregister();
+    class_unregister(&pdm_adapter_class);
     OSA_DEBUG("PDM Adapter unregistered.\n");
 }
 

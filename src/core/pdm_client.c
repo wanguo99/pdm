@@ -3,7 +3,7 @@
 #include "pdm.h"
 
 /**
- * @brief PDM 主控制器类
+ * @brief PDM Client 类
  */
 static struct class pdm_client_class = {
     .name = "pdm_client",
@@ -174,7 +174,6 @@ static int pdm_client_device_register(struct pdm_client *client)
 {
     int status;
     int minor;
-    int dev_no;
 
     if (!client) {
         OSA_ERROR("Invalid input parameter.\n");
@@ -189,8 +188,7 @@ static int pdm_client_device_register(struct pdm_client *client)
         goto err_out;
     }
 
-    dev_no = minor;
-    dev_set_name(&client->dev, "%s%d", dev_name(&client->adapter->dev), dev_no);
+    dev_set_name(&client->dev, "%s.%d", dev_name(&client->adapter->dev), client->index);
 
     client->dev.devt = MKDEV(pdm_client_major, minor);
     client->dev.class = &pdm_client_class;
