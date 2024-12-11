@@ -1,5 +1,5 @@
-#ifndef _PDM_MASTER_SENSOR_PRIV_H_
-#define _PDM_MASTER_SENSOR_PRIV_H_
+#ifndef _PDM_SENSOR_PRIV_H_
+#define _PDM_SENSOR_PRIV_H_
 
 /**
  * @file pdm_master_sensor_priv.h
@@ -65,4 +65,4 @@ int pdm_master_sensor_i2c_setup(struct pdm_device *pdmdev);
  */
 int pdm_master_sensor_adc_setup(struct pdm_device *pdmdev);
 
-#endif /* _PDM_MASTER_SENSOR_PRIV_H_ */
+#endif /* _PDM_SENSOR_PRIV_H_ */

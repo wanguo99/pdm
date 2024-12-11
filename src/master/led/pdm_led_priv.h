@@ -1,5 +1,5 @@
-#ifndef _PDM_MASTER_LED_PRIV_H_
-#define _PDM_MASTER_LED_PRIV_H_
+#ifndef _PDM_LED_PRIV_H_
+#define _PDM_LED_PRIV_H_
 
 /**
  * @file pdm_led.h
@@ -43,4 +43,4 @@ struct pdm_device_led_priv {
 int pdm_master_led_gpio_setup(struct pdm_device *pdmdev);
 int pdm_master_led_pwm_setup(struct pdm_device *pdmdev);
 
-#endif /* _PDM_MASTER_LED_PRIV_H_ */
+#endif /* _PDM_LED_PRIV_H_ */

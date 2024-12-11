@@ -1,5 +1,5 @@
 #include "pdm.h"
-#include "pdm_master_sensor_priv.h"
+#include "pdm_sensor_priv.h"
 
 /**
  * @brief 获取 I2C 传感器的电流值

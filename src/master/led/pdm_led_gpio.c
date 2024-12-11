@@ -1,5 +1,5 @@
 #include "pdm.h"
-#include "pdm_master_led_priv.h"
+#include "pdm_led_priv.h"
 
 /**
  * @brief 设置 GPIO LED 状态

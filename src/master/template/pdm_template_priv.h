@@ -1,5 +1,5 @@
-#ifndef _PDM_MASTER_TEMPLATE_PRIV_H_
-#define _PDM_MASTER_TEMPLATE_PRIV_H_
+#ifndef _PDM_TEMPLATE_PRIV_H_
+#define _PDM_TEMPLATE_PRIV_H_
 
 /**
  * @file pdm_master_template_priv.h
@@ -42,4 +42,4 @@ struct pdm_device_template_priv {
     // 可以根据需要添加 device 的私有数据
 };
 
-#endif /* _PDM_MASTER_TEMPLATE_PRIV_H_ */
+#endif /* _PDM_TEMPLATE_PRIV_H_ */

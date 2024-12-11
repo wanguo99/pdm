@@ -1,5 +1,5 @@
-#ifndef _PDM_MASTER_TEMPLATE_IOCTL_H_
-#define _PDM_MASTER_TEMPLATE_IOCTL_H_
+#ifndef _PDM_TEMPLATE_IOCTL_H_
+#define _PDM_TEMPLATE_IOCTL_H_
 
 /**
  * @file pdm_master_template_ioctl.h
@@ -38,4 +38,4 @@
  */
 #define PDM_MASTER_TEMPLATE_GET_CURRENT _IOR(PDM_MASTER_TEMPLATE_IOC_MAGIC, 1, int32_t)
 
-#endif /* _PDM_MASTER_TEMPLATE_IOCTL_H_ */
+#endif /* _PDM_TEMPLATE_IOCTL_H_ */

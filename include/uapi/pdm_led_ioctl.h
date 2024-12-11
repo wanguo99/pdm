@@ -1,5 +1,5 @@
-#ifndef _PDM_MASTER_LED_IOCTL_H_
-#define _PDM_MASTER_LED_IOCTL_H_
+#ifndef _PDM_LED_IOCTL_H_
+#define _PDM_LED_IOCTL_H_
 
 #define PDM_MASTER_LED_STATE_OFF       (0)
 #define PDM_MASTER_LED_STATE_ON        (1)
@@ -17,4 +17,4 @@ struct pdm_master_led_ioctl_args {
 #define PDM_MASTER_LED_SET_STATE		_IOW(PDM_MASTER_LED_IOC_MAGIC, 0, struct pdm_master_led_ioctl_args *)
 
 
-#endif /* _PDM_MASTER_LED_IOCTL_H_ */
+#endif /* _PDM_LED_IOCTL_H_ */
