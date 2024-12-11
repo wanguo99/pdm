@@ -30,7 +30,7 @@ struct pdm_device {
     int client_index;                           /**< 主控制器上的设备 ID */
     char name[PDM_DEVICE_NAME_SIZE];            /**< 设备名称 */
     struct device dev;                          /**< 设备结构体 */
-    struct pdm_master *master;                  /**< 指向所属的 PDM 主控制器 */
+    struct pdm_adapter *adapter;                  /**< 指向所属的 PDM 主控制器 */
     struct list_head entry;                     /**< 设备链表节点 */
 };
 

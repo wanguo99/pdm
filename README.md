@@ -6,10 +6,8 @@ PDM (Peripheral Driver Module) 是一个用于提供通用外设访问框架的�
 
 PDM 主要由以下几个部分组成：
 - **PDM Core**: 驱动的核心入口，负责 PDM 总线的注册、PDM 主设备的初始化、子模块的初始化以及外设驱动的注册。
-- **PDM Master**: 一个通用的外设控制器类型，提供了一个统一的外设访问模型。
-- **PDM Template Master**: 一个具体的外设控制器实例，提供了一种名为 template 的外设访问接口。
+- **PDM Adapter**: 一个通用的外设适配器类型，提供了一个统一的外设访问模型。
 - **PDM Device**: 一个通用的外设抽象模型，提供了统一的外设设备模型。
-- **PDM Template I2C Driver**: 一个使用 I2C 访问的 template 外设的实例。
 
 
 ## 编译

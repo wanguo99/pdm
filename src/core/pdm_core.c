@@ -34,8 +34,7 @@ struct pdm_device *pdm_bus_find_device_by_parent(struct device *parent)
 
 /**
  * @brief 为PDM设备分配ID
- * @master: PDM主控制器
- * @pdmdev: PDM设备
+ * @pdmdev: PDM Device
  *
  * 返回值:
  * 0 - 成功
@@ -71,8 +70,7 @@ int pdm_bus_device_id_alloc(struct pdm_device *pdmdev)
 
 /**
  * @brief 释放PDM设备的ID
- * @master: PDM主控制器
- * @pdmdev: PDM设备
+ * @pdmdev: PDM Device
  */
 void pdm_bus_device_id_free(struct pdm_device *pdmdev)
 {
@@ -352,13 +350,13 @@ static int __init pdm_init(void)
 
     status = pdm_device_init();
     if (status < 0) {
-        OSA_ERROR("Failed to initialize PDM device, error %d\n", status);
+        OSA_ERROR("Failed to initialize PDM Device, error %d\n", status);
         goto err_bus_exit;
     }
 
-    status = pdm_master_init();
+    status = pdm_adapter_init();
     if (status < 0) {
-        OSA_ERROR("Failed to initialize PDM master, error %d\n", status);
+        OSA_ERROR("Failed to initialize PDM Adapter, error %d\n", status);
         goto err_device_exit;
     }
 
@@ -381,7 +379,7 @@ err_bus_exit:
 static void __exit pdm_exit(void)
 {
     OSA_INFO("===== PDM Exit =====\n");
-    pdm_master_exit();
+    pdm_adapter_exit();
     pdm_device_exit();
     pdm_bus_exit();
     OSA_INFO("----- PDM Exited -----\n");

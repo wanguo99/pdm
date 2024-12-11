@@ -3,7 +3,7 @@
 #include "pdm_led_ioctl.h"
 #include "pdm_led_priv.h"
 
-static struct pdm_master *led_master = NULL;
+static struct pdm_adapter *led_adapter = NULL;
 
 /**
  * @brief 查找指定索引的 PDM 设备
@@ -16,7 +16,7 @@ static struct pdm_device *pdm_led_find_pdmdev(int index)
     struct pdm_device *pdmdev;
     int found_dev = 0;
 
-    list_for_each_entry(pdmdev, &led_master->client_list, entry) {
+    list_for_each_entry(pdmdev, &led_adapter->client_list, entry) {
         if (pdmdev->client_index == index) {
             OSA_INFO("Found target LED device.\n");
             found_dev = 1;
@@ -44,7 +44,7 @@ static int pdm_led_set_state(struct pdm_led_ioctl_args *args)
     struct pdm_device *pdmdev;
     int status;
 
-    mutex_lock(&led_master->client_list_mutex_lock);
+    mutex_lock(&led_adapter->client_list_mutex_lock);
 
     pdmdev = pdm_led_find_pdmdev(args->index);
     if (!pdmdev) {
@@ -64,11 +64,11 @@ static int pdm_led_set_state(struct pdm_led_ioctl_args *args)
         goto err_unlock;
     }
 
-    mutex_unlock(&led_master->client_list_mutex_lock);
+    mutex_unlock(&led_adapter->client_list_mutex_lock);
     return 0;
 
 err_unlock:
-    mutex_unlock(&led_master->client_list_mutex_lock);
+    mutex_unlock(&led_adapter->client_list_mutex_lock);
     return status;
 }
 
@@ -163,9 +163,9 @@ static int pdm_led_device_probe(struct pdm_device *pdmdev)
 {
     int status;
 
-    status = pdm_master_client_add(led_master, pdmdev);
+    status = pdm_adapter_client_add(led_adapter, pdmdev);
     if (status) {
-        OSA_ERROR("LED Master Add Device Failed, status=%d\n", status);
+        OSA_ERROR("LED Adapter Add Device Failed, status=%d\n", status);
         return status;
     }
 
@@ -179,7 +179,7 @@ static int pdm_led_device_probe(struct pdm_device *pdmdev)
     return 0;
 
 err_client_del:
-    pdm_master_client_delete(led_master, pdmdev);
+    pdm_adapter_client_delete(led_adapter, pdmdev);
     OSA_DEBUG("LED PDM Device Probe Failed\n");
     return status;
 }
@@ -197,9 +197,9 @@ static void pdm_led_device_remove(struct pdm_device *pdmdev)
 
     pdm_device_devdata_free(pdmdev);
 
-    status = pdm_master_client_delete(led_master, pdmdev);
+    status = pdm_adapter_client_delete(led_adapter, pdmdev);
     if (status) {
-        OSA_ERROR("LED Master Delete Device Failed, status=%d\n", status);
+        OSA_ERROR("LED Adapter Delete Device Failed, status=%d\n", status);
         return;
     }
 
@@ -243,35 +243,35 @@ int pdm_led_driver_init(void)
 {
     int status;
 
-    led_master = pdm_master_alloc(sizeof(void *));
-    if (!led_master) {
-        OSA_ERROR("Failed to allocate pdm_master\n");
+    led_adapter = pdm_adapter_alloc(sizeof(void *));
+    if (!led_adapter) {
+        OSA_ERROR("Failed to allocate pdm_adapter\n");
         return -ENOMEM;
     }
 
-    strncpy(led_master->name, PDM_LED_NAME, strlen(PDM_LED_NAME));
-    status = pdm_master_register(led_master);
+    strncpy(led_adapter->name, PDM_LED_NAME, strlen(PDM_LED_NAME));
+    status = pdm_adapter_register(led_adapter);
     if (status) {
-        OSA_ERROR("Failed to register LED PDM Master, status=%d\n", status);
-        goto err_master_free;
+        OSA_ERROR("Failed to register LED PDM Adapter, status=%d\n", status);
+        goto err_adapter_free;
     }
 
     status = pdm_bus_register_driver(THIS_MODULE, &pdm_led_driver);
     if (status) {
-        OSA_ERROR("Failed to register LED PDM Master Driver, status=%d\n", status);
-        goto err_master_unregister;
+        OSA_ERROR("Failed to register LED PDM Adapter Driver, status=%d\n", status);
+        goto err_adapter_unregister;
     }
 
-    led_master->fops.unlocked_ioctl = pdm_led_ioctl;
-    led_master->fops.write = pdm_led_write;
+    led_adapter->fops.unlocked_ioctl = pdm_led_ioctl;
+    led_adapter->fops.write = pdm_led_write;
 
-    OSA_INFO("LED PDM Master Driver Initialized\n");
+    OSA_INFO("LED PDM Adapter Driver Initialized\n");
     return 0;
 
-err_master_unregister:
-    pdm_master_unregister(led_master);
-err_master_free:
-    pdm_master_free(led_master);
+err_adapter_unregister:
+    pdm_adapter_unregister(led_adapter);
+err_adapter_free:
+    pdm_adapter_free(led_adapter);
     return status;
 }
 
@@ -283,11 +283,11 @@ err_master_free:
 void pdm_led_driver_exit(void)
 {
     pdm_bus_unregister_driver(&pdm_led_driver);
-    pdm_master_unregister(led_master);
-    pdm_master_free(led_master);
-    OSA_INFO("LED PDM Master Driver Exited\n");
+    pdm_adapter_unregister(led_adapter);
+    pdm_adapter_free(led_adapter);
+    OSA_INFO("LED PDM Adapter Driver Exited\n");
 }
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("<guohaoprc@163.com>");
-MODULE_DESCRIPTION("LED PDM Master Driver");
+MODULE_DESCRIPTION("LED PDM Adapter Driver");

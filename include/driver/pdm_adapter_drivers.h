@@ -9,14 +9,14 @@
  * @return 0 - 成功
  *         负值 - 失败
  */
-int pdm_master_drivers_register(void);
+int pdm_adapter_drivers_register(void);
 
 /**
  * @brief 卸载 PDM 主控制器驱动
  *
  * 该函数用于卸载所有 PDM 主控制器驱动程序。
  */
-void pdm_master_drivers_unregister(void);
+void pdm_adapter_drivers_unregister(void);
 
 /**
  * @brief 初始化 LED 主设备驱动

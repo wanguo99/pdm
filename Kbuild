@@ -5,7 +5,7 @@ obj-m := $(MODULE_NAME).o
 # 定义要编译的目标模块对象文件
 $(MODULE_NAME)-objs := 	src/core/pdm_core.o \
 						src/core/pdm_device.o \
-						src/core/pdm_master.o \
+						src/core/pdm_adapter.o \
 						src/core/pdm_component.o
 
 # pdm drivers
