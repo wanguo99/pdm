@@ -60,8 +60,6 @@ int pdm_adapter_client_add(struct pdm_adapter *adapter, struct pdm_device *pdmde
  */
 int pdm_adapter_client_delete(struct pdm_adapter *adapter, struct pdm_device *pdmdev);
 
-struct pdm_adapter *dev_to_pdm_adapter(struct device *dev);
-
 
 /**
  * @brief 获取 PDM  Adapter的私有数据

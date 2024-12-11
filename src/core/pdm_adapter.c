@@ -18,90 +18,107 @@ static struct list_head pdm_adapter_device_list;
  */
 static struct mutex pdm_adapter_device_list_mutex_lock;
 
-/**
- * @brief 获取PDM Adapter的引用
- *
- * 该函数用于获取 PDM  Adapter的引用计数。
- *
- * @param adapter PDM Adapter
- * @return 指向PDM Adapter的指针，或NULL（失败）
- */
-static struct pdm_adapter *pdm_adapter_get(struct pdm_adapter *adapter)
-{
-    if (!adapter || !get_device(adapter->dev)) {
-        OSA_ERROR("Invalid input parameter or unable to get device reference (adapter: %p).\n", adapter);
-        return NULL;
-    }
-
-    return adapter;
-}
 
 /**
- * @brief 释放PDM Adapter的引用
+ * @brief 默认打开函数
  *
- * 该函数用于释放 PDM  Adapter的引用计数。
+ * 该函数是默认的文件打开操作。
  *
- * @param adapter PDM Adapter
+ * @param inode inode 结构
+ * @param filp 文件结构
+ * @return 成功返回 0
  */
-static void pdm_adapter_put(struct pdm_adapter *adapter)
+static int pdm_client_fops_default_open(struct inode *inode, struct file *filp)
 {
-    if (adapter) {
-        put_device(adapter->dev);
-    }
-}
-
-/**
- * @brief 从设备结构转换为PDM Adapter
- *
- * 该函数用于从给定的设备结构中提取关联的 PDM  Adapter。
- *
- * @param dev 设备结构
- * @return 指向PDM Adapter的指针，或NULL（失败）
- */
-struct pdm_adapter *dev_to_pdm_adapter(struct device *dev)
-{
-    struct pdm_adapter *adapter;
-
-    if (!dev) {
-        OSA_ERROR("Invalid input parameter.\n");
-        return NULL;
-    }
-
-    adapter = (struct pdm_adapter *)dev_get_drvdata(dev);
-    return adapter;
-}
-
-/**
- * @brief 显示所有已注册的 PDM 设备列表
- *
- * 该函数用于显示当前已注册的所有 PDM 设备的名称。
- * 如果主设备未初始化，则会返回错误。
- *
- * @param adapter PDM Adapter
- * @return 成功返回 0，失败返回负错误码
- */
-int pdm_adapter_client_show(struct pdm_adapter *adapter)
-{
-    struct pdm_device *client;
-    int index = 1;
-
-    if (!adapter) {
-        OSA_ERROR("Adapter is not initialized.\n");
-        return -ENODEV;
-    }
-
-    OSA_INFO("-------------------------\n");
-    OSA_INFO("Device List:\n");
-
-    mutex_lock(&adapter->client_list_mutex_lock);
-    list_for_each_entry(client, &adapter->client_list, entry) {
-        OSA_INFO("  [%d] Client Name: %s.\n", index++, client->name);
-    }
-    mutex_unlock(&adapter->client_list_mutex_lock);
-
-    OSA_INFO("-------------------------\n");
-
+    OSA_INFO("fops_default_open.\n");
     return 0;
+}
+
+/**
+ * @brief 默认释放函数
+ *
+ * 该函数是默认的文件释放操作。
+ *
+ * @param inode inode 结构
+ * @param filp 文件结构
+ * @return 成功返回 0
+ */
+static int pdm_client_fops_default_release(struct inode *inode, struct file *filp)
+{
+    OSA_INFO("fops_default_release.\n");
+    return 0;
+}
+
+/**
+ * @brief 默认读取函数
+ *
+ * 该函数是默认的文件读取操作。
+ *
+ * @param filp 文件结构
+ * @param buf 用户空间缓冲区
+ * @param count 要读取的字节数
+ * @param ppos 当前文件位置
+ * @return 成功返回 0
+ */
+static ssize_t pdm_client_fops_default_read(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
+{
+    OSA_INFO("fops_default_read.\n");
+    return 0;
+}
+
+/**
+ * @brief 默认写入函数
+ *
+ * 该函数是默认的文件写入操作。
+ *
+ * @param filp 文件结构
+ * @param buf 用户空间缓冲区
+ * @param count 要写入的字节数
+ * @param ppos 当前文件位置
+ * @return 成功返回写入的字节数
+ */
+static ssize_t pdm_client_fops_default_write(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
+{
+    OSA_INFO("fops_default_write.\n");
+    return count;
+}
+
+/**
+ * @brief 默认ioctl函数
+ *
+ * 该函数是默认的ioctl操作。
+ *
+ * @param filp 文件结构
+ * @param cmd ioctl命令
+ * @param arg 命令参数
+ * @return -ENOTSUPP - 不支持的ioctl操作
+ */
+static long pdm_client_fops_default_unlocked_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+{
+    OSA_INFO("Called pdm_client_fops_default_unlocked_ioctl\n");
+
+    return -ENOTSUPP;
+}
+
+/**
+ * @brief 兼容层ioctl函数
+ *
+ * 该函数处理兼容层的ioctl操作。
+ *
+ * @param filp 文件结构
+ * @param cmd ioctl命令
+ * @param arg 命令参数
+ * @return 返回底层unlocked_ioctl的结果
+ */
+static long pdm_client_fops_default_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+{
+    OSA_INFO("pdm_client_fops_default_compat_ioctl.\n");
+
+    if (_IOC_DIR(cmd) & (_IOC_READ | _IOC_WRITE)) {
+        arg = (unsigned long)compat_ptr(arg);
+    }
+
+    return filp->f_op->unlocked_ioctl(filp, cmd, arg);
 }
 
 /**
@@ -187,8 +204,6 @@ int pdm_adapter_client_add(struct pdm_adapter *adapter, struct pdm_device *pdmde
         return -EINVAL;
     }
 
-    pdmdev->adapter = pdm_adapter_get(adapter);
-
     status = pdm_adapter_client_id_alloc(adapter, pdmdev);
     if (status) {
         OSA_ERROR("Alloc id for client failed: %d\n", status);
@@ -224,157 +239,11 @@ int pdm_adapter_client_delete(struct pdm_adapter *adapter, struct pdm_device *pd
     list_del(&pdmdev->entry);
     mutex_unlock(&adapter->client_list_mutex_lock);
     pdm_adapter_client_id_free(adapter, pdmdev);
-    pdm_adapter_put(adapter);
 
     OSA_DEBUG("Device %s removed from %s adapter.\n", dev_name(&pdmdev->dev), adapter->name);
     return 0;
 }
 
-/**
- * @brief 默认打开函数
- *
- * 该函数是默认的文件打开操作。
- *
- * @param inode inode 结构
- * @param filp 文件结构
- * @return 成功返回 0
- */
-static int pdm_adapter_fops_default_open(struct inode *inode, struct file *filp)
-{
-    struct pdm_adapter *adapter;
-
-    OSA_INFO("fops_default_open.\n");
-
-    adapter = container_of(inode->i_cdev, struct pdm_adapter, cdev);
-    if (!adapter) {
-        OSA_ERROR("Invalid adapter.\n");
-        return -EINVAL;
-    }
-
-    filp->private_data = adapter;
-
-    return 0;
-}
-
-/**
- * @brief 默认释放函数
- *
- * 该函数是默认的文件释放操作。
- *
- * @param inode inode 结构
- * @param filp 文件结构
- * @return 成功返回 0
- */
-static int pdm_adapter_fops_default_release(struct inode *inode, struct file *filp)
-{
-    OSA_INFO("fops_default_release.\n");
-    return 0;
-}
-
-/**
- * @brief 默认读取函数
- *
- * 该函数是默认的文件读取操作。
- *
- * @param filp 文件结构
- * @param buf 用户空间缓冲区
- * @param count 要读取的字节数
- * @param ppos 当前文件位置
- * @return 成功返回 0
- */
-static ssize_t pdm_adapter_fops_default_read(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
-{
-    struct pdm_adapter *adapter;
-
-    OSA_INFO("fops_default_read.\n");
-
-    adapter = filp->private_data;
-    if (!adapter) {
-        OSA_ERROR("Invalid adapter.\n");
-        return -EINVAL;
-    }
-
-    (void)pdm_adapter_client_show(adapter);
-    return 0;
-}
-
-/**
- * @brief 默认写入函数
- *
- * 该函数是默认的文件写入操作。
- *
- * @param filp 文件结构
- * @param buf 用户空间缓冲区
- * @param count 要写入的字节数
- * @param ppos 当前文件位置
- * @return 成功返回写入的字节数
- */
-static ssize_t pdm_adapter_fops_default_write(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
-{
-    OSA_INFO("fops_default_write.\n");
-    return count;
-}
-
-/**
- * @brief 默认ioctl函数
- *
- * 该函数是默认的ioctl操作。
- *
- * @param filp 文件结构
- * @param cmd ioctl命令
- * @param arg 命令参数
- * @return -ENOTSUPP - 不支持的ioctl操作
- */
-static long pdm_adapter_fops_default_unlocked_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
-{
-    OSA_INFO("Called pdm_adapter_fops_default_unlocked_ioctl\n");
-
-    return -ENOTSUPP;
-}
-
-/**
- * @brief 兼容层ioctl函数
- *
- * 该函数处理兼容层的ioctl操作。
- *
- * @param filp 文件结构
- * @param cmd ioctl命令
- * @param arg 命令参数
- * @return 返回底层unlocked_ioctl的结果
- */
-static long pdm_adapter_fops_default_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
-{
-    OSA_INFO("pdm_adapter_fops_default_compat_ioctl.\n");
-
-    if (_IOC_DIR(cmd) & (_IOC_READ | _IOC_WRITE)) {
-        arg = (unsigned long)compat_ptr(arg);
-    }
-
-    return filp->f_op->unlocked_ioctl(filp, cmd, arg);
-}
-
-/**
- * @brief 显示设备名称
- *
- * 该函数用于在sysfs中显示设备名称。
- *
- * @param dev 设备结构
- * @param da 设备属性结构
- * @param buf 输出缓冲区
- * @return 实际写入的字节数
- */
-static ssize_t name_show(struct device *dev, struct device_attribute *da, char *buf)
-{
-    return sysfs_emit(buf, "%s\n", dev_name(dev));
-}
-
-static DEVICE_ATTR_RO(name);
-
-static struct attribute *pdm_adapter_device_attrs[] = {
-    &dev_attr_name.attr,
-    NULL,
-};
-ATTRIBUTE_GROUPS(pdm_adapter_device);
 
 /**
  * @brief PDM  Adapter类
@@ -383,99 +252,7 @@ ATTRIBUTE_GROUPS(pdm_adapter_device);
  */
 static struct class pdm_adapter_class = {
     .name = "pdm_adapter",
-    .dev_groups = pdm_adapter_device_groups,
 };
-
-/**
- * @brief 添加PDM Adapter字符设备
- *
- * 该函数用于注册PDM Adapter字符设备。
- *
- * @param adapter PDM Adapter
- * @return 成功返回 0，失败返回负错误码
- */
-static int pdm_adapter_device_register(struct pdm_adapter *adapter)
-{
-    int status;
-    struct device *adapter_dev;
-    char device_name[PDM_DEVICE_NAME_SIZE];
-
-    if (!adapter) {
-        OSA_ERROR("Invalid input parameter.\n");
-        return -EINVAL;
-    }
-
-    memset(device_name, 0, PDM_DEVICE_NAME_SIZE);
-    snprintf(device_name, PDM_DEVICE_NAME_SIZE, "pdm_adapter_%s", adapter->name);
-    status = alloc_chrdev_region(&adapter->devno, 0, 1, device_name);
-    if (status < 0) {
-        OSA_ERROR("Failed to allocate char device region for %s, error: %d.\n", adapter->name, status);
-        goto err_out;
-    }
-
-    adapter->fops.open = pdm_adapter_fops_default_open;
-    adapter->fops.release = pdm_adapter_fops_default_release;
-    adapter->fops.read = pdm_adapter_fops_default_read;
-    adapter->fops.write = pdm_adapter_fops_default_write;
-    adapter->fops.unlocked_ioctl = pdm_adapter_fops_default_unlocked_ioctl;
-    adapter->fops.compat_ioctl =  pdm_adapter_fops_default_compat_ioctl;
-
-    cdev_init(&adapter->cdev, &adapter->fops);
-    adapter->cdev.owner = THIS_MODULE;
-
-    status = cdev_add(&adapter->cdev, adapter->devno, 1);
-    if (status < 0) {
-        OSA_ERROR("Failed to add char device for %s, error: %d.\n", adapter->name, status);
-        goto err_unregister_chrdev;
-    }
-
-    adapter_dev = device_create(&pdm_adapter_class, NULL, adapter->devno, NULL, device_name);
-    if (IS_ERR(adapter_dev)) {
-        OSA_ERROR("Failed to create device for %s.\n", adapter->name);
-        goto err_cdev_del;
-    }
-
-    adapter->dev = adapter_dev;
-    dev_set_drvdata(adapter->dev, adapter);   // 保存adapter地址至dev_drvdata
-    OSA_DEBUG("PDM Adapter %s Device Registered.\n", adapter->name);
-
-    return 0;
-
-err_cdev_del:
-    cdev_del(&adapter->cdev);
-err_unregister_chrdev:
-    unregister_chrdev_region(adapter->devno, 1);
-err_out:
-    return status;
-}
-
-/**
- * @brief 删除PDM Adapter字符设备
- *
- * 该函数用于注销PDM Adapter字符设备。
- *
- * @param adapter PDM Adapter
- */
-static void pdm_adapter_device_unregister(struct pdm_adapter *adapter)
-{
-    if (!adapter) {
-        OSA_ERROR("Invalid input parameter.\n");
-    }
-
-    if (adapter->dev) {
-        device_destroy(&pdm_adapter_class, adapter->devno);
-        adapter->dev = NULL;
-    }
-
-    cdev_del(&adapter->cdev);
-
-    if (adapter->devno != 0) {
-        unregister_chrdev_region(adapter->devno, 1);
-        adapter->devno = 0;
-    }
-
-    OSA_DEBUG("PDM Adapter Device Unregistered.\n");
-}
 
 /**
  * @brief 获取PDM Adapter的私有数据
@@ -531,7 +308,7 @@ struct pdm_adapter *pdm_adapter_alloc(unsigned int data_size)
 void pdm_adapter_free(struct pdm_adapter *adapter)
 {
     if (adapter) {
-        pdm_adapter_put(adapter);
+        kfree(adapter);
     }
 }
 
@@ -549,7 +326,6 @@ void pdm_adapter_free(struct pdm_adapter *adapter)
 int pdm_adapter_register(struct pdm_adapter *adapter)
 {
     struct pdm_adapter *existing_adapter;
-    int status;
 
     if (!adapter || !strlen(adapter->name)) {
         OSA_ERROR("Invalid input parameters (adapter: %p, name: %s).\n", adapter, adapter ? adapter->name : "NULL");
@@ -565,12 +341,6 @@ int pdm_adapter_register(struct pdm_adapter *adapter)
         }
     }
     mutex_unlock(&pdm_adapter_device_list_mutex_lock);
-
-    status = pdm_adapter_device_register(adapter);
-    if (status) {
-        OSA_ERROR("Failed to add cdev, error: %d.\n", status);
-        return status;
-    }
 
     mutex_lock(&pdm_adapter_device_list_mutex_lock);
     list_add_tail(&adapter->entry, &pdm_adapter_device_list);
@@ -605,8 +375,6 @@ void pdm_adapter_unregister(struct pdm_adapter *adapter)
     mutex_lock(&pdm_adapter_device_list_mutex_lock);
     list_del(&adapter->entry);
     mutex_unlock(&pdm_adapter_device_list_mutex_lock);
-
-    pdm_adapter_device_unregister(adapter);
 }
 
 /**
