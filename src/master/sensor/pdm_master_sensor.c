@@ -224,33 +224,8 @@ static int pdm_master_sensor_device_probe(struct pdm_device *pdmdev)
         goto err_client_del;
     }
 
-    switch (pdmdev->physical_info.type) {
-        case PDM_DEVICE_INTERFACE_TYPE_I2C: {
-            OSA_DEBUG("pdmdev->physical_info.type: %d\n", pdmdev->physical_info.type);
-            status = pdm_master_sensor_i2c_setup(pdmdev);
-            break;
-        }
-        case PDM_DEVICE_INTERFACE_TYPE_ADC: {
-            OSA_DEBUG("pdmdev->physical_info.type: %d\n", pdmdev->physical_info.type);
-            status = pdm_master_sensor_adc_setup(pdmdev);
-            break;
-        }
-        default: {
-            OSA_ERROR("Unsupported Sensor Type: %d\n", pdmdev->physical_info.type);
-            status = -ENOTSUPP;
-            break;
-        }
-    }
-    if (status) {
-        OSA_ERROR("Setup Failed: %d\n", status);
-        goto err_devdata_free;
-    }
-
     OSA_DEBUG("Sensor PDM Device Probed.\n");
     return 0;
-
-err_devdata_free:
-    pdm_device_devdata_free(pdmdev);
 
 err_client_del:
     pdm_master_client_delete(sensor_master, pdmdev);

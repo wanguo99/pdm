@@ -174,34 +174,8 @@ static int pdm_master_led_device_probe(struct pdm_device *pdmdev)
         goto err_client_del;
     }
 
-    switch (pdmdev->physical_info.type) {
-        case PDM_DEVICE_INTERFACE_TYPE_GPIO: {
-            OSA_DEBUG("pdmdev->physical_info.type: %d\n", pdmdev->physical_info.type);
-            status = pdm_master_led_gpio_setup(pdmdev);
-            break;
-        }
-        case PDM_DEVICE_INTERFACE_TYPE_PWM: {
-            OSA_DEBUG("pdmdev->physical_info.type: %d\n", pdmdev->physical_info.type);
-            status = pdm_master_led_pwm_setup(pdmdev);
-            break;
-        }
-        default: {
-            OSA_ERROR("Unsupported LED Type: %d\n", pdmdev->physical_info.type);
-            status = -ENOTSUPP;
-            break;
-        }
-    }
-
-    if (status) {
-        OSA_ERROR("Setup Failed: %d\n", status);
-        goto err_devdata_free;
-    }
-
     OSA_DEBUG("LED PDM Device Probed\n");
     return 0;
-
-err_devdata_free:
-    pdm_device_devdata_free(pdmdev);
 
 err_client_del:
     pdm_master_client_delete(led_master, pdmdev);
