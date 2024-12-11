@@ -39,7 +39,7 @@ static struct pdm_led_operations pdm_device_led_ops_gpio = {
  */
 int pdm_led_gpio_setup(struct pdm_client *client)
 {
-    OSA_INFO("pdm_led_gpio_setup for device: %s\n", client->name);
+    OSA_INFO("pdm_led_gpio_setup for device: %s\n", dev_name(&client->dev));
 
     return 0;
 }

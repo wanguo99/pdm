@@ -3,10 +3,19 @@
 
 
 /**
- * @brief PDM Client 名称的最大长度
+ * @brief PDM Client 设备名
  */
-#define PDM_CLIENT_NAME_SIZE (64)
+#define PDM_CLIENT_DEVICE_NAME              "pdm_client"
 
+/**
+ * @brief PDM Client 最大设备数量
+ */
+#define PDM_CLIENT_MAX_DEVICES         (1024)
+
+/**
+ * @brief PDM Client 起始次设备号
+ */
+#define PDM_CLIENT_FIRST_DEVICE        (256)
 
 /**
  * @brief PDM Client 结构体
@@ -14,13 +23,11 @@
  * 该结构体定义了 PDM Client 的基本信息。
  */
 struct pdm_client {
-    char name[PDM_CLIENT_NAME_SIZE];            /**< 设备名称 */
     struct pdm_device *pdmdev;                  /**< pdm_deivce句柄 */
+    struct pdm_adapter *adapter;                /**< 指向所属的 PDM 主控制器 */
     bool force_dts_id;                          /**< 是否强制从dts内指定ID */
     int index;                                  /**< Adapter分配的 Client ID */
-    struct pdm_adapter *adapter;                /**< 指向所属的 PDM 主控制器 */
-    struct device *dev;                         /**< 设备句柄 */
-    dev_t devno;                                /**< 设备号 */
+    struct device dev;                          /**< 设备结构体 */
     struct cdev cdev;                           /**< 字符设备结构体 */
     struct file_operations fops;                /**< 文件操作结构体，每个client单独实现一套文件操作 */
     struct list_head entry;                     /**< 设备链表节点 */
