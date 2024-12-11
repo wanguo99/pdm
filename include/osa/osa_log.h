@@ -1,5 +1,5 @@
-#ifndef __OSA_LOG_H_
-#define __OSA_LOG_H_
+#ifndef _OSA_LOG_H_
+#define _OSA_LOG_H_
 
 /**
  * @file osa_log.h
