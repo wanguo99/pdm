@@ -33,7 +33,7 @@ static int pdm_bus_debug_fs_init(void)
         OSA_WARN("Failed to register PDM debugfs, error %ld\n", PTR_ERR(pdm_debugfs_dir));
         pdm_debugfs_dir = NULL;  // Set to NULL to indicate failure
     } else {
-        OSA_DEBUG("PDM debugfs registered\n");
+        OSA_INFO("PDM debugfs registered\n");
     }
 
     pdm_procfs_dir = proc_mkdir(PDM_DEBUG_FS_DIR_NAME, NULL);
@@ -44,7 +44,7 @@ static int pdm_bus_debug_fs_init(void)
             pdm_debugfs_dir = NULL;
         }
     } else {
-        OSA_DEBUG("PDM procfs registered\n");
+        OSA_INFO("PDM procfs registered\n");
     }
 
     return 0;
@@ -59,11 +59,11 @@ static void pdm_bus_debug_fs_exit(void)
 {
     if (pdm_debugfs_dir) {
         debugfs_remove_recursive(pdm_debugfs_dir);
-        OSA_DEBUG("PDM debugfs unregistered\n");
+        OSA_INFO("PDM debugfs unregistered\n");
     }
     if (pdm_procfs_dir) {
         remove_proc_entry(PDM_DEBUG_FS_DIR_NAME, NULL);
-        OSA_DEBUG("PDM procfs unregistered\n");
+        OSA_INFO("PDM procfs unregistered\n");
     }
 }
 

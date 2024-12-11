@@ -244,7 +244,7 @@ int pdm_bus_init(void)
     mutex_init(&pdm_bus_priv_data.idr_mutex_lock);
     idr_init(&pdm_bus_priv_data.device_idr);
 
-    OSA_DEBUG("PDM bus initialized\n");
+    OSA_INFO("PDM bus initialized\n");
     return 0;
 }
 
@@ -264,7 +264,7 @@ void pdm_bus_exit(void)
     mutex_unlock(&pdm_bus_priv_data.idr_mutex_lock);
 
     bus_unregister(&pdm_bus_type);
-    OSA_DEBUG("PDM bus unregistered\n");
+    OSA_INFO("PDM bus unregistered\n");
 }
 
 MODULE_LICENSE("GPL");

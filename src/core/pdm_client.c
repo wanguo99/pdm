@@ -21,8 +21,7 @@ static struct ida pdm_client_ida;
 
 static int pdm_client_minor_alloc(void)
 {
-    return ida_alloc_range(&pdm_client_ida, PDM_CLIENT_FIRST_DEVICE,
-                            PDM_CLIENT_MAX_DEVICES - 1, GFP_KERNEL);
+    return ida_alloc_range(&pdm_client_ida, PDM_CLIENT_MIN_MINOR, PDM_CLIENT_MAX_MINOR, GFP_KERNEL);
 }
 
 static void pdm_client_minor_free(unsigned int minor)
@@ -187,6 +186,7 @@ static int pdm_client_device_register(struct pdm_client *client)
         OSA_ERROR("Failed to alloc new minor: %d\n", status);
         goto err_out;
     }
+    OSA_DEBUG("client minor: %d\n", minor);
 
     dev_set_name(&client->dev, "%s.%d", dev_name(&client->adapter->dev), client->index);
 
@@ -353,6 +353,7 @@ void pdm_client_free(struct pdm_client *client)
 int pdm_client_init(void)
 {
     int status;
+    dev_t dev;
 
     status = class_register(&pdm_client_class);
     if (status < 0) {
@@ -361,16 +362,19 @@ int pdm_client_init(void)
     }
     OSA_DEBUG("PDM Client Class registered.\n");
 
-    status = alloc_chrdev_region(&pdm_client_major, 0, 1, PDM_CLIENT_DEVICE_NAME);
+    status = alloc_chrdev_region(&dev, 0, 1, PDM_CLIENT_DEVICE_NAME);
     if (status < 0) {
         OSA_ERROR("Failed to allocate device region for %s, error: %d.\n", PDM_CLIENT_DEVICE_NAME, status);
         class_unregister(&pdm_client_class);
         return status;
     }
 
+    pdm_client_major = MAJOR(dev);
+    OSA_DEBUG("client major: %d\n", pdm_client_major);
+
     ida_init(&pdm_client_ida);
 
-    OSA_DEBUG("PDM Client Initialize OK.\n");
+    OSA_INFO("PDM Client Initialize OK.\n");
     return 0;
 }
 
@@ -379,10 +383,13 @@ int pdm_client_init(void)
  */
 void pdm_client_exit(void)
 {
-    unregister_chrdev_region(pdm_client_major, 1);
+    ida_destroy(&pdm_client_ida);
+    unregister_chrdev_region(MKDEV(pdm_client_major, 0), 1);
     class_unregister(&pdm_client_class);
-    OSA_DEBUG("PDM Client Exited.\n");
+
+    OSA_INFO("PDM Client Cleanup OK.\n");
 }
+
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("<guohaoprc@163.com>");

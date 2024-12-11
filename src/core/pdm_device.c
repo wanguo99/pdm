@@ -333,7 +333,7 @@ int pdm_device_init(void)
         return status;
     }
 
-    OSA_DEBUG("Initialize PDM Device OK.\n");
+    OSA_INFO("Initialize PDM Device OK.\n");
     return 0;
 }
 
@@ -348,7 +348,7 @@ int pdm_device_init(void)
 void pdm_device_exit(void)
 {
     pdm_device_drivers_unregister();
-    OSA_DEBUG("PDM Device Exit.\n");
+    OSA_INFO("PDM Device Exit.\n");
 }
 
 MODULE_LICENSE("GPL");

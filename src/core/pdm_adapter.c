@@ -403,7 +403,7 @@ int pdm_adapter_init(void)
         return status;
     }
 
-    OSA_DEBUG("Initialize PDM Adapter OK.\n");
+    OSA_INFO("Initialize PDM Adapter OK.\n");
     return 0;
 }
 
@@ -416,7 +416,7 @@ void pdm_adapter_exit(void)
 {
     pdm_adapter_drivers_unregister();
     class_unregister(&pdm_adapter_class);
-    OSA_DEBUG("PDM Adapter unregistered.\n");
+    OSA_INFO("PDM Adapter unregistered.\n");
 }
 
 MODULE_LICENSE("GPL");

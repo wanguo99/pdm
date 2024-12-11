@@ -7,15 +7,16 @@
  */
 #define PDM_CLIENT_DEVICE_NAME              "pdm_client"
 
-/**
- * @brief PDM Client 最大设备数量
- */
-#define PDM_CLIENT_MAX_DEVICES         (1024)
 
 /**
  * @brief PDM Client 起始次设备号
  */
-#define PDM_CLIENT_FIRST_DEVICE        (256)
+#define PDM_CLIENT_MIN_MINOR        (0)
+
+/**
+ * @brief PDM Client 最大次设备号
+ */
+#define PDM_CLIENT_MAX_MINOR         (1023)
 
 /**
  * @brief PDM Client 结构体
