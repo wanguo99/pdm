@@ -338,11 +338,6 @@ int pdm_device_register(struct pdm_device *pdmdev)
         return -EINVAL;
     }
 
-    if (!pdmdev->dev.parent) {
-        OSA_ERROR("device parent is invalid\n");
-        return -EINVAL;
-    }
-
     if (pdm_device_verify(pdmdev)) {
         return -EINVAL;
     }
