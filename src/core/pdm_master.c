@@ -122,7 +122,7 @@ static int pdm_master_client_id_alloc(struct pdm_master *master, struct pdm_devi
         return -EINVAL;
     }
 
-    if (of_property_read_s32(pdmdev->physical_info.of_node, "client-index", &client_index)) {
+    if (of_property_read_s32(pdmdev->dev.parent->of_node, "client-index", &client_index)) {
         if (pdmdev->force_dts_id) {
             OSA_ERROR("Cannot get index from dts, force_dts_id was set\n");
             return -EINVAL;

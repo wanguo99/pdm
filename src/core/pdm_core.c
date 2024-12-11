@@ -6,12 +6,11 @@
 
 static struct pdm_bus_private_data pdm_bus_priv_data;
 
-
-int device_match_of_node(struct device *dev, const void *data)
+static int pdm_bus_device_match_parent(struct device *dev, const void *data)
 {
     struct pdm_device *pdmdev = dev_to_pdm_device(dev);
-    struct device_node *of_node = (struct device_node *)data;
-    return (pdmdev->physical_info.of_node == of_node) ? 1 : 0;
+    struct device *parent = (struct device *)data;
+    return (pdmdev->dev.parent == parent) ? 1 : 0;
 }
 
 /**
@@ -23,29 +22,15 @@ int device_match_of_node(struct device *dev, const void *data)
  * @param fn 回调函数指针，用于处理每个设备
  * @return 返回遍历结果，0 表示成功，非零值表示失败
  */
-struct pdm_device *pdm_bus_find_device_by_of_node(struct device_node *of_node)
+struct pdm_device *pdm_bus_find_device_by_parent(struct device *parent)
 {
-    struct device *dev = bus_find_device(&pdm_bus_type, NULL, of_node, device_match_of_node);
+    struct device *dev = bus_find_device(&pdm_bus_type, NULL, parent, pdm_bus_device_match_parent);
     if (!dev) {
         return NULL;
     }
     return dev_to_pdm_device(dev);
 }
 
-
-/**
- * @brief 遍历 pdm_bus_type 总线上的所有设备
- *
- * 该函数用于遍历 `pdm_bus_type` 总线上的所有设备，并对每个设备调用指定的回调函数。
- *
- * @param data 传递给回调函数的数据
- * @param fn 回调函数指针，用于处理每个设备
- * @return 返回遍历结果，0 表示成功，非零值表示失败
- */
-int pdm_bus_for_each_dev(void *data, int (*fn)(struct device *dev, void *data))
-{
-    return bus_for_each_dev(&pdm_bus_type, NULL, data, fn);
-}
 
 /**
  * @brief 为PDM设备分配ID
@@ -137,32 +122,6 @@ void pdm_bus_unregister_driver(struct pdm_driver *driver)
 }
 
 /**
- * @brief 匹配 PDM 设备和驱动
- *
- * 该函数用于匹配 PDM 设备和驱动。
- *
- * @param dev 设备指针
- * @param drv 驱动指针
- * @return 匹配成功返回 1，失败返回 0
- */
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 10, 0)
-static int pdm_bus_device_match(struct device *dev, struct device_driver *drv) {
-#else
-static int pdm_bus_device_match(struct device *dev, const struct device_driver *drv) {
-#endif
-    if (dev->type != &pdm_device_type) {
-        return 0;
-    }
-
-    /* Attempt an OF style match */
-    if (of_driver_match_device(dev, drv)) {
-        return 1;
-    }
-
-    return 0;
-}
-
-/**
  * @brief 探测 PDM 设备
  *
  * 该函数用于处理 PDM 设备的探测操作。
@@ -215,6 +174,39 @@ static void pdm_bus_device_remove(struct device *dev)
 }
 
 /**
+ * @brief 匹配 PDM 设备和驱动
+ *
+ * 该函数用于匹配 PDM 设备和驱动。
+ *
+ * @param dev 设备指针
+ * @param drv 驱动指针
+ * @return 匹配成功返回 1，失败返回 0
+ */
+static int pdm_bus_device_real_match(struct device *dev, const struct device_driver *drv) {
+
+    if (dev->type != &pdm_device_type) {
+        return 0;
+    }
+
+    /* Attempt an OF style match */
+    if (of_driver_match_device(dev, drv)) {
+        return 1;
+    }
+
+    return 0;
+}
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 10, 0)
+static int pdm_bus_device_match(struct device *dev, struct device_driver *drv) {
+    return pdm_bus_device_real_match(dev, (const struct device_driver *)drv);
+}
+#else
+static int pdm_bus_device_match(struct device *dev, const struct device_driver *drv) {
+    return pdm_bus_device_real_match(dev, drv);
+}
+#endif
+
+/**
  * @brief PDM 总线类型
  *
  * 该结构体定义了 PDM 总线的基本信息和操作函数。
@@ -225,9 +217,9 @@ struct bus_type pdm_bus_type = {
 const struct bus_type pdm_bus_type = {
 #endif
     .name   = "pdm",
-    .match  = pdm_bus_device_match,
     .probe  = pdm_bus_device_probe,
     .remove = pdm_bus_device_remove,
+    .match  = pdm_bus_device_match,
 };
 
 /**

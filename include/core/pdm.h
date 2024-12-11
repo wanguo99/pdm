@@ -95,7 +95,7 @@ void pdm_bus_device_id_free(struct pdm_device *pdmdev);
  * @param fn 回调函数指针，用于处理每个设备
  * @return 返回遍历结果，0 表示成功，非零值表示失败
  */
-struct pdm_device *pdm_bus_find_device_by_of_node(struct device_node *of_node);
+struct pdm_device *pdm_bus_find_device_by_parent(struct device *parent);
 
 /**
  * @brief 遍历 pdm_bus_type 总线上的所有设备

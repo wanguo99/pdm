@@ -20,40 +20,6 @@ extern const struct device_type pdm_device_type;
 #define PDM_DEVICE_NAME_SIZE (64)
 
 /**
- * @brief PDM 设备接口类型枚举
- *
- * 该枚举定义了 PDM 设备支持的不同接口类型。
- */
-typedef enum tagPDM_DEVICE_INTERFACE_TYPE {
-    PDM_DEVICE_INTERFACE_TYPE_UNDEFINED = 0x00, /**< 未定义 */
-    PDM_DEVICE_INTERFACE_TYPE_I2C       = 0x02, /**< I2C 接口 */
-    PDM_DEVICE_INTERFACE_TYPE_I3C       = 0x03, /**< I3C 接口 */
-    PDM_DEVICE_INTERFACE_TYPE_SPI       = 0x04, /**< SPI 接口 */
-    PDM_DEVICE_INTERFACE_TYPE_GPIO      = 0x05, /**< GPIO 接口 */
-    PDM_DEVICE_INTERFACE_TYPE_PWM       = 0x06, /**< PWM 接口 */
-    PDM_DEVICE_INTERFACE_TYPE_TTY       = 0x07, /**< TTY 接口 */
-    PDM_DEVICE_INTERFACE_TYPE_PLATFORM  = 0x08, /**< 平台设备 */
-    PDM_DEVICE_INTERFACE_TYPE_ADC       = 0x09, /**< ADC 接口 */
-    PDM_DEVICE_INTERFACE_TYPE_INVALID   = 0xFF, /**< 无效类型 */
-} PDM_DEVICE_INTERFACE_TYPE;
-
-/**
- * @brief 物理设备信息结构体
- *
- * 该结构体用于存储物理设备的信息。
- */
-struct pdm_device_physical_info {
-    int type;                              /**< 设备物理接口类型, PDM_DEVICE_INTERFACE_TYPE */
-    union {
-        struct i2c_client *i2cdev;
-        struct i3c_device *i3cdev;
-        struct spi_device *spidev;
-        struct platform_device *pdev;
-    }device;                                /**< 指向实际的设备结构体 */
-    struct device_node *of_node;            /**< 设备树节点信息 */
-};
-
-/**
  * @brief PDM 设备结构体
  *
  * 该结构体定义了 PDM 设备的基本信息。
@@ -66,7 +32,6 @@ struct pdm_device {
     struct device dev;                          /**< 设备结构体 */
     struct pdm_master *master;                  /**< 指向所属的 PDM 主控制器 */
     struct list_head entry;                     /**< 设备链表节点 */
-    struct pdm_device_physical_info physical_info; /**< 物理设备信息 */
 };
 
 /**
@@ -147,17 +112,6 @@ struct pdm_device *pdm_device_alloc(void);
  * @param pdmdev PDM 设备结构体指针
  */
 void pdm_device_free(struct pdm_device *pdmdev);
-
-/**
- * @brief 设置 PDM 设备的物理设备信息
- *
- * 该函数用于设置 PDM 设备的物理设备信息。
- *
- * @param pdmdev PDM 设备结构体指针
- * @param physical_info 要设置的物理设备信息
- * @return 成功返回 0，失败返回负错误码
- */
-int pdm_device_physical_info_set(struct pdm_device *pdmdev, struct pdm_device_physical_info *physical_info);
 
 /**
  * @brief 注册 PDM 设备

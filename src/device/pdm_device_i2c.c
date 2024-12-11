@@ -33,9 +33,7 @@ static int pdm_device_i2c_real_probe(struct i2c_client *client, const struct i2c
         return -ENOMEM;
     }
 
-    pdmdev->physical_info.type = PDM_DEVICE_INTERFACE_TYPE_I2C;
-    pdmdev->physical_info.device.i2cdev = client;
-    pdmdev->physical_info.of_node = client->dev.of_node;
+    pdmdev->dev.parent = &client->dev;
     status = pdm_device_register(pdmdev);
     if (status) {
         OSA_ERROR("Failed to register pdm device, status=%d.\n", status);
@@ -61,7 +59,7 @@ free_pdmdev:
 static int pdm_device_i2c_real_remove(struct i2c_client *client) {
     struct pdm_device *pdmdev;
 
-    pdmdev = pdm_bus_find_device_by_of_node(client->dev.of_node);
+    pdmdev = pdm_bus_find_device_by_parent(&client->dev);
     if (!pdmdev) {
         OSA_ERROR("Failed to find pdm device from bus.\n");
         return -ENODEV;

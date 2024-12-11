@@ -20,9 +20,7 @@ static int pdm_device_spi_probe(struct spi_device *spi) {
         return -ENOMEM;
     }
 
-    pdmdev->physical_info.type = PDM_DEVICE_INTERFACE_TYPE_SPI;
-    pdmdev->physical_info.device.spidev = spi;
-    pdmdev->physical_info.of_node = spi->dev.of_node;
+    pdmdev->dev.parent = &spi->dev;
     status = pdm_device_register(pdmdev);
     if (status) {
         OSA_ERROR("Failed to register pdm device, status=%d.\n", status);
@@ -47,7 +45,7 @@ free_pdmdev:
 static int pdm_device_spi_real_remove(struct spi_device *spi) {
     struct pdm_device *pdmdev;
 
-    pdmdev = pdm_bus_find_device_by_of_node(spi->dev.of_node);
+    pdmdev = pdm_bus_find_device_by_parent(&spi->dev);
     if (!pdmdev) {
         OSA_ERROR("Failed to find pdm device from bus.\n");
         return -ENODEV;

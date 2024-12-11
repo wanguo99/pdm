@@ -2,60 +2,6 @@
 
 #include "pdm.h"
 
-/**
- * @brief PLATFORM 设备平台数据结构体
- *
- * 该结构体用于存储 PLATFORM 设备的平台数据。
- */
-struct pdm_device_platform_data {
-    PDM_DEVICE_INTERFACE_TYPE type;  /**< 设备接口类型 */
-};
-
-/**
- * @brief PLATFORM 设备平台数据实例
- *
- * 这些变量定义了不同类型的 PLATFORM 设备的平台数据。
- */
-static struct pdm_device_platform_data pdm_device_platform_data_plat = {
-    .type = PDM_DEVICE_INTERFACE_TYPE_PLATFORM,
-};
-static struct pdm_device_platform_data pdm_device_platform_data_gpio = {
-    .type = PDM_DEVICE_INTERFACE_TYPE_GPIO,
-};
-static struct pdm_device_platform_data pdm_device_platform_data_pwm = {
-    .type = PDM_DEVICE_INTERFACE_TYPE_PWM,
-};
-static struct pdm_device_platform_data pdm_device_platform_data_tty = {
-    .type = PDM_DEVICE_INTERFACE_TYPE_TTY,
-};
-
-/**
- * @brief 获取 PLATFORM 设备类型
- *
- * 该函数从设备树或平台数据中获取 PLATFORM 设备的类型。
- *
- * @param pdev 指向 PLATFORM 设备的指针
- * @return 返回设备类型
- */
-static int pdm_device_platform_get_dev_type(struct platform_device *pdev) {
-    struct pdm_device_platform_data *pdata;
-    int dev_type;
-
-    pdata = dev_get_platdata(&pdev->dev);
-    if (pdata) {
-        return pdata->type;
-    }
-
-    // 后续需要删掉，pdm_device_platform不对外支持compatible匹配
-    if (of_device_is_compatible(pdev->dev.of_node, "led,pdm-device-gpio")) {
-        dev_type = PDM_DEVICE_INTERFACE_TYPE_GPIO;
-    } else if (of_device_is_compatible(pdev->dev.of_node, "led,pdm-device-pwm")) {
-        dev_type = PDM_DEVICE_INTERFACE_TYPE_PWM;
-    } else {
-        dev_type = PDM_DEVICE_INTERFACE_TYPE_UNDEFINED;
-    }
-    return dev_type;
-}
 
 /**
  * @brief PLATFORM 设备探测函数
@@ -77,9 +23,7 @@ static int pdm_device_platform_probe(struct platform_device *pdev) {
         return -ENOMEM;
     }
 
-    pdmdev->physical_info.type = pdm_device_platform_get_dev_type(pdev);
-    pdmdev->physical_info.device.pdev = pdev;
-    pdmdev->physical_info.of_node = pdev->dev.of_node;
+    pdmdev->dev.parent = &pdev->dev;
     status = pdm_device_register(pdmdev);
     if (status) {
         OSA_ERROR("Failed to register pdm device, status=%d.\n", status);
@@ -105,7 +49,7 @@ free_pdmdev:
 static int pdm_device_platform_real_remove(struct platform_device *pdev) {
     struct pdm_device *pdmdev;
 
-    pdmdev = pdm_bus_find_device_by_of_node(pdev->dev.of_node);
+    pdmdev = pdm_bus_find_device_by_parent(&pdev->dev);
     if (!pdmdev) {
         OSA_ERROR("Failed to find pdm device from bus.\n");
         return -ENODEV;
@@ -146,10 +90,10 @@ static void pdm_device_platform_remove(struct platform_device *pdev) {
  * 该表定义了支持的 PLATFORM 设备 ID。
  */
 static const struct platform_device_id pdm_device_platform_ids[] = {
-    { .name = "pdm-device-platform", .driver_data = (kernel_ulong_t)&pdm_device_platform_data_plat, },
-    { .name = "pdm-device-gpio", .driver_data = (kernel_ulong_t)&pdm_device_platform_data_gpio, },
-    { .name = "pdm-device-pwm", .driver_data = (kernel_ulong_t)&pdm_device_platform_data_pwm, },
-    { .name = "pdm-device-tty", .driver_data = (kernel_ulong_t)&pdm_device_platform_data_tty, },
+    { .name = "pdm-device-platform" },
+    { .name = "pdm-device-gpio" },
+    { .name = "pdm-device-pwm" },
+    { .name = "pdm-device-tty" },
     { },  // 终止符
 };
 MODULE_DEVICE_TABLE(platform, pdm_device_platform_ids);
