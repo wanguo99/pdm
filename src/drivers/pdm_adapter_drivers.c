@@ -3,16 +3,16 @@
 #include "pdm_master_drivers.h"
 
 /**
- * @brief PDM 主驱动程序列表
+ * @brief PDM Adapter 驱动列表
  *
- * 该列表用于存储所有注册的 PDM 主驱动程序。
+ * 该列表用于存储所有注册的 PDM Adapter 驱动。
  */
 static struct list_head pdm_master_driver_list;
 
 /**
- * @brief PDM 主驱动程序数组
+ * @brief PDM Adapter 驱动数组
  *
- * 该数组包含所有需要注册的 PDM 主驱动程序。
+ * 该数组包含所有需要注册的 PDM Adapter 驱动。
  */
 static struct pdm_subdriver pdm_master_drivers[] = {
     {
@@ -26,9 +26,9 @@ static struct pdm_subdriver pdm_master_drivers[] = {
 };
 
 /**
- * @brief 初始化 PDM 主控制器模块
+ * @brief 注册 PDM Adapter 驱动
  *
- * 该函数用于初始化 PDM 主控制器模块，并注册所有 PDM 主驱动程序。
+ * 该函数用于初始化 PDM Adapter 列表，并注册所有 PDM Adapter 驱动。
  *
  * @return 0 - 成功
  *         负值 - 失败
@@ -53,9 +53,9 @@ int pdm_master_drivers_register(void)
 }
 
 /**
- * @brief 卸载 PDM 主控制器模块
+ * @brief 卸载 PDM Adapter 驱动
  *
- * 该函数用于卸载 PDM 主控制器模块，并注销所有 PDM 主驱动程序。
+ * 该函数用于卸载所有 PDM Adapter 驱动。
  */
 void pdm_master_drivers_unregister(void)
 {
