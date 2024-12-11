@@ -37,9 +37,9 @@ static struct pdm_device *pdm_led_find_pdmdev(int index)
  * @param args 包含设备索引和状态的结构体
  * @return 成功返回 0，失败返回负错误码
  */
-static int pdm_led_set_state(struct pdm_master_led_ioctl_args *args)
+static int pdm_led_set_state(struct pdm_led_ioctl_args *args)
 {
-    struct pdm_device_led_priv *led_priv;
+    struct pdm_led_priv *led_priv;
     struct pdm_device *pdmdev;
     int status;
 
@@ -83,19 +83,19 @@ err_unlock:
  */
 static long pdm_led_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
-    struct pdm_master_led_ioctl_args args;
+    struct pdm_led_ioctl_args args;
     int status;
 
     OSA_DEBUG("ioctl, cmd=0x%02x, arg=0x%02lx\n", cmd, arg);
 
-    memset(&args, 0, sizeof(struct pdm_master_led_ioctl_args));
+    memset(&args, 0, sizeof(struct pdm_led_ioctl_args));
     switch (cmd) {
-        case PDM_MASTER_LED_SET_STATE: {
-            if (copy_from_user(&args, (struct pdm_master_led_ioctl_args __user *)arg,
-                                        sizeof(struct pdm_master_led_ioctl_args))) {
+        case PDM_LED_SET_STATE: {
+            if (copy_from_user(&args, (struct pdm_led_ioctl_args __user *)arg,
+                                        sizeof(struct pdm_led_ioctl_args))) {
                 return -EFAULT;
             }
-            printk(KERN_INFO "PDM_MASTER_LED set: index %d, state %d\n", args.index, args.state);
+            printk(KERN_INFO "PDM_LED_SET_STATE: index %d, state %d\n", args.index, args.state);
             status = pdm_led_set_state(&args);
             break;
         }
@@ -123,7 +123,7 @@ static long pdm_led_ioctl(struct file *file, unsigned int cmd, unsigned long arg
  */
 static ssize_t pdm_led_write(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
 {
-    struct pdm_master_led_ioctl_args args;
+    struct pdm_led_ioctl_args args;
     char kernel_buf[5];
     ssize_t bytes_read;
 
@@ -168,7 +168,7 @@ static int pdm_led_device_probe(struct pdm_device *pdmdev)
         return status;
     }
 
-    status = pdm_device_devdata_alloc(pdmdev, sizeof(struct pdm_device_led_priv));
+    status = pdm_device_devdata_alloc(pdmdev, sizeof(struct pdm_led_priv));
     if (status) {
         OSA_ERROR("Alloc Device Private Data Failed, status=%d\n", status);
         goto err_client_del;
@@ -242,13 +242,13 @@ int pdm_led_driver_init(void)
 {
     int status;
 
-    led_master = pdm_master_alloc(sizeof(struct pdm_master_led_priv));
+    led_master = pdm_master_alloc(sizeof(void *));
     if (!led_master) {
         OSA_ERROR("Failed to allocate pdm_master\n");
         return -ENOMEM;
     }
 
-    strncpy(led_master->name, PDM_MASTER_LED_NAME, strlen(PDM_MASTER_LED_NAME));
+    strncpy(led_master->name, PDM_LED_NAME, strlen(PDM_LED_NAME));
     status = pdm_master_register(led_master);
     if (status) {
         OSA_ERROR("Failed to register LED PDM Master, status=%d\n", status);
