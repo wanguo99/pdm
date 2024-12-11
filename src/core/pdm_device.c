@@ -1,5 +1,6 @@
 #include "pdm.h"
 #include "pdm_device.h"
+#include "pdm_component.h"
 #include "pdm_device_drivers.h"
 
 /**

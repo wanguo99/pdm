@@ -12,10 +12,7 @@
 
 #include "osa_log.h"
 #include "pdm_device.h"
-#include "pdm_device_drivers.h"
-#include "pdm_master.h"
-#include "pdm_master_drivers.h"
-#include "pdm_driver_manager.h"
+#include "pdm_adapter.h"
 
 /**
  * @file pdm.h

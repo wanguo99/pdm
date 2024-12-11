@@ -1,7 +1,8 @@
 #include "linux/compat.h"
 
 #include "pdm.h"
-#include "pdm_master_drivers.h"
+#include "pdm_component.h"
+#include "pdm_adapter_drivers.h"
 
 /**
  * @brief PDM 主设备列表

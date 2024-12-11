@@ -6,7 +6,7 @@ obj-m := $(MODULE_NAME).o
 $(MODULE_NAME)-objs := 	src/core/pdm_core.o \
 						src/core/pdm_device.o \
 						src/core/pdm_master.o \
-						src/core/pdm_driver_manager.o
+						src/core/pdm_component.o
 
 # pdm drivers
 $(MODULE_NAME)-objs += 	src/drivers/pdm_device_drivers.o \
@@ -26,7 +26,7 @@ $(MODULE_NAME)-objs +=	src/led/pdm_led.o \
 ccflags-y += 	-I$(src)/include \
 				-I$(src)/include/osa \
 				-I$(src)/include/core \
-				-I$(src)/include/master \
+				-I$(src)/include/driver \
 				-I$(src)/include/uapi
 
 

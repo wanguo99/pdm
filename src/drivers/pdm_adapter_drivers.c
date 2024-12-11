@@ -1,6 +1,6 @@
 #include "pdm.h"
-#include "pdm_driver_manager.h"
-#include "pdm_master_drivers.h"
+#include "pdm_component.h"
+#include "pdm_adapter_drivers.h"
 
 /**
  * @brief PDM Adapter 驱动列表
@@ -14,7 +14,7 @@ static struct list_head pdm_master_driver_list;
  *
  * 该数组包含所有需要注册的 PDM Adapter 驱动。
  */
-static struct pdm_subdriver pdm_master_drivers[] = {
+static struct pdm_component pdm_master_drivers[] = {
     {
         .name = "LED Master",
         .status = true,
@@ -36,13 +36,13 @@ static struct pdm_subdriver pdm_master_drivers[] = {
 int pdm_master_drivers_register(void)
 {
     int status;
-    struct pdm_subdriver_register_params params;
+    struct pdm_component_params params;
 
     INIT_LIST_HEAD(&pdm_master_driver_list);
     params.drivers = pdm_master_drivers;
     params.count = ARRAY_SIZE(pdm_master_drivers);
     params.list = &pdm_master_driver_list;
-    status = pdm_subdriver_register(&params);
+    status = pdm_component_register(&params);
     if (status < 0) {
         OSA_ERROR("Failed to register PDM Master Drivers, error: %d.\n", status);
         return status;
@@ -59,7 +59,7 @@ int pdm_master_drivers_register(void)
  */
 void pdm_master_drivers_unregister(void)
 {
-    pdm_subdriver_unregister(&pdm_master_driver_list);
+    pdm_component_unregister(&pdm_master_driver_list);
 
     OSA_DEBUG("PDM Master Drivers Unregistered.\n");
 }

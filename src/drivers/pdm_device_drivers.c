@@ -1,11 +1,5 @@
-#include <linux/i2c.h>
-#include <linux/i3c/master.h>
-#include <linux/spi/spi.h>
-#include <linux/platform_device.h>
-
 #include "pdm.h"
-#include "pdm_device.h"
-#include "pdm_driver_manager.h"
+#include "pdm_component.h"
 #include "pdm_device_drivers.h"
 
 /**
@@ -18,9 +12,9 @@ static struct list_head pdm_device_driver_list;
 /**
  * @brief PDM Device 驱动数组
  *
- * 该数组包含所有需要注册的 PDM Device 驱动。每个 `pdm_subdriver` 结构体包含驱动程序的名称、初始化函数和退出函数。
+ * 该数组包含所有需要注册的 PDM Device 驱动。每个 `pdm_component` 结构体包含驱动程序的名称、初始化函数和退出函数。
  */
-static struct pdm_subdriver pdm_device_drivers[] = {
+static struct pdm_component pdm_device_drivers[] = {
     {
         .name = "SPI PDM Device",
         .status = true,
@@ -56,7 +50,7 @@ static struct pdm_subdriver pdm_device_drivers[] = {
  */
 int pdm_device_drivers_register(void)
 {
-    struct pdm_subdriver_register_params params;
+    struct pdm_component_params params;
     int status;
 
     INIT_LIST_HEAD(&pdm_device_driver_list);
@@ -64,7 +58,7 @@ int pdm_device_drivers_register(void)
     params.drivers = pdm_device_drivers;
     params.count = ARRAY_SIZE(pdm_device_drivers);
     params.list = &pdm_device_driver_list;
-    status = pdm_subdriver_register(&params);
+    status = pdm_component_register(&params);
     if (status < 0) {
         OSA_ERROR("Failed to register PDM Device Drivers, error: %d.\n", status);
         return status;
@@ -85,7 +79,7 @@ int pdm_device_drivers_register(void)
  */
 void pdm_device_drivers_unregister(void)
 {
-    pdm_subdriver_unregister(&pdm_device_driver_list);
+    pdm_component_unregister(&pdm_device_driver_list);
     OSA_DEBUG("PDM Device Drivers Exited.\n");
 }
 

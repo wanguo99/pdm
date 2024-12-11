@@ -1,7 +1,7 @@
 #include <linux/platform_device.h>
 
 #include "pdm.h"
-
+#include "pdm_device_drivers.h"
 
 /**
  * @brief PLATFORM 设备探测函数

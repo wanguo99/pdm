@@ -1,4 +1,5 @@
 #include "pdm.h"
+#include "pdm_adapter_drivers.h"
 #include "pdm_led_ioctl.h"
 #include "pdm_led_priv.h"
 
