@@ -13,17 +13,84 @@
  * @brief PDM  Adapter结构体
  */
 struct pdm_adapter {
-    char name[PDM_DEVICE_NAME_SIZE];     /**<  Adapter名称 */
-    struct rw_semaphore rwlock;          /**< 读写锁，用于sysfs读写 Adapter属性时使用 */
-    unsigned int init_done : 1;          /**< 初始化标志 */
-    struct list_head entry;              /**< 挂载到bus的链表节点 */
-    struct list_head client_list;        /**< 子设备列表 */
-    struct mutex client_list_mutex_lock; /**< 用于保护子设备列表的互斥锁 */
-    struct idr device_idr;               /**< 用于给client分配ID的IDR */
-    struct mutex idr_mutex_lock;         /**< 用于保护IDR的互斥锁 */
-    void *data;                          /**< 私有数据 */
+    char name[PDM_DEVICE_NAME_SIZE];        /**< Adapter名称 */
+    struct list_head entry;                 /**< 链表节点句柄 */
+    struct list_head client_list;           /**< 子设备列表 */
+    struct mutex client_list_mutex_lock;    /**< 用于保护子设备列表的互斥锁 */
+    struct idr device_idr;                  /**< 用于给client分配ID的IDR */
+    struct mutex idr_mutex_lock;            /**< 用于保护IDR的互斥锁 */
+    struct device dev;                      /**< 设备结构体 */
+    struct rw_semaphore rwlock;             /**< 读写锁，用于sysfs读写主控制器属性时使用 */
 };
 
+
+/**
+ * @brief 将 device 转换为 pdm_adapter
+ *
+ * 该宏用于将 device 转换为 pdm_adapter
+ *
+ * @param __dev device 结构体指针
+ * @return pdm_adapter 结构体指针
+ */
+#define dev_to_pdm_adapter(__dev) container_of(__dev, struct pdm_adapter, dev)
+
+/**
+ * @brief 获取 PDM Adapter 的私有数据
+ *
+ * 该函数用于获取 PDM Adapter 的私有数据。
+ *
+ * @param adapter PDM Adapter 结构体指针
+ * @return 私有数据指针
+ */
+void *pdm_adapter_devdata_get(struct pdm_adapter *adapter);
+
+/**
+ * @brief 设置 PDM Adapter 的私有数据
+ *
+ * 该函数用于设置 PDM Adapter 的私有数据。
+ *
+ * @param adapter PDM Adapter 结构体指针
+ * @param data 私有数据指针
+ */
+void pdm_adapter_devdata_set(struct pdm_adapter *adapter, void *data);
+
+/**
+ * @brief 获取 PDM Adapter 的引用
+ *
+ * 该函数用于获取 PDM Adapter 的引用。
+ *
+ * @param adapter PDM Adapter 结构体指针
+ * @return 成功返回 PDM Adapter 结构体指针，失败返回 NULL
+ */
+struct pdm_adapter *pdm_adapter_get(struct pdm_adapter *adapter);
+
+/**
+ * @brief 释放 PDM Adapter 的引用
+ *
+ * 该函数用于释放 PDM Adapter 的引用。
+ *
+ * @param adapter PDM Adapter 结构体指针
+ */
+void pdm_adapter_put(struct pdm_adapter *adapter);
+
+/**
+ * @brief 注册 PDM  Adapter
+ *
+ * 该函数用于注册 PDM  Adapter。
+ *
+ * @param adapter PDM  Adapter结构体指针
+ * @return 成功返回 0，失败返回负错误码
+ */
+int pdm_adapter_register(struct pdm_adapter *adapter, const char *name);
+
+/**
+ * @brief 注销 PDM  Adapter
+ *
+ * 该函数用于注销 PDM  Adapter。
+ *
+ * @param adapter PDM  Adapter结构体指针
+ */
+void pdm_adapter_unregister(struct pdm_adapter *adapter);
 
 /**
  * @brief 分配 PDM  Adapter结构体
@@ -43,25 +110,6 @@ struct pdm_adapter *pdm_adapter_alloc(unsigned int size);
  * @param adapter PDM  Adapter结构体指针
  */
 void pdm_adapter_free(struct pdm_adapter *adapter);
-
-/**
- * @brief 注册 PDM  Adapter
- *
- * 该函数用于注册 PDM  Adapter。
- *
- * @param adapter PDM  Adapter结构体指针
- * @return 成功返回 0，失败返回负错误码
- */
-int pdm_adapter_register(struct pdm_adapter *adapter);
-
-/**
- * @brief 注销 PDM  Adapter
- *
- * 该函数用于注销 PDM  Adapter。
- *
- * @param adapter PDM  Adapter结构体指针
- */
-void pdm_adapter_unregister(struct pdm_adapter *adapter);
 
 /**
  * @brief 初始化 PDM  Adapter

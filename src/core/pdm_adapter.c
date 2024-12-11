@@ -17,6 +17,192 @@ static struct list_head pdm_adapter_list;
 static struct mutex pdm_adapter_list_mutex_lock;
 
 /**
+ * name_show - 显示设备名称
+ * @dev: 设备结构
+ * @da: 设备属性结构
+ * @buf: 输出缓冲区
+ *
+ * 返回值:
+ * 实际写入的字节数
+ */
+static ssize_t name_show(struct device *dev, struct device_attribute *da, char *buf)
+{
+    struct pdm_adapter *adapter = dev_to_pdm_adapter(dev);
+    ssize_t status;
+
+    down_read(&adapter->rwlock);
+    status = sysfs_emit(buf, "%s\n", dev_name(&adapter->dev));
+    up_read(&adapter->rwlock);
+
+    OSA_INFO("Device name: %s.\n", dev_name(&adapter->dev));
+    return status;
+}
+
+static DEVICE_ATTR_RO(name);
+
+static struct attribute *pdm_adapter_device_attrs[] = {
+    &dev_attr_name.attr,
+    NULL,
+};
+ATTRIBUTE_GROUPS(pdm_adapter_device);
+
+/**
+ * @brief PDM 主控制器设备类型
+ */
+static const struct device_type pdm_adapter_device_type = {
+    .groups = pdm_adapter_device_groups,
+};
+
+/**
+ * @brief 释放 PDM 主控制器设备
+ * @dev: 设备结构
+ */
+static void pdm_adapter_dev_release(struct device *dev)
+{
+    struct pdm_adapter *master = dev_to_pdm_adapter(dev);
+    kfree(master);
+}
+
+/**
+ * @brief 获取PDM主控制器的私有数据
+ * @master: PDM主控制器
+ *
+ * 返回值:
+ * 指向私有数据的指针
+ */
+void *pdm_adapter_devdata_get(struct pdm_adapter *master)
+{
+    if (!master) {
+        OSA_ERROR("Invalid input parameter (master: %p).\n", master);
+        return NULL;
+    }
+
+    return dev_get_drvdata(&master->dev);
+}
+
+/**
+ * @brief 设置PDM主控制器的私有数据
+ * @master: PDM主控制器
+ * @data: 私有数据指针
+ */
+void pdm_adapter_devdata_set(struct pdm_adapter *master, void *data)
+{
+    if (!master) {
+        OSA_ERROR("Invalid input parameter (master: %p).\n", master);
+        return;
+    }
+
+    dev_set_drvdata(&master->dev, data);
+}
+
+
+/**
+ * @brief 获取PDM主控制器的引用
+ * @master: PDM主控制器
+ *
+ * 返回值:
+ * 指向PDM主控制器的指针，或NULL（失败）
+ */
+struct pdm_adapter *pdm_adapter_get(struct pdm_adapter *master)
+{
+    if (!master || !get_device(&master->dev)) {
+        OSA_ERROR("Invalid input parameter or unable to get device reference (master: %p).\n", master);
+        return NULL;
+    }
+
+    return master;
+}
+
+/**
+ * @brief 释放PDM主控制器的引用
+ * @master: PDM主控制器
+ */
+void pdm_adapter_put(struct pdm_adapter *master)
+{
+    if (master) {
+        put_device(&master->dev);
+    }
+}
+
+/**
+ * @brief 注册 PDM  Adapter
+ *
+ * 该函数用于注册 PDM  Adapter，并将其添加到 Adapter列表中。
+ *
+ * @param adapter PDM  Adapter指针
+ * @return 0 - 成功
+ *         -EINVAL - 参数无效
+ *         -EEXIST -  Adapter名称已存在
+ *         其他负值 - 其他错误码
+ */
+int pdm_adapter_register(struct pdm_adapter *adapter, const char *name)
+{
+    struct pdm_adapter *existing_adapter;
+    int status;
+
+    if (!adapter || !name) {
+        OSA_ERROR("Invalid input parameters (adapter: %p, name: %s).\n", adapter, name);
+        return -EINVAL;
+    }
+
+    mutex_lock(&pdm_adapter_list_mutex_lock);
+    list_for_each_entry(existing_adapter, &pdm_adapter_list, entry) {
+        if (!strcmp(dev_name(&existing_adapter->dev), name)) {
+            OSA_ERROR("Adapter already exists: %s.\n", name);
+            mutex_unlock(&pdm_adapter_list_mutex_lock);
+            return -EEXIST;
+        }
+    }
+    mutex_unlock(&pdm_adapter_list_mutex_lock);
+
+    adapter->dev.type = &pdm_adapter_device_type;
+    dev_set_name(&adapter->dev, "pdm_adapter_%s", name);
+    status = device_add(&adapter->dev);
+    if (status) {
+        OSA_ERROR("Failed to add device: %s, error: %d.\n", dev_name(&adapter->dev), status);
+        goto err_device_put;
+    }
+
+    mutex_lock(&pdm_adapter_list_mutex_lock);
+    list_add_tail(&adapter->entry, &pdm_adapter_list);
+    mutex_unlock(&pdm_adapter_list_mutex_lock);
+
+    mutex_init(&adapter->idr_mutex_lock);
+    idr_init(&adapter->device_idr);
+
+    OSA_DEBUG("PDM Adapter Registered: %s.\n", name);
+
+    return 0;
+
+err_device_put:
+    pdm_adapter_put(adapter);
+    return status;
+}
+
+/**
+ * @brief 注销 PDM  Adapter
+ *
+ * 该函数用于注销 PDM  Adapter，并从 Adapter列表中移除。
+ *
+ * @param adapter PDM  Adapter指针
+ */
+void pdm_adapter_unregister(struct pdm_adapter *adapter)
+{
+    if (!adapter) {
+        OSA_ERROR("Invalid input parameters (adapter: %p).\n", adapter);
+        return;
+    }
+
+    OSA_INFO("PDM Adapter unregistered: %s.\n", dev_name(&adapter->dev));
+
+    mutex_lock(&pdm_adapter_list_mutex_lock);
+    list_del(&adapter->entry);
+    mutex_unlock(&pdm_adapter_list_mutex_lock);
+
+    device_unregister(&adapter->dev);
+}
+
+/**
  * @brief 分配PDM Adapter结构
  *
  * 该函数用于分配PDM Adapter结构及其私有数据。
@@ -35,9 +221,12 @@ struct pdm_adapter *pdm_adapter_alloc(unsigned int data_size)
         return NULL;
     }
 
+    device_initialize(&adapter->dev);
+    adapter->dev.release = pdm_adapter_dev_release;
+    pdm_adapter_devdata_set(adapter, (void *)adapter + adapter_size);
+
     INIT_LIST_HEAD(&adapter->client_list);
     mutex_init(&adapter->client_list_mutex_lock);
-    adapter->data = (void *)adapter + adapter_size;
 
     return adapter;
 }
@@ -54,71 +243,6 @@ void pdm_adapter_free(struct pdm_adapter *adapter)
     if (adapter) {
         kfree(adapter);
     }
-}
-
-/**
- * @brief 注册 PDM  Adapter
- *
- * 该函数用于注册 PDM  Adapter，并将其添加到 Adapter列表中。
- *
- * @param adapter PDM  Adapter指针
- * @return 0 - 成功
- *         -EINVAL - 参数无效
- *         -EEXIST -  Adapter名称已存在
- *         其他负值 - 其他错误码
- */
-int pdm_adapter_register(struct pdm_adapter *adapter)
-{
-    struct pdm_adapter *existing_adapter;
-
-    if (!adapter || !strlen(adapter->name)) {
-        OSA_ERROR("Invalid input parameters (adapter: %p, name: %s).\n", adapter, adapter ? adapter->name : "NULL");
-        return -EINVAL;
-    }
-
-    mutex_lock(&pdm_adapter_list_mutex_lock);
-    list_for_each_entry(existing_adapter, &pdm_adapter_list, entry) {
-        if (!strcmp(existing_adapter->name, adapter->name)) {
-            OSA_ERROR("Adapter already exists: %s.\n", adapter->name);
-            mutex_unlock(&pdm_adapter_list_mutex_lock);
-            return -EEXIST;
-        }
-    }
-    mutex_unlock(&pdm_adapter_list_mutex_lock);
-
-    mutex_lock(&pdm_adapter_list_mutex_lock);
-    list_add_tail(&adapter->entry, &pdm_adapter_list);
-    mutex_unlock(&pdm_adapter_list_mutex_lock);
-
-    mutex_init(&adapter->idr_mutex_lock);
-    idr_init(&adapter->device_idr);
-
-    adapter->init_done = true;
-    OSA_DEBUG("PDM Adapter Registered: %s.\n", adapter->name);
-
-    return 0;
-}
-
-/**
- * @brief 注销 PDM  Adapter
- *
- * 该函数用于注销 PDM  Adapter，并从 Adapter列表中移除。
- *
- * @param adapter PDM  Adapter指针
- */
-void pdm_adapter_unregister(struct pdm_adapter *adapter)
-{
-    if (!adapter) {
-        OSA_ERROR("Invalid input parameters (adapter: %p).\n", adapter);
-        return;
-    }
-
-    OSA_INFO("PDM Adapter unregistered: %s.\n", adapter->name);
-    adapter->init_done = false;
-
-    mutex_lock(&pdm_adapter_list_mutex_lock);
-    list_del(&adapter->entry);
-    mutex_unlock(&pdm_adapter_list_mutex_lock);
 }
 
 /**

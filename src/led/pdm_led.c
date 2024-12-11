@@ -227,8 +227,7 @@ int pdm_led_driver_init(void)
         return -ENOMEM;
     }
 
-    strncpy(led_adapter->name, PDM_LED_NAME, strlen(PDM_LED_NAME));
-    status = pdm_adapter_register(led_adapter);
+    status = pdm_adapter_register(led_adapter, PDM_LED_NAME);
     if (status) {
         OSA_ERROR("Failed to register LED PDM Adapter, status=%d\n", status);
         goto err_adapter_free;
