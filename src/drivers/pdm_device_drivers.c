@@ -55,7 +55,7 @@ int pdm_device_drivers_register(void)
 
     INIT_LIST_HEAD(&pdm_device_driver_list);
 
-    params.drivers = pdm_device_drivers;
+    params.components = pdm_device_drivers;
     params.count = ARRAY_SIZE(pdm_device_drivers);
     params.list = &pdm_device_driver_list;
     status = pdm_component_register(&params);

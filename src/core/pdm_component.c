@@ -17,9 +17,9 @@ static int pdm_component_register_single(struct pdm_component *driver, struct li
         status = driver->init();
         if (status) {
             if (driver->ignore_failures) {
-                OSA_WARN("Failed to register driver %s, status = %d.\n", driver->name ? driver->name : "Unknown", status);
+                OSA_WARN("Failed to register component <%s>, status = %d.\n", driver->name ? driver->name : "Unknown", status);
             } else {
-                OSA_ERROR("Failed to register driver %s, status = %d.\n", driver->name ? driver->name : "Unknown", status);
+                OSA_ERROR("Failed to register component <%s>, status = %d.\n", driver->name ? driver->name : "Unknown", status);
                 return status;
             }
         }
@@ -44,7 +44,7 @@ static void pdm_component_unregister_single(struct pdm_component *driver) {
 }
 
 /**
- * @brief 卸载链表中所有的驱动
+ * @brief 卸载链表中所有的组件
  *
  * 该函数用于卸载所有已注册的 PDM 组件，依次调用每个组件的退出函数。
  *
@@ -64,10 +64,10 @@ void pdm_component_unregister(struct list_head *list) {
 }
 
 /**
- * @brief 注册数组中所有的驱动并保存至链表
+ * @brief 注册数组中所有的组件并保存至链表
  *
  * 该函数用于注册所有 PDM 组件，依次调用每个组件的初始化函数。
- * 根据 `ignore_failures` 参数决定是否忽略某些驱动初始化失败的情况。
+ * 根据 `ignore_failures` 参数决定是否忽略某些组件初始化失败的情况。
  *
  * @param params 组件注册参数结构体指针
  * @return 成功返回 0，失败返回负错误码
@@ -75,26 +75,26 @@ void pdm_component_unregister(struct list_head *list) {
 int pdm_component_register(struct pdm_component_params *params) {
     int i, status = 0;
 
-    if (!params || !params->drivers || params->count <= 0 || !params->list) {
+    if (!params || !params->components || params->count <= 0 || !params->list) {
         OSA_ERROR("Invalid input parameters.\n");
         return -EINVAL;
     }
 
     for (i = 0; i < params->count; i++) {
-        status = pdm_component_register_single(&params->drivers[i], params->list);
+        status = pdm_component_register_single(&params->components[i], params->list);
         if (status) {
-            OSA_ERROR("Failed to register driver %s at index %d, status = %d.\n",
-                      params->drivers[i].name ? params->drivers[i].name : "Unknown", i, status);
+            OSA_ERROR("Failed to register component <%s>, status = %d.\n",
+                      params->components[i].name ? params->components[i].name : "Unknown", status);
             pdm_component_unregister(params->list);
             return status;
 
         }
     }
 
-    OSA_DEBUG("PDM Subdriver Register OK.\n");
+    OSA_DEBUG("PDM Component Register OK.\n");
     return 0;
 }
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("<guohaoprc@163.com>");
-MODULE_DESCRIPTION("PDM Driver Manager Module.");
+MODULE_DESCRIPTION("PDM Component Module.");

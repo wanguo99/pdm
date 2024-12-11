@@ -29,7 +29,7 @@ struct pdm_component {
  * 该结构体用于封装组件注册所需的所有参数。
  */
 struct pdm_component_params {
-    struct pdm_component *drivers;      /**< 要注册的组件数组 */
+    struct pdm_component *components;      /**< 要注册的组件数组 */
     int count;                          /**< 组件数组的长度 */
     struct list_head *list;             /**< 组件链表头指针 */
 };

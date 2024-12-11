@@ -39,7 +39,7 @@ int pdm_master_drivers_register(void)
     struct pdm_component_params params;
 
     INIT_LIST_HEAD(&pdm_master_driver_list);
-    params.drivers = pdm_master_drivers;
+    params.components = pdm_master_drivers;
     params.count = ARRAY_SIZE(pdm_master_drivers);
     params.list = &pdm_master_driver_list;
     status = pdm_component_register(&params);
