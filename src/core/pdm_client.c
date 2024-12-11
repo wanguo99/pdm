@@ -236,7 +236,7 @@ static void pdm_client_device_unregister(struct pdm_client *client)
         OSA_ERROR("Invalid input parameter.\n");
     }
     cdev_device_del(&client->cdev, &client->dev);
-    pdm_client_minor_free(client->dev.devt);
+    pdm_client_minor_free(MINOR(client->dev.devt));
 
     OSA_DEBUG("PDM Master Device Unregistered.\n");
 }
