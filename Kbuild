@@ -14,17 +14,10 @@ $(MODULE_NAME)-objs += 	src/device/pdm_device_i2c.o \
 						src/device/pdm_device_platform.o \
 						src/device/pdm_device_spi.o
 
-# pdm_template
-$(MODULE_NAME)-objs += src/master/template/pdm_template.o 
-
 # pdm_led
 $(MODULE_NAME)-objs +=	src/master/led/pdm_led.o \
 						src/master/led/pdm_led_gpio.o \
 						src/master/led/pdm_led_pwm.o
-# pdm_sensor
-$(MODULE_NAME)-objs +=	src/master/sensor/pdm_sensor.o \
-						src/master/sensor/pdm_sensor_adc.o \
-						src/master/sensor/pdm_sensor_i2c.o
 
 # 添加头文件路径
 ccflags-y += 	-I$(src)/include \
