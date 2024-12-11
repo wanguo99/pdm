@@ -221,60 +221,6 @@ const struct bus_type pdm_bus_type = {
 };
 
 /**
- * @brief 调试文件系统目录
- *
- * 该指针用于存储 PDM 调试文件系统的目录。
- */
-static struct dentry *pdm_debugfs_dir;
-static struct proc_dir_entry *pdm_procfs_dir;
-
-/**
- * @brief 初始化 PDM 调试文件系统
- *
- * 该函数用于在 debugfs 和 procfs 中创建 PDM 相关的目录。
- */
-static int pdm_bus_debug_fs_init(void)
-{
-    pdm_debugfs_dir = debugfs_create_dir(PDM_DEBUG_FS_DIR_NAME, NULL);
-    if (IS_ERR(pdm_debugfs_dir)) {
-        OSA_WARN("Failed to register PDM debugfs, error %ld\n", PTR_ERR(pdm_debugfs_dir));
-        pdm_debugfs_dir = NULL;  // Set to NULL to indicate failure
-    } else {
-        OSA_DEBUG("PDM debugfs registered\n");
-    }
-
-    pdm_procfs_dir = proc_mkdir(PDM_DEBUG_FS_DIR_NAME, NULL);
-    if (!pdm_procfs_dir) {
-        OSA_WARN("Failed to register PDM procfs\n");
-        if (pdm_debugfs_dir) {
-            debugfs_remove_recursive(pdm_debugfs_dir);
-            pdm_debugfs_dir = NULL;
-        }
-    } else {
-        OSA_DEBUG("PDM procfs registered\n");
-    }
-
-    return 0;
-}
-
-/**
- * @brief 卸载 PDM 调试文件系统
- *
- * 该函数用于删除在 debugfs 和 procfs 中创建的 PDM 相关目录。
- */
-static void pdm_bus_debug_fs_exit(void)
-{
-    if (pdm_debugfs_dir) {
-        debugfs_remove_recursive(pdm_debugfs_dir);
-        OSA_DEBUG("PDM debugfs unregistered\n");
-    }
-    if (pdm_procfs_dir) {
-        remove_proc_entry(PDM_DEBUG_FS_DIR_NAME, NULL);
-        OSA_DEBUG("PDM procfs unregistered\n");
-    }
-}
-
-/**
  * @brief 初始化 PDM 总线
  *
  * 该函数用于注册 PDM 总线类型，使其可以在内核中使用。
@@ -298,7 +244,6 @@ int pdm_bus_init(void)
     memset(&pdm_bus_priv_data, 0, sizeof(struct pdm_bus_private_data));
     mutex_init(&pdm_bus_priv_data.idr_mutex_lock);
     idr_init(&pdm_bus_priv_data.device_idr);
-    pdm_bus_debug_fs_init();
 
     OSA_DEBUG("PDM bus initialized\n");
     return 0;
@@ -315,8 +260,6 @@ int pdm_bus_init(void)
  */
 void pdm_bus_exit(void)
 {
-    pdm_bus_debug_fs_exit();
-
     mutex_lock(&pdm_bus_priv_data.idr_mutex_lock);
     idr_destroy(&pdm_bus_priv_data.device_idr);
     mutex_unlock(&pdm_bus_priv_data.idr_mutex_lock);
