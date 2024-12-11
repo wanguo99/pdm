@@ -14,10 +14,6 @@
  */
 struct pdm_adapter {
     char name[PDM_DEVICE_NAME_SIZE];     /**<  Adapter名称 */
-    struct device *dev;                  /**< 字符设备结构体 */
-    dev_t devno;                         /**< 设备号 */
-    struct cdev cdev;                    /**< 字符设备结构体 */
-    struct file_operations fops;         /**< 文件操作结构体，每个 Adapter内部单独实现一套文件操作 */
     struct rw_semaphore rwlock;          /**< 读写锁，用于sysfs读写 Adapter属性时使用 */
     unsigned int init_done : 1;          /**< 初始化标志 */
     struct list_head entry;              /**< 挂载到bus的链表节点 */
@@ -28,48 +24,6 @@ struct pdm_adapter {
     void *data;                          /**< 私有数据 */
 };
 
-/**
- * @brief 显示所有已注册的 PDM 设备列表
- *
- * 该函数用于显示当前已注册的所有 PDM 设备的名称。
- * 如果主设备未初始化，则会返回错误。
- *
- * @return 成功返回 0，失败返回负错误码
- */
-int pdm_adapter_client_show(struct pdm_adapter *adapter);
-
-/**
- * @brief 添加 PDM 设备
- *
- * 该函数用于添加 PDM 设备。
- *
- * @param adapter PDM  Adapter结构体指针
- * @param pdmdev PDM 设备结构体指针
- * @return 成功返回 0，失败返回负错误码
- */
-int pdm_adapter_client_add(struct pdm_adapter *adapter, struct pdm_device *pdmdev);
-
-/**
- * @brief 删除 PDM 设备
- *
- * 该函数用于删除 PDM 设备。
- *
- * @param adapter PDM  Adapter结构体指针
- * @param pdmdev PDM 设备结构体指针
- * @return 成功返回 0，失败返回负错误码
- */
-int pdm_adapter_client_delete(struct pdm_adapter *adapter, struct pdm_device *pdmdev);
-
-
-/**
- * @brief 获取 PDM  Adapter的私有数据
- *
- * 该函数用于获取 PDM  Adapter的私有数据。
- *
- * @param adapter PDM  Adapter结构体指针
- * @return 私有数据指针
- */
-void *pdm_adapter_priv_data_get(struct pdm_adapter *adapter);
 
 /**
  * @brief 分配 PDM  Adapter结构体

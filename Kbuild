@@ -4,9 +4,11 @@ obj-m := $(MODULE_NAME).o
 
 # 定义要编译的目标模块对象文件
 $(MODULE_NAME)-objs := 	src/core/pdm_core.o \
+						src/core/pdm_component.o \
+						src/core/pdm_bus.o \
 						src/core/pdm_device.o \
 						src/core/pdm_adapter.o \
-						src/core/pdm_component.o
+						src/core/pdm_client.o
 
 # pdm drivers
 $(MODULE_NAME)-objs += 	src/driver/pdm_device_drivers.o \
@@ -19,8 +21,7 @@ $(MODULE_NAME)-objs += 	src/device/pdm_device_i2c.o \
 
 # pdm_led
 $(MODULE_NAME)-objs +=	src/led/pdm_led.o \
-						src/led/pdm_led_gpio.o \
-						src/led/pdm_led_pwm.o
+						src/led/pdm_led_gpio.o
 
 # 添加头文件路径
 ccflags-y += 	-I$(src)/include \

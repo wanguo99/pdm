@@ -1,6 +1,7 @@
 #include "pdm.h"
 #include "pdm_led_priv.h"
 
+#if 0
 /**
  * @brief 设置 GPIO LED 状态
  *
@@ -10,9 +11,9 @@
  * @param state LED 状态（0 表示关，1 表示开）
  * @return 成功返回 0，失败返回负错误码
  */
-static int pdm_led_gpio_set_state(struct pdm_device *pdmdev, int state)
+static int pdm_led_gpio_set_state(struct pdm_client *client, int state)
 {
-    OSA_INFO("PWM LED set state: %d for device: %s\n", state, pdmdev->name);
+    OSA_INFO("PWM LED set state: %d for device: %s\n", state, client->name);
     // 这里可以添加实际的 GPIO 控制代码
     return 0;
 }
@@ -26,6 +27,7 @@ static int pdm_led_gpio_set_state(struct pdm_device *pdmdev, int state)
 static struct pdm_led_operations pdm_device_led_ops_gpio = {
     .set_state = pdm_led_gpio_set_state,
 };
+#endif
 
 /**
  * @brief 初始化 GPIO 设置
@@ -35,27 +37,9 @@ static struct pdm_led_operations pdm_device_led_ops_gpio = {
  * @param pdmdev PDM 设备指针
  * @return 成功返回 0，失败返回负错误码
  */
-int pdm_led_gpio_setup(struct pdm_device *pdmdev)
+int pdm_led_gpio_setup(struct pdm_client *client)
 {
-    struct pdm_led_priv *data;
-
-    OSA_INFO("pdm_led_gpio_setup for device: %s\n", pdmdev->name);
-
-    // 获取设备私有数据
-    data = (struct pdm_led_priv *)pdm_device_devdata_get(pdmdev);
-    if (!data) {
-        OSA_ERROR("Failed to get device private data for %s\n", pdmdev->name);
-        return -ENOMEM;
-    }
-
-    // 设置操作函数
-    data->ops = &pdm_device_led_ops_gpio;
-
-    // 这里可以添加实际的 GPIO 配置代码，例如初始化 GPIO 引脚
-    // 例如：gpio_request(data->gpio_pin, "led_gpio");
-    //      gpio_direction_output(data->gpio_pin, 0); // 默认关闭
-
-    OSA_INFO("GPIO setup completed for device: %s\n", pdmdev->name);
+    OSA_INFO("pdm_led_gpio_setup for device: %s\n", client->name);
 
     return 0;
 }

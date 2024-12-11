@@ -17,7 +17,7 @@
  * 该结构体定义了 PDM LED 设备的操作函数，包括开灯和关灯。
  */
 struct pdm_led_operations {
-    int (*set_state)(struct pdm_device *pdmdev, int state);      /**< 设置开关灯 */
+    int (*set_state)(struct pdm_client *client, int state);      /**< 设置开关灯 */
 };
 
 /**
@@ -30,7 +30,7 @@ struct pdm_led_priv {
     struct pdm_led_operations *ops;  /**< 操作函数回调 */
 };
 
-int pdm_led_gpio_setup(struct pdm_device *pdmdev);
-int pdm_led_pwm_setup(struct pdm_device *pdmdev);
+int pdm_led_gpio_setup(struct pdm_client *client);
+int pdm_led_pwm_setup(struct pdm_client *client);
 
 #endif /* _PDM_LED_PRIV_H_ */

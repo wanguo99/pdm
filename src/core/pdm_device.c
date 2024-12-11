@@ -50,37 +50,8 @@ static int pdm_device_uevent(const struct device *dev, struct kobj_uevent_env *e
     }
 
     OSA_DEBUG("Generating MODALIAS for device %s\n", dev_name(dev));
-    return add_uevent_var(env, "MODALIAS=pdm:%04X", pdmdev->device_id);
+    return add_uevent_var(env, "MODALIAS=pdm:%04X", pdmdev->id);
 }
-
-/**
- * id_show - 显示设备ID
- * @dev: 设备结构
- * @da: 设备属性结构
- * @buf: 输出缓冲区
- *
- * 返回值:
- * 实际写入的字节数
- */
-static ssize_t name_show(struct device *dev, struct device_attribute *da, char *buf)
-{
-    struct pdm_device *pdmdev = NULL;
-
-    if (!dev) {
-        OSA_ERROR("dev is null\n");
-        return -EINVAL;
-    }
-
-    pdmdev = dev_to_pdm_device(dev);
-    if (pdm_device_verify(pdmdev)) {
-        return -EINVAL;
-    }
-
-    OSA_INFO("Showing Name for device %s\n", dev_name(dev));
-
-    return sysfs_emit(buf, "%s\n", pdmdev->name);
-}
-static DEVICE_ATTR_RO(name);
 
 /**
  * compatible_show - 显示设备兼容性字符串
@@ -113,35 +84,6 @@ static ssize_t compatible_show(struct device *dev, struct device_attribute *da, 
 static DEVICE_ATTR_RO(compatible);
 
 /**
- * adapter_name_show - 显示设备所属主控制器的名称
- * @dev: 设备结构
- * @da: 设备属性结构
- * @buf: 输出缓冲区
- *
- * 返回值:
- * 实际写入的字节数
- */
-static ssize_t adapter_name_show(struct device *dev, struct device_attribute *da, char *buf)
-{
-    struct pdm_device *pdmdev = NULL;
-
-    if (!dev) {
-        OSA_ERROR("dev is null\n");
-        return -EINVAL;
-    }
-
-    pdmdev = dev_to_pdm_device(dev);
-    if (pdm_device_verify(pdmdev)) {
-        return -EINVAL;
-    }
-
-    OSA_INFO("Showing adapter name for device %s\n", dev_name(dev));
-
-    return sysfs_emit(buf, "%s\n", pdmdev->adapter->name);
-}
-static DEVICE_ATTR_RO(adapter_name);
-
-/**
  * @brief 定义 PDM 设备的属性数组
  *
  * 这个数组包含 PDM 设备的所有属性，每个属性都是一个 `struct attribute` 类型的指针。
@@ -149,9 +91,7 @@ static DEVICE_ATTR_RO(adapter_name);
  * 使用 `ATTRIBUTE_GROUPS` 宏将属性数组转换为属性组，以便在设备模型中注册。
  */
 static struct attribute *pdm_device_attrs[] = {
-    &dev_attr_name.attr,
     &dev_attr_compatible.attr,
-    &dev_attr_adapter_name.attr,
     NULL,
 };
 ATTRIBUTE_GROUPS(pdm_device);
@@ -181,95 +121,6 @@ static void pdm_device_release(struct device *dev)
         kfree(pdmdev);
     }
 }
-
-/**
- * @brief 获取 PDM 设备的私有数据
- *
- * 该函数用于获取与 PDM 设备关联的私有数据。
- *
- * @param pdmdev PDM 设备结构体指针
- * @return 成功返回私有数据指针，失败返回 NULL
- */
-void *pdm_device_devdata_get(struct pdm_device *pdmdev)
-{
-    if (!pdmdev) {
-        OSA_ERROR("pdmdev is null\n");
-        return NULL;
-    }
-
-    return dev_get_drvdata(&pdmdev->dev);
-}
-
-/**
- * @brief 设置 PDM 设备的私有数据
- *
- * 该函数用于设置与 PDM 设备关联的私有数据。
- *
- * @param pdmdev PDM 设备结构体指针
- * @param data 私有数据指针
- */
-void pdm_device_devdata_set(struct pdm_device *pdmdev, void *data)
-{
-    if (!pdmdev) {
-        OSA_ERROR("pdmdev is null\n");
-        return;
-    }
-
-    dev_set_drvdata(&pdmdev->dev, data);
-}
-
-/**
- * @brief 分配 PDM 设备结构体的私有数据
- *
- * 该函数用于分配新的 PDM 设备结构体的私有数据区域，并将其关联到设备结构体。
- *
- * @param pdmdev PDM 设备结构体指针
- * @param size 私有数据区域的大小
- * @return 成功返回 0，失败返回负错误码
- */
-int pdm_device_devdata_alloc(struct pdm_device *pdmdev, size_t size)
-{
-    void *data;
-
-    if (!pdmdev) {
-        OSA_ERROR("pdmdev is null\n");
-        return -EINVAL;
-    }
-
-    data = kzalloc(size, GFP_KERNEL);
-    if (!data) {
-        OSA_ERROR("Failed to allocate memory for pdm device devdata.\n");
-        return -ENOMEM;
-    }
-
-    pdm_device_devdata_set(pdmdev, data);
-    return 0;
-}
-
-/**
- * @brief 释放 PDM 设备结构体的私有数据
- *
- * 该函数用于释放 PDM 设备结构体的私有数据区域，并将其关联的指针设置为 NULL。
- *
- * @param pdmdev PDM 设备结构体指针
- * @param data 私有数据指针
- */
-void pdm_device_devdata_free(struct pdm_device *pdmdev)
-{
-    void *data;
-
-    if (!pdmdev) {
-        OSA_ERROR("pdmdev is null\n");
-        return;
-    }
-
-    data = pdm_device_devdata_get(pdmdev);
-    if (data) {
-        kfree(data);
-    }
-    pdm_device_devdata_set(pdmdev, NULL);
-}
-
 
 /**
  * @brief 分配 PDM 设备结构体
@@ -347,13 +198,12 @@ int pdm_device_register(struct pdm_device *pdmdev)
         goto err_free_id;
     }
 
-    dev_set_name(&pdmdev->dev, "pdmdev-%d", pdmdev->device_id);
+    dev_set_name(&pdmdev->dev, "pdmdev-%d", pdmdev->id);
     status = device_add(&pdmdev->dev);
     if (status < 0) {
         OSA_ERROR("Can't add %s, status %d\n", dev_name(&pdmdev->dev), status);
         goto err_free_id;
     }
-    pdmdev->force_dts_id = true;
 
     OSA_DEBUG("Device %s registered.\n", dev_name(&pdmdev->dev));
     return 0;

@@ -5,19 +5,20 @@
 
 static struct pdm_adapter *led_adapter = NULL;
 
+#if 0
 /**
  * @brief 查找指定索引的 PDM 设备
  *
  * @param index 设备索引
  * @return 找到的 PDM 设备指针，未找到返回 NULL
  */
-static struct pdm_device *pdm_led_find_pdmdev(int index)
+static struct pdm_client *pdm_led_find_client(int index)
 {
-    struct pdm_device *pdmdev;
+    struct pdm_client *client;
     int found_dev = 0;
 
-    list_for_each_entry(pdmdev, &led_adapter->client_list, entry) {
-        if (pdmdev->client_index == index) {
+    list_for_each_entry(client, &led_adapter->client_list, entry) {
+        if (client->index == index) {
             OSA_INFO("Found target LED device.\n");
             found_dev = 1;
             break;
@@ -29,7 +30,7 @@ static struct pdm_device *pdm_led_find_pdmdev(int index)
         return NULL;
     }
 
-    return pdmdev;
+    return client;
 }
 
 /**
@@ -40,27 +41,14 @@ static struct pdm_device *pdm_led_find_pdmdev(int index)
  */
 static int pdm_led_set_state(struct pdm_led_ioctl_args *args)
 {
-    struct pdm_led_priv *led_priv;
-    struct pdm_device *pdmdev;
+    struct pdm_client *client;
     int status;
 
     mutex_lock(&led_adapter->client_list_mutex_lock);
 
-    pdmdev = pdm_led_find_pdmdev(args->index);
-    if (!pdmdev) {
+    client = pdm_led_find_client(args->index);
+    if (!client) {
         status = -EINVAL;
-        goto err_unlock;
-    }
-
-    led_priv = pdm_device_devdata_get(pdmdev);
-    if (!led_priv || !led_priv->ops || !led_priv->ops->set_state) {
-        status = -EINVAL;
-        goto err_unlock;
-    }
-
-    status = led_priv->ops->set_state(pdmdev, args->state);
-    if (status) {
-        OSA_ERROR("PDM LED set_state failed.\n");
         goto err_unlock;
     }
 
@@ -150,6 +138,7 @@ static ssize_t pdm_led_write(struct file *filp, const char __user *buf, size_t c
 
     return count;
 }
+#endif
 
 /**
  * @brief LED PDM 设备探测函数
@@ -162,26 +151,24 @@ static ssize_t pdm_led_write(struct file *filp, const char __user *buf, size_t c
 static int pdm_led_device_probe(struct pdm_device *pdmdev)
 {
     int status;
+    struct pdm_client *client;
 
-    status = pdm_adapter_client_add(led_adapter, pdmdev);
+    client = pdm_client_alloc(sizeof(void *));
+    if (client) {
+        OSA_ERROR("LED Client Alloc Failed, status=%d\n", status);
+        return -ENOMEM;
+    }
+
+    pdmdev->client = client;
+    client->pdmdev = pdmdev;
+    status = pdm_client_register(led_adapter, client);
     if (status) {
         OSA_ERROR("LED Adapter Add Device Failed, status=%d\n", status);
         return status;
     }
 
-    status = pdm_device_devdata_alloc(pdmdev, sizeof(struct pdm_led_priv));
-    if (status) {
-        OSA_ERROR("Alloc Device Private Data Failed, status=%d\n", status);
-        goto err_client_del;
-    }
-
     OSA_DEBUG("LED PDM Device Probed\n");
     return 0;
-
-err_client_del:
-    pdm_adapter_client_delete(led_adapter, pdmdev);
-    OSA_DEBUG("LED PDM Device Probe Failed\n");
-    return status;
 }
 
 /**
@@ -193,16 +180,7 @@ err_client_del:
  */
 static void pdm_led_device_remove(struct pdm_device *pdmdev)
 {
-    int status;
-
-    pdm_device_devdata_free(pdmdev);
-
-    status = pdm_adapter_client_delete(led_adapter, pdmdev);
-    if (status) {
-        OSA_ERROR("LED Adapter Delete Device Failed, status=%d\n", status);
-        return;
-    }
-
+    pdm_client_unregister(led_adapter, pdmdev->client);
     OSA_DEBUG("LED PDM Device Removed\n");
 }
 
@@ -261,9 +239,6 @@ int pdm_led_driver_init(void)
         OSA_ERROR("Failed to register LED PDM Adapter Driver, status=%d\n", status);
         goto err_adapter_unregister;
     }
-
-    led_adapter->fops.unlocked_ioctl = pdm_led_ioctl;
-    led_adapter->fops.write = pdm_led_write;
 
     OSA_INFO("LED PDM Adapter Driver Initialized\n");
     return 0;
