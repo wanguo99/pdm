@@ -1,4 +1,5 @@
 #include "pdm.h"
+#include "pdm_template_ioctl.h"
 #include "pdm_template_priv.h"
 
 static struct pdm_master *template_master = NULL;

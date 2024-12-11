@@ -26,8 +26,8 @@ static struct pdm_subdriver pdm_master_drivers[] = {
         .name = "LED Master",
         .status = true,
         .ignore_failures = true,
-        .init = pdm_master_led_driver_init,
-        .exit = pdm_master_led_driver_exit,
+        .init = pdm_led_driver_init,
+        .exit = pdm_led_driver_exit,
     },
     {
         .name = "Sensor Master",

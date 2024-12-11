@@ -1,6 +1,6 @@
 #include "pdm.h"
-#include "pdm_sensor_priv.h"
 #include "pdm_sensor_ioctl.h"
+#include "pdm_sensor_priv.h"
 
 static struct pdm_master *sensor_master = NULL;
 
