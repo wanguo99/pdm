@@ -1,5 +1,5 @@
-#ifndef _PDM_ADAPTER_DRIVERS_H_
-#define _PDM_ADAPTER_DRIVERS_H_
+#ifndef _PDM_ADAPTER_PRIV_H_
+#define _PDM_ADAPTER_PRIV_H_
 
 /**
  * @brief 初始化 PDM 主控制器驱动
@@ -35,4 +35,4 @@ int pdm_led_driver_init(void);
  */
 void pdm_led_driver_exit(void);
 
-#endif /* _PDM_ADAPTER_DRIVERS_H_ */
+#endif /* _PDM_ADAPTER_PRIV_H_ */

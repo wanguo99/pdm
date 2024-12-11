@@ -10,10 +10,6 @@ $(MODULE_NAME)-objs := 	src/core/pdm_core.o \
 						src/core/pdm_adapter.o \
 						src/core/pdm_client.o
 
-# pdm drivers
-$(MODULE_NAME)-objs += 	src/driver/pdm_device_drivers.o \
-						src/driver/pdm_adapter_drivers.o
-
 # pdm_device_drivers
 $(MODULE_NAME)-objs += 	src/device/pdm_device_i2c.o \
 						src/device/pdm_device_platform.o \
@@ -27,7 +23,7 @@ $(MODULE_NAME)-objs +=	src/led/pdm_led.o \
 ccflags-y += 	-I$(src)/include \
 				-I$(src)/include/osa \
 				-I$(src)/include/core \
-				-I$(src)/include/driver \
+				-I$(src)/include/private \
 				-I$(src)/include/uapi
 
 

@@ -1,7 +1,7 @@
 #include <linux/i2c.h>
 
 #include "pdm.h"
-#include "pdm_device_drivers.h"
+#include "pdm_device_priv.h"
 
 /**
  * @brief 兼容旧内核版本的 i2c_device_id 结构体定义

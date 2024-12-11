@@ -1,5 +1,5 @@
-#ifndef _PDM_DEVICE_DRIVERS_H_
-#define _PDM_DEVICE_DRIVERS_H_
+#ifndef _PDM_DEVICE_PRIV_H_
+#define _PDM_DEVICE_PRIV_H_
 
 /**
  * @brief 初始化 PDM 设备驱动
@@ -65,4 +65,4 @@ int pdm_device_spi_driver_init(void);
  */
 void pdm_device_spi_driver_exit(void);
 
-#endif /* _PDM_DEVICE_DRIVERS_H_ */
+#endif /* _PDM_DEVICE_PRIV_H_ */
