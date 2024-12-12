@@ -1,11 +1,14 @@
-#include <linux/debugfs.h>
-#include <linux/proc_fs.h>
-#include <linux/of_device.h>
-
 #include "pdm.h"
 
 static struct pdm_bus_private_data pdm_bus_priv_data;
 
+/**
+ * @brief Matches a device based on its parent device.
+ *
+ * @param dev The device to check.
+ * @param data The parent device to match against.
+ * @return Returns 1 if the device's parent matches the given parent device; otherwise, returns 0.
+ */
 static int pdm_bus_device_match_parent(struct device *dev, const void *data)
 {
     struct pdm_device *pdmdev = dev_to_pdm_device(dev);
@@ -14,13 +17,13 @@ static int pdm_bus_device_match_parent(struct device *dev, const void *data)
 }
 
 /**
- * @brief 根据of_node值在pdm_bus_type 总线上查找设备
+ * @brief Finds a device on the `pdm_bus_type` bus that matches the specified parent device.
  *
- * 该函数遍历 `pdm_bus_type` 总线上的所有设备，找到of_node值匹配的设备。
+ * This function iterates over all devices on the `pdm_bus_type` bus and finds one whose parent device
+ * matches the provided one.
  *
- * @param data 传递给回调函数的数据
- * @param fn 回调函数指针，用于处理每个设备
- * @return 返回遍历结果，0 表示成功，非零值表示失败
+ * @param parent The parent device to match.
+ * @return A pointer to the matching PDM device or NULL if no match is found.
  */
 struct pdm_device *pdm_bus_find_device_by_parent(struct device *parent)
 {
@@ -31,16 +34,12 @@ struct pdm_device *pdm_bus_find_device_by_parent(struct device *parent)
     return dev_to_pdm_device(dev);
 }
 
-
 /**
- * @brief 为PDM设备分配ID
- * @pdmdev: PDM Device
+ * @brief Allocates a unique ID for a PDM device.
  *
- * 返回值:
- * 0 - 成功
- * -EINVAL - 参数无效
- * -EBUSY - 没有可用的ID
- * 其他负值 - 其他错误码
+ * @param pdmdev Pointer to the PDM device.
+ * @return Returns 0 on success, -EINVAL for invalid parameters, -EBUSY if no IDs are available, and
+ * other negative values for other errors.
  */
 int pdm_bus_device_id_alloc(struct pdm_device *pdmdev)
 {
@@ -52,7 +51,8 @@ int pdm_bus_device_id_alloc(struct pdm_device *pdmdev)
     }
 
     mutex_lock(&pdm_bus_priv_data.idr_mutex_lock);
-    id = idr_alloc(&pdm_bus_priv_data.device_idr, pdmdev, PDM_BUS_DEVICE_IDR_START, PDM_BUS_DEVICE_IDR_END, GFP_KERNEL);
+    id = idr_alloc(&pdm_bus_priv_data.device_idr, pdmdev, PDM_BUS_DEVICE_IDR_START,
+                                                PDM_BUS_DEVICE_IDR_END, GFP_KERNEL);
     mutex_unlock(&pdm_bus_priv_data.idr_mutex_lock);
     if (id < 0) {
         if (id == -ENOSPC) {
@@ -69,8 +69,9 @@ int pdm_bus_device_id_alloc(struct pdm_device *pdmdev)
 }
 
 /**
- * @brief 释放PDM设备的ID
- * @pdmdev: PDM Device
+ * @brief Frees the ID previously allocated for a PDM device.
+ *
+ * @param pdmdev Pointer to the PDM device.
  */
 void pdm_bus_device_id_free(struct pdm_device *pdmdev)
 {
@@ -85,17 +86,20 @@ void pdm_bus_device_id_free(struct pdm_device *pdmdev)
 }
 
 /**
- * @brief 注册PDM驱动程序
- * @owner: 模块所有者
- * @driver: PDM驱动程序
+ * @brief Registers a PDM driver with the kernel.
  *
- * 返回值:
- * 0 - 成功
- * 非零值 - 失败
+ * @param owner Pointer to the module that owns this driver.
+ * @param driver Pointer to the PDM driver structure.
+ * @return Returns 0 on success or a negative error code on failure.
  */
 int pdm_bus_register_driver(struct module *owner, struct pdm_driver *driver)
 {
     int status;
+
+    if (!driver) {
+        OSA_WARN("Driver is NULL\n");
+        return -EINVAL;
+    }
 
     driver->driver.owner = owner;
     driver->driver.bus = &pdm_bus_type;
@@ -110,22 +114,27 @@ int pdm_bus_register_driver(struct module *owner, struct pdm_driver *driver)
 }
 
 /**
- * @brief 注销PDM驱动程序
- * @driver: PDM驱动程序
+ * @brief Unregisters a PDM driver from the kernel.
+ *
+ * @param driver Pointer to the PDM driver structure.
  */
 void pdm_bus_unregister_driver(struct pdm_driver *driver)
 {
-    if (driver)
-        driver_unregister(&driver->driver);
+    if (!driver) {
+        OSA_WARN("Driver is NULL\n");
+        return;
+    }
+
+    driver_unregister(&driver->driver);
 }
 
 /**
- * @brief 探测 PDM 设备
+ * @brief Probes a PDM device.
  *
- * 该函数用于处理 PDM 设备的探测操作。
+ * This function handles the probing of a PDM device.
  *
- * @param dev 设备指针
- * @return 成功返回 0，失败返回负错误码
+ * @param dev Pointer to the device.
+ * @return Returns 0 on success or a negative error code on failure.
  */
 static int pdm_bus_device_probe(struct device *dev)
 {
@@ -148,11 +157,11 @@ static int pdm_bus_device_probe(struct device *dev)
 }
 
 /**
- * @brief 移除 PDM 设备
+ * @brief Removes a PDM device.
  *
- * 该函数用于处理 PDM 设备的移除操作。
+ * This function handles the removal of a PDM device.
  *
- * @param dev 设备指针
+ * @param dev Pointer to the device.
  */
 static void pdm_bus_device_remove(struct device *dev)
 {
@@ -172,13 +181,13 @@ static void pdm_bus_device_remove(struct device *dev)
 }
 
 /**
- * @brief 匹配 PDM 设备和驱动
+ * @brief Matches a PDM device with a driver.
  *
- * 该函数用于匹配 PDM 设备和驱动。
+ * This function attempts to match a PDM device with a driver using an OF-style match.
  *
- * @param dev 设备指针
- * @param drv 驱动指针
- * @return 匹配成功返回 1，失败返回 0
+ * @param dev Pointer to the device.
+ * @param drv Pointer to the driver.
+ * @return Returns 1 if a match is found; otherwise, returns 0.
  */
 static int pdm_bus_device_real_match(struct device *dev, const struct device_driver *drv) {
     if (dev->type != &pdm_device_type) {
@@ -204,9 +213,9 @@ static int pdm_bus_device_match(struct device *dev, const struct device_driver *
 #endif
 
 /**
- * @brief PDM 总线类型
+ * @brief Definition of the PDM bus type.
  *
- * 该结构体定义了 PDM 总线的基本信息和操作函数。
+ * This structure defines the basic information and operation functions of the PDM bus.
  */
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 2, 0)
 struct bus_type pdm_bus_type = {
@@ -220,14 +229,14 @@ const struct bus_type pdm_bus_type = {
 };
 
 /**
- * @brief 初始化 PDM 总线
+ * @brief Initializes the PDM bus.
  *
- * 该函数用于注册 PDM 总线类型，使其可以在内核中使用。
- * 它会执行以下操作：
- * - 注册 PDM 总线类型
- * - 初始化 PDM 总线实例的相关数据结构
+ * This function registers the PDM bus type so it can be used within the kernel. It performs the
+ * following actions:
+ * - Registers the PDM bus type.
+ * - Initializes relevant data structures for the PDM bus instance.
  *
- * @return 成功返回 0，失败返回负错误码
+ * @return Returns 0 on success or a negative error code on failure.
  */
 int pdm_bus_init(void)
 {
@@ -249,21 +258,22 @@ int pdm_bus_init(void)
 }
 
 /**
- * @brief 卸载 PDM 总线
+ * @brief Exits the PDM bus.
  *
- * 该函数用于注销 PDM 总线类型，使其不再在内核中使用。
- * 它会执行以下操作：
- * - 注销 PDM 总线类型
+ * This function unregisters the PDM bus type so it is no longer used within the kernel. It performs
+ * the following actions:
+ * - Unregisters the PDM bus type.
  *
- * @note 在调用此函数之前，请确保所有相关的设备已经注销。
+ * @note Ensure all related devices have been unregistered before calling this function.
  */
 void pdm_bus_exit(void)
 {
+    bus_unregister(&pdm_bus_type);
+
     mutex_lock(&pdm_bus_priv_data.idr_mutex_lock);
     idr_destroy(&pdm_bus_priv_data.device_idr);
     mutex_unlock(&pdm_bus_priv_data.idr_mutex_lock);
 
-    bus_unregister(&pdm_bus_type);
     OSA_INFO("PDM bus unregistered\n");
 }
 
