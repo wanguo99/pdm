@@ -4,50 +4,30 @@
 #include "pdm_device_priv.h"
 
 /**
- * @brief PDM Device 驱动列表
- *
- * 该列表用于存储所有注册的 PDM Device 驱动。
+ * @brief List to store all registered PDM device drivers.
  */
-static struct list_head pdm_device_driver_list;
+static LIST_HEAD(pdm_device_driver_list);
 
 /**
- * @brief PDM Device 驱动数组
+ * @brief Array of PDM device drivers.
  *
- * 该数组包含所有需要注册的 PDM Device 驱动。每个 `pdm_component` 结构体包含驱动程序的名称、初始化函数和退出函数。
+ * Each `pdm_component` structure contains the driver's name, init and exit functions.
  */
 static struct pdm_component pdm_device_drivers[] = {
-    {
-        .name = "SPI PDM Device",
-        .status = true,
-        .ignore_failures = true,
-        .init = pdm_device_spi_driver_init,
-        .exit = pdm_device_spi_driver_exit
-    },
-    {
-        .name = "I2C PDM Device",
-        .status = true,
-        .ignore_failures = true,
-        .init = pdm_device_i2c_driver_init,
-        .exit = pdm_device_i2c_driver_exit
-    },
-    {
-        .name = "PLATFORM PDM Device",
-        .status = true,
-        .ignore_failures = true,
-        .init = pdm_device_platform_driver_init,
-        .exit = pdm_device_platform_driver_exit
-    },
+    { .name = "SPI PDM Device", .status = true, .ignore_failures = true,
+      .init = pdm_device_spi_driver_init, .exit = pdm_device_spi_driver_exit },
+    { .name = "I2C PDM Device", .status = true, .ignore_failures = true,
+      .init = pdm_device_i2c_driver_init, .exit = pdm_device_i2c_driver_exit },
+    { .name = "PLATFORM PDM Device", .status = true, .ignore_failures = true,
+      .init = pdm_device_platform_driver_init, .exit = pdm_device_platform_driver_exit },
 };
 
 /**
- * @brief 初始化 PDM Device 驱动
+ * @brief Registers PDM device drivers.
  *
- * 该函数用于初始化 PDM Device 驱动。
- * 它会执行以下操作：
- * - 初始化 PDM Device 驱动列表
- * - 注册 PDM Device 驱动
+ * Initializes the PDM device driver list and registers the drivers.
  *
- * @return 成功返回 0，失败返回负错误码
+ * @return 0 on success, negative error code on failure.
  */
 int pdm_device_drivers_register(void)
 {
@@ -65,67 +45,45 @@ int pdm_device_drivers_register(void)
         return status;
     }
 
-    OSA_DEBUG("Initialize PDM Device Drivers OK.\n");
+    OSA_DEBUG("PDM Device Drivers initialized successfully.\n");
     return 0;
 }
 
 /**
- * @brief 卸载 PDM Device 驱动
+ * @brief Unregisters PDM device drivers.
  *
- * 该函数用于卸载 PDM Device，包括注销设备驱动。
- * 它会执行以下操作：
- * - 注销 PDM Device驱动
- *
- * @note 在调用此函数之前，请确保所有相关的设备已经注销。
+ * Cleans up and unregisters the PDM device drivers.
  */
 void pdm_device_drivers_unregister(void)
 {
     pdm_component_unregister(&pdm_device_driver_list);
-    OSA_DEBUG("PDM Device Drivers Exited.\n");
+    OSA_DEBUG("PDM Device Drivers exited successfully.\n");
 }
 
 /**
- * @brief 验证 PDM 设备的有效性
+ * @brief Validates a PDM device.
  *
- * @param pdmdev 要验证的 PDM 设备结构体指针
- * @return 成功返回 0，失败返回 -EINVAL
+ * Checks if the provided PDM device pointer is valid.
+ *
+ * @param pdmdev Pointer to the PDM device structure.
+ * @return 0 on success, -EINVAL on failure.
  */
 static int pdm_device_verify(struct pdm_device *pdmdev)
 {
-    if (!pdmdev) {
-        OSA_ERROR("pdmdev is null\n");
+    if (!pdmdev || !pdmdev->dev.parent) {
+        OSA_ERROR("%s is null\n", !pdmdev ? "pdmdev" : "parent");
         return -EINVAL;
     }
-
-    if (!pdmdev->dev.parent) {
-        OSA_ERROR("parent is invalid\n");
-        return -EINVAL;
-    }
-
     return 0;
 }
 
-/**
- * @brief 生成 PDM 设备的 uevent 事件
- *
- * @param dev 设备结构体指针
- * @param env uevent 环境变量结构体指针
- * @return 成功返回 0，失败返回 -EINVAL
- */
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 0)
 static int pdm_device_uevent(struct device *dev, struct kobj_uevent_env *env)
 #else
 static int pdm_device_uevent(const struct device *dev, struct kobj_uevent_env *env)
 #endif
 {
-    struct pdm_device *pdmdev = NULL;
-
-    if (!dev) {
-        OSA_ERROR("dev is null\n");
-        return -EINVAL;
-    }
-
-    pdmdev = dev_to_pdm_device(dev);
+    struct pdm_device *pdmdev = dev_to_pdm_device(dev);
     if (pdm_device_verify(pdmdev)) {
         return -EINVAL;
     }
@@ -135,41 +93,30 @@ static int pdm_device_uevent(const struct device *dev, struct kobj_uevent_env *e
 }
 
 /**
- * compatible_show - 显示设备兼容性字符串
- * @dev: 设备结构
- * @da: 设备属性结构
- * @buf: 输出缓冲区
+ * @brief Shows the compatible string for the device.
  *
- * 返回值:
- * 实际写入的字节数
+ * @param dev Pointer to the device structure.
+ * @param da Pointer to the device attribute structure.
+ * @param buf Output buffer.
+ * @return Number of bytes written or -EINVAL on failure.
  */
 static ssize_t compatible_show(struct device *dev, struct device_attribute *da, char *buf)
 {
-    struct pdm_device *pdmdev = NULL;
-
-    if (!dev) {
-        OSA_ERROR("dev is null\n");
-        return -EINVAL;
-    }
-
-    pdmdev = dev_to_pdm_device(dev);
+    struct pdm_device *pdmdev = dev_to_pdm_device(dev);
     if (pdm_device_verify(pdmdev)) {
         return -EINVAL;
     }
 
     OSA_INFO("Showing compatible string for device %s\n", dev_name(dev));
     return 0;
-    // TODO: 后续增加compatible解析
+
+    // TODO: Implement compatible parsing logic.
     // return sysfs_emit(buf, "%s\n", pdmdev->physical_info.compatible);
 }
 static DEVICE_ATTR_RO(compatible);
 
 /**
- * @brief 定义 PDM 设备的属性数组
- *
- * 这个数组包含 PDM 设备的所有属性，每个属性都是一个 `struct attribute` 类型的指针。
- * 属性数组以 NULL 结尾，表示属性列表的结束。
- * 使用 `ATTRIBUTE_GROUPS` 宏将属性数组转换为属性组，以便在设备模型中注册。
+ * @brief Attribute array for PDM devices.
  */
 static struct attribute *pdm_device_attrs[] = {
     &dev_attr_compatible.attr,
@@ -177,22 +124,18 @@ static struct attribute *pdm_device_attrs[] = {
 };
 ATTRIBUTE_GROUPS(pdm_device);
 
-/**
- * pdm_device_type - PDM设备类型
- */
 const struct device_type pdm_device_type = {
     .name   = "pdm_device",
     .groups = pdm_device_groups,
     .uevent = pdm_device_uevent,
 };
 
-
 /**
- * @brief 释放 PDM 设备资源
+ * @brief Releases resources associated with a PDM device.
  *
- * 该函数用于释放 PDM 设备的资源，主要是释放设备结构体本身。
+ * Frees the memory allocated for the PDM device structure.
  *
- * @param dev 设备结构体指针
+ * @param dev Pointer to the device structure.
  */
 static void pdm_device_release(struct device *dev)
 {
@@ -204,29 +147,26 @@ static void pdm_device_release(struct device *dev)
 }
 
 /**
- * @brief 分配 PDM 设备结构体
+ * @brief Allocates a new PDM device structure.
  *
- * 该函数用于分配一个新的 PDM 设备结构体，并初始化设备的相关字段。
- * 分配的内存大小包括 PDM 设备结构体本身的大小和额外的私有数据区域。
- *
- * @param data_size 私有数据区域的大小
- * @return 成功返回分配的 PDM 设备结构体指针，失败返回 NULL
+ * @return Pointer to the allocated PDM device structure, or NULL on failure.
  */
 struct pdm_device *pdm_device_alloc(void)
 {
     struct pdm_device *pdmdev;
     int status;
 
-    pdmdev = kzalloc(sizeof(struct pdm_device), GFP_KERNEL);
+    pdmdev = kzalloc(sizeof(*pdmdev), GFP_KERNEL);
     if (!pdmdev) {
-        OSA_ERROR("Failed to allocate memory for pdm device.\n");
+        OSA_ERROR("Failed to allocate memory for PDM device.\n");
         return NULL;
     }
 
     status = pdm_bus_device_id_alloc(pdmdev);
     if (status) {
-        OSA_ERROR("id_alloc failed, status %d\n", status);
+        OSA_ERROR("ID allocation failed, status %d\n", status);
         kfree(pdmdev);
+        return NULL;
     }
 
     device_initialize(&pdmdev->dev);
@@ -238,90 +178,81 @@ struct pdm_device *pdm_device_alloc(void)
 }
 
 /**
- * @brief 释放 PDM 设备结构体
+ * @brief Frees a PDM device structure.
  *
- * 该函数用于释放 PDM 设备结构体及其相关资源。
- * 通过调用 `put_device` 函数来减少设备引用计数，当引用计数为零时，设备将被自动释放。
+ * Decrements the device reference count; when it reaches zero, the device is freed.
  *
- * @param pdmdev PDM 设备结构体指针
+ * @param pdmdev Pointer to the PDM device structure.
  */
 void pdm_device_free(struct pdm_device *pdmdev)
 {
     if (pdmdev) {
-        put_device(&pdmdev->dev);
         pdm_bus_device_id_free(pdmdev);
+        put_device(&pdmdev->dev);
     }
 }
-
 /**
- * @brief 注册 PDM 设备
+ * @brief Registers a PDM device.
  *
- * 该函数用于注册 PDM 设备，包括验证设备有效性、分配设备 ID、检查设备是否存在、设置设备名称和添加设备。
+ * Verifies the device, allocates an ID, checks for duplicates, sets the device name,
+ * and adds the device to the system.
  *
- * @param pdmdev PDM 设备结构体指针
- * @return 成功返回 0，失败返回负错误码
+ * @param pdmdev Pointer to the PDM device structure.
+ * @return 0 on success, negative error code on failure.
  */
 int pdm_device_register(struct pdm_device *pdmdev)
 {
     int status;
 
-    if (!pdmdev) {
-        OSA_ERROR("pdmdev is null\n");
+    if (pdm_device_verify(pdmdev))
         return -EINVAL;
-    }
-
-    if (pdm_device_verify(pdmdev)) {
-        return -EINVAL;
-    }
 
     if (pdm_bus_find_device_by_parent(pdmdev->dev.parent)) {
-        OSA_ERROR("Device %s already exists\n", dev_name(&pdmdev->dev));
-        goto err_free_id;
+        OSA_ERROR("Device with parent %s already exists\n", dev_name(pdmdev->dev.parent));
+        status = -EEXIST;
+        goto err_out;
     }
 
     dev_set_name(&pdmdev->dev, "pdmdev-%d", pdmdev->id);
     status = device_add(&pdmdev->dev);
-    if (status < 0) {
-        OSA_ERROR("Can't add %s, status %d\n", dev_name(&pdmdev->dev), status);
+    if (status) {
+        OSA_ERROR("Failed to add device %s, error: %d\n", dev_name(&pdmdev->dev), status);
         goto err_free_id;
     }
 
-    OSA_DEBUG("Device %s registered.\n", dev_name(&pdmdev->dev));
+    OSA_DEBUG("Device %s registered successfully.\n", dev_name(&pdmdev->dev));
     return 0;
 
 err_free_id:
     pdm_bus_device_id_free(pdmdev);
+err_out:
     return status;
 }
 
 /**
- * @brief 注销 PDM 设备
+ * @brief Unregisters a PDM device.
  *
- * 该函数用于注销 PDM 设备，包括取消设备注册、释放设备 ID 和释放 adapter 引用。
+ * Removes the device from the system and frees its ID.
  *
- * @param pdmdev PDM 设备结构体指针
+ * @param pdmdev Pointer to the PDM device structure.
  */
 void pdm_device_unregister(struct pdm_device *pdmdev)
 {
     if (!pdmdev) {
-        OSA_ERROR("pdmdev is null\n");
+        OSA_ERROR("Invalid PDM device pointer.\n");
         return;
     }
 
-    OSA_DEBUG("Device %s unregistered.\n", dev_name(&pdmdev->dev));
+    OSA_DEBUG("Unregistering device %s.\n", dev_name(&pdmdev->dev));
     device_unregister(&pdmdev->dev);
 }
 
 /**
- * @brief 初始化 PDM 设备
+ * @brief Initializes the PDM device module.
  *
- * 该函数用于初始化 PDM 设备，包括注册设备类和设备驱动。
- * 它会执行以下操作：
- * - 注册 PDM 设备类
- * - 初始化子驱动列表
- * - 注册 PDM 设备驱动
+ * Registers the device class and device drivers.
  *
- * @return 成功返回 0，失败返回负错误码
+ * @return 0 on success, negative error code on failure.
  */
 int pdm_device_init(void)
 {
@@ -329,26 +260,23 @@ int pdm_device_init(void)
 
     status = pdm_device_drivers_register();
     if (status < 0) {
-        OSA_ERROR("Failed to register PDM Device Drivers, error: %d.\n", status);
+        OSA_ERROR("Failed to register PDM Device Drivers, error: %d\n", status);
         return status;
     }
 
-    OSA_INFO("Initialize PDM Device OK.\n");
+    OSA_INFO("PDM Device module initialized successfully.\n");
     return 0;
 }
 
 /**
- * @brief 卸载 PDM 设备
+ * @brief Exits the PDM device module.
  *
- * 该函数用于卸载 PDM 设备，包括注销设备驱动和设备类。
- * 它会执行以下操作：
- * - 注销 PDM 设备驱动
- * - 注销 PDM 设备类
+ * Unregisters the device drivers and cleans up resources.
  */
 void pdm_device_exit(void)
 {
     pdm_device_drivers_unregister();
-    OSA_INFO("PDM Device Exit.\n");
+    OSA_INFO("PDM Device module exited successfully.\n");
 }
 
 MODULE_LICENSE("GPL");
