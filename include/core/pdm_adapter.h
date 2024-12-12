@@ -3,149 +3,158 @@
 
 /**
  * @file pdm_adapter.h
- * @brief PDM  Adapter模块头文件
+ * @brief PDM Adapter module header file.
  *
- * 本文件定义了 PDM  Adapter模块的公共数据类型、结构体和函数声明。
+ * This file defines public data types, structures, and function declarations for the PDM Adapter module.
+ */
+
+#include <linux/list.h>
+#include <linux/mutex.h>
+#include <linux/idr.h>
+#include <linux/device.h>
+#include <linux/rwsem.h>
+
+/**
+ * @brief Maximum number of clients that can be registered with an adapter.
  */
 #define PDM_ADAPTER_CLIENT_IDR_END          (1024)
 
 /**
- * @brief PDM  Adapter结构体
+ * @brief PDM Adapter structure.
+ *
+ * This structure represents a PDM Adapter, which manages multiple PDM Client devices.
  */
 struct pdm_adapter {
-    char name[PDM_DEVICE_NAME_SIZE];        /**< Adapter名称 */
-    struct list_head entry;                 /**< 链表节点句柄 */
-    struct list_head client_list;           /**< 子设备列表 */
-    struct mutex client_list_mutex_lock;    /**< 用于保护子设备列表的互斥锁 */
-    struct idr device_idr;                  /**< 用于给client分配ID的IDR */
-    struct mutex idr_mutex_lock;            /**< 用于保护IDR的互斥锁 */
-    struct device dev;                      /**< 设备结构体 */
-    struct rw_semaphore rwlock;             /**< 读写锁，用于sysfs读写主控制器属性时使用 */
+    char name[PDM_DEVICE_NAME_SIZE];        /**< Adapter name */
+    struct list_head entry;                 /**< List node handle */
+    struct list_head client_list;           /**< List of child devices */
+    struct mutex client_list_mutex_lock;    /**< Mutex to protect the client list */
+    struct idr device_idr;                  /**< IDR for allocating unique IDs to clients */
+    struct mutex idr_mutex_lock;            /**< Mutex to protect the IDR */
+    struct device dev;                      /**< Kernel device structure */
+    struct rw_semaphore rwlock;             /**< Read-write semaphore for sysfs attribute access */
 };
 
-
 /**
- * @brief 将 device 转换为 pdm_adapter
+ * @brief Macro to convert a device pointer to a pdm_adapter pointer.
  *
- * 该宏用于将 device 转换为 pdm_adapter
- *
- * @param __dev device 结构体指针
- * @return pdm_adapter 结构体指针
+ * @param __dev Pointer to the device structure.
+ * @return Pointer to the pdm_adapter structure.
  */
 #define dev_to_pdm_adapter(__dev) container_of(__dev, struct pdm_adapter, dev)
 
 /**
- * @brief 获取 PDM Adapter 的私有数据
+ * @brief Gets private data from a PDM Adapter.
  *
- * 该函数用于获取 PDM Adapter 的私有数据。
+ * This function retrieves the private data associated with a PDM Adapter.
  *
- * @param adapter PDM Adapter 结构体指针
- * @return 私有数据指针
+ * @param adapter Pointer to the PDM Adapter structure.
+ * @return Pointer to the private data.
  */
 void *pdm_adapter_devdata_get(struct pdm_adapter *adapter);
 
 /**
- * @brief 设置 PDM Adapter 的私有数据
+ * @brief Sets private data for a PDM Adapter.
  *
- * 该函数用于设置 PDM Adapter 的私有数据。
+ * This function sets the private data associated with a PDM Adapter.
  *
- * @param adapter PDM Adapter 结构体指针
- * @param data 私有数据指针
+ * @param adapter Pointer to the PDM Adapter structure.
+ * @param data Pointer to the private data.
  */
 void pdm_adapter_devdata_set(struct pdm_adapter *adapter, void *data);
 
 /**
- * @brief 获取 PDM Adapter 的引用
+ * @brief Gets a reference to a PDM Adapter.
  *
- * 该函数用于获取 PDM Adapter 的引用。
+ * This function increments the reference count of a PDM Adapter.
  *
- * @param adapter PDM Adapter 结构体指针
- * @return 成功返回 PDM Adapter 结构体指针，失败返回 NULL
+ * @param adapter Pointer to the PDM Adapter structure.
+ * @return Pointer to the PDM Adapter structure, or NULL on failure.
  */
 struct pdm_adapter *pdm_adapter_get(struct pdm_adapter *adapter);
 
-
 /**
- * @brief 分配PDM设备ID
+ * @brief Allocates a unique ID for a PDM Client.
  *
- * 该函数用于分配一个唯一的ID给PDM设备。
+ * This function allocates a unique ID for a PDM Client managed by the specified adapter.
  *
- * @param adapter PDM Adapter
- * @param pdmdev PDM设备
- * @return 成功返回 0，失败返回负错误码
+ * @param adapter Pointer to the PDM Adapter structure.
+ * @param client Pointer to the PDM Client structure.
+ * @return 0 on success, negative error code on failure.
  */
 int pdm_adapter_id_alloc(struct pdm_adapter *adapter, struct pdm_client *client);
 
 /**
- * @brief 释放 PDM Client 的ID
+ * @brief Frees the ID allocated for a PDM Client.
  *
- * 该函数用于释放 PDM Client 的ID。
+ * This function frees the ID previously allocated for a PDM Client.
  *
- * @param adapter PDM Adapter
- * @param client PDM Client
+ * @param adapter Pointer to the PDM Adapter structure.
+ * @param client Pointer to the PDM Client structure.
  */
 void pdm_adapter_id_free(struct pdm_adapter *adapter, struct pdm_client *client);
 
 /**
- * @brief 释放 PDM Adapter 的引用
+ * @brief Releases a reference to a PDM Adapter.
  *
- * 该函数用于释放 PDM Adapter 的引用。
+ * This function decrements the reference count of a PDM Adapter.
  *
- * @param adapter PDM Adapter 结构体指针
+ * @param adapter Pointer to the PDM Adapter structure.
  */
 void pdm_adapter_put(struct pdm_adapter *adapter);
 
 /**
- * @brief 注册 PDM  Adapter
+ * @brief Registers a PDM Adapter.
  *
- * 该函数用于注册 PDM  Adapter。
+ * This function registers a new PDM Adapter with the system.
  *
- * @param adapter PDM  Adapter结构体指针
- * @return 成功返回 0，失败返回负错误码
+ * @param adapter Pointer to the PDM Adapter structure.
+ * @param name Name of the adapter.
+ * @return 0 on success, negative error code on failure.
  */
 int pdm_adapter_register(struct pdm_adapter *adapter, const char *name);
 
 /**
- * @brief 注销 PDM  Adapter
+ * @brief Unregisters a PDM Adapter.
  *
- * 该函数用于注销 PDM  Adapter。
+ * This function unregisters a PDM Adapter from the system and cleans up resources.
  *
- * @param adapter PDM  Adapter结构体指针
+ * @param adapter Pointer to the PDM Adapter structure.
  */
 void pdm_adapter_unregister(struct pdm_adapter *adapter);
 
 /**
- * @brief 分配 PDM  Adapter结构体
+ * @brief Allocates a new PDM Adapter structure.
  *
- * 该函数用于分配新的 PDM  Adapter结构体。
+ * This function allocates and initializes a new PDM Adapter structure.
  *
- * @param size 私有数据区域的大小
- * @return 分配的 PDM  Adapter结构体指针，失败返回 NULL
+ * @param size Size of the private data area to allocate.
+ * @return Pointer to the allocated PDM Adapter structure, or NULL on failure.
  */
 struct pdm_adapter *pdm_adapter_alloc(unsigned int size);
 
 /**
- * @brief 释放 PDM  Adapter结构体
+ * @brief Frees a PDM Adapter structure.
  *
- * 该函数用于释放 PDM  Adapter结构体。
+ * This function frees an allocated PDM Adapter structure and its associated resources.
  *
- * @param adapter PDM  Adapter结构体指针
+ * @param adapter Pointer to the PDM Adapter structure.
  */
 void pdm_adapter_free(struct pdm_adapter *adapter);
 
 /**
- * @brief 初始化 PDM  Adapter
+ * @brief Initializes the PDM Adapter module.
  *
- * 该函数用于初始化 PDM  Adapter。
+ * This function initializes the PDM Adapter module, including registering necessary drivers and setting initial states.
  *
- * @return 成功返回 0，失败返回负错误码
+ * @return 0 on success, negative error code on failure.
  */
 int pdm_adapter_init(void);
 
 /**
- * @brief 退出 PDM  Adapter
+ * @brief Cleans up the PDM Adapter module.
  *
- * 该函数用于退出 PDM  Adapter。
+ * This function exits the PDM Adapter module, including unregistering drivers and cleaning up all resources.
  */
 void pdm_adapter_exit(void);
 

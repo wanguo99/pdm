@@ -2,18 +2,13 @@
 #include "pdm_component.h"
 #include "pdm_adapter_priv.h"
 
-
 /**
- * @brief PDM Adapter 驱动列表
- *
- * 该列表用于存储所有注册的 PDM Adapter 驱动。
+ * @brief List of registered PDM Adapter drivers.
  */
-static struct list_head pdm_adapter_driver_list;
+static struct list_head pdm_adapter_driver_list = LIST_HEAD_INIT(pdm_adapter_driver_list);
 
 /**
- * @brief PDM Adapter 驱动数组
- *
- * 该数组包含所有需要注册的 PDM Adapter 驱动。
+ * @brief Array of PDM Adapter drivers to be registered.
  */
 static struct pdm_component pdm_adapter_drivers[] = {
     {
@@ -27,22 +22,22 @@ static struct pdm_component pdm_adapter_drivers[] = {
 };
 
 /**
- * @brief 注册 PDM Adapter 驱动
+ * @brief Registers PDM Adapter drivers.
  *
- * 该函数用于初始化 PDM Adapter 列表，并注册所有 PDM Adapter 驱动。
+ * This function initializes the PDM Adapter driver list and registers all PDM Adapter drivers.
  *
- * @return 0 - 成功
- *         负值 - 失败
+ * @return 0 on success, negative error code on failure.
  */
 int pdm_adapter_drivers_register(void)
 {
     int status;
-    struct pdm_component_params params;
+    struct pdm_component_params params = {
+        .components = pdm_adapter_drivers,
+        .count = ARRAY_SIZE(pdm_adapter_drivers),
+        .list = &pdm_adapter_driver_list,
+    };
 
     INIT_LIST_HEAD(&pdm_adapter_driver_list);
-    params.components = pdm_adapter_drivers;
-    params.count = ARRAY_SIZE(pdm_adapter_drivers);
-    params.list = &pdm_adapter_driver_list;
     status = pdm_component_register(&params);
     if (status < 0) {
         OSA_ERROR("Failed to register PDM Adapter Drivers, error: %d.\n", status);
@@ -54,40 +49,26 @@ int pdm_adapter_drivers_register(void)
 }
 
 /**
- * @brief 卸载 PDM Adapter 驱动
- *
- * 该函数用于卸载所有 PDM Adapter 驱动。
+ * @brief Unregisters PDM Adapter drivers.
  */
 void pdm_adapter_drivers_unregister(void)
 {
     pdm_component_unregister(&pdm_adapter_driver_list);
-
     OSA_DEBUG("PDM Adapter Drivers Unregistered.\n");
 }
 
-
 /**
- * @brief PDM Adapter 列表
- *
- * 该列表用于存储所有注册的 PDM Adapter 。
+ * @brief List of registered PDM Adapters.
  */
-static struct list_head pdm_adapter_list;
+static struct list_head pdm_adapter_list = LIST_HEAD_INIT(pdm_adapter_list);
 
 /**
- * @brief 保护 PDM Adapter 列表的互斥锁
- *
- * 该互斥锁用于同步对 PDM Adapter 列表的访问，防止并发访问导致的数据竞争。
+ * @brief Mutex to protect the PDM Adapter list.
  */
-static struct mutex pdm_adapter_list_mutex_lock;
+static struct mutex pdm_adapter_list_mutex_lock = __MUTEX_INITIALIZER(pdm_adapter_list_mutex_lock);
 
 /**
- * name_show - 显示设备名称
- * @dev: 设备结构
- * @da: 设备属性结构
- * @buf: 输出缓冲区
- *
- * 返回值:
- * 实际写入的字节数
+ * @brief Sysfs attribute for showing device name.
  */
 static ssize_t name_show(struct device *dev, struct device_attribute *da, char *buf)
 {
@@ -101,7 +82,6 @@ static ssize_t name_show(struct device *dev, struct device_attribute *da, char *
     OSA_INFO("Device name: %s.\n", dev_name(&adapter->dev));
     return status;
 }
-
 static DEVICE_ATTR_RO(name);
 
 static struct attribute *pdm_adapter_device_attrs[] = {
@@ -111,7 +91,7 @@ static struct attribute *pdm_adapter_device_attrs[] = {
 ATTRIBUTE_GROUPS(pdm_adapter_device);
 
 /**
- * @brief PDM Adapter 类
+ * @brief PDM Adapter class.
  */
 static struct class pdm_adapter_class = {
     .name = "pdm_adapter",
@@ -119,78 +99,70 @@ static struct class pdm_adapter_class = {
 };
 
 /**
- * @brief 释放 PDM 主控制器设备
- * @dev: 设备结构
+ * @brief Releases a PDM Adapter device.
  */
 static void pdm_adapter_dev_release(struct device *dev)
 {
-    struct pdm_adapter *master = dev_to_pdm_adapter(dev);
-    kfree(master);
+    struct pdm_adapter *adapter = dev_to_pdm_adapter(dev);
+    kfree(adapter);
 }
 
 /**
- * @brief 获取PDM主控制器的私有数据
- * @master: PDM主控制器
+ * @brief Gets private data from a PDM Adapter.
  *
- * 返回值:
- * 指向私有数据的指针
+ * @param adapter Pointer to the PDM Adapter structure.
+ * @return Pointer to the private data.
  */
-void *pdm_adapter_devdata_get(struct pdm_adapter *master)
+void *pdm_adapter_devdata_get(struct pdm_adapter *adapter)
 {
-    if (!master) {
-        OSA_ERROR("Invalid input parameter (master: %p).\n", master);
+    if (!adapter) {
+        OSA_ERROR("Invalid input parameter (adapter: %p).\n", adapter);
         return NULL;
     }
 
-    return dev_get_drvdata(&master->dev);
+    return dev_get_drvdata(&adapter->dev);
 }
 
 /**
- * @brief 设置PDM主控制器的私有数据
- * @master: PDM主控制器
- * @data: 私有数据指针
+ * @brief Sets private data for a PDM Adapter.
+ *
+ * @param adapter Pointer to the PDM Adapter structure.
+ * @param data Pointer to the private data.
  */
-void pdm_adapter_devdata_set(struct pdm_adapter *master, void *data)
+void pdm_adapter_devdata_set(struct pdm_adapter *adapter, void *data)
 {
-    if (!master) {
-        OSA_ERROR("Invalid input parameter (master: %p).\n", master);
+    if (!adapter) {
+        OSA_ERROR("Invalid input parameter (adapter: %p).\n", adapter);
         return;
     }
 
-    dev_set_drvdata(&master->dev, data);
+    dev_set_drvdata(&adapter->dev, data);
 }
 
-
 /**
- * @brief 分配PDM设备ID
+ * @brief Allocates a unique ID for a PDM Client.
  *
- * 该函数用于分配一个唯一的ID给PDM设备。
- *
- * @param adapter PDM Adapter
- * @param pdmdev PDM设备
- * @return 成功返回 0，失败返回负错误码
+ * @param adapter Pointer to the PDM Adapter structure.
+ * @param client Pointer to the PDM Client structure.
+ * @return 0 on success, negative error code on failure.
  */
 int pdm_adapter_id_alloc(struct pdm_adapter *adapter, struct pdm_client *client)
 {
     int id;
     int index = 0;
 
-    if (!client) {
+    if (!client || !adapter) {
         OSA_ERROR("Invalid input parameters.\n");
         return -EINVAL;
     }
 
-    if (of_property_read_s32(client->pdmdev->dev.parent->of_node, "index", &index)) {
-        if (client->force_dts_id) {
-            OSA_ERROR("Cannot get index from dts, force_dts_id was set\n");
+    if (!of_property_read_s32(client->pdmdev->dev.parent->of_node, "index", &index)) {
+        if (client->force_dts_id && index < 0) {
+            OSA_ERROR("Cannot get valid index from dts, force_dts_id was set\n");
             return -EINVAL;
         }
+    } else {
         OSA_DEBUG("Cannot get index from dts\n");
-    }
-
-    if (index < 0) {
-        OSA_ERROR("Invalid client index: %d.\n", client->index);
-        return -EINVAL;
     }
 
     mutex_lock(&adapter->idr_mutex_lock);
@@ -212,58 +184,57 @@ int pdm_adapter_id_alloc(struct pdm_adapter *adapter, struct pdm_client *client)
 }
 
 /**
- * @brief 释放 PDM Client 的ID
+ * @brief Frees the ID allocated for a PDM Client.
  *
- * 该函数用于释放 PDM Client 的ID。
- *
- * @param adapter PDM Adapter
- * @param client PDM Client
+ * @param adapter Pointer to the PDM Adapter structure.
+ * @param client Pointer to the PDM Client structure.
  */
 void pdm_adapter_id_free(struct pdm_adapter *adapter, struct pdm_client *client)
 {
+    if (!adapter || !client) {
+        OSA_ERROR("Invalid input parameters.\n");
+        return;
+    }
+
     mutex_lock(&adapter->idr_mutex_lock);
     idr_remove(&adapter->device_idr, client->index);
     mutex_unlock(&adapter->idr_mutex_lock);
 }
 
 /**
- * @brief 获取PDM主控制器的引用
- * @master: PDM主控制器
+ * @brief Gets a reference to a PDM Adapter.
  *
- * 返回值:
- * 指向PDM主控制器的指针，或NULL（失败）
+ * @param adapter Pointer to the PDM Adapter structure.
+ * @return Pointer to the PDM Adapter structure, or NULL on failure.
  */
-struct pdm_adapter *pdm_adapter_get(struct pdm_adapter *master)
+struct pdm_adapter *pdm_adapter_get(struct pdm_adapter *adapter)
 {
-    if (!master || !get_device(&master->dev)) {
-        OSA_ERROR("Invalid input parameter or unable to get device reference (master: %p).\n", master);
+    if (!adapter || !get_device(&adapter->dev)) {
+        OSA_ERROR("Invalid input parameter or unable to get device reference (adapter: %p).\n", adapter);
         return NULL;
     }
 
-    return master;
+    return adapter;
 }
 
 /**
- * @brief 释放PDM主控制器的引用
- * @master: PDM主控制器
+ * @brief Releases a reference to a PDM Adapter.
+ *
+ * @param adapter Pointer to the PDM Adapter structure.
  */
-void pdm_adapter_put(struct pdm_adapter *master)
+void pdm_adapter_put(struct pdm_adapter *adapter)
 {
-    if (master) {
-        put_device(&master->dev);
+    if (adapter) {
+        put_device(&adapter->dev);
     }
 }
 
 /**
- * @brief 注册 PDM  Adapter
+ * @brief Registers a PDM Adapter.
  *
- * 该函数用于注册 PDM  Adapter，并将其添加到 Adapter列表中。
- *
- * @param adapter PDM  Adapter指针
- * @return 0 - 成功
- *         -EINVAL - 参数无效
- *         -EEXIST -  Adapter名称已存在
- *         其他负值 - 其他错误码
+ * @param adapter Pointer to the PDM Adapter structure.
+ * @param name Name of the adapter.
+ * @return 0 on success, negative error code on failure.
  */
 int pdm_adapter_register(struct pdm_adapter *adapter, const char *name)
 {
@@ -310,11 +281,9 @@ err_device_put:
 }
 
 /**
- * @brief 注销 PDM  Adapter
+ * @brief Unregisters a PDM Adapter.
  *
- * 该函数用于注销 PDM  Adapter，并从 Adapter列表中移除。
- *
- * @param adapter PDM  Adapter指针
+ * @param adapter Pointer to the PDM Adapter structure.
  */
 void pdm_adapter_unregister(struct pdm_adapter *adapter)
 {
@@ -343,9 +312,8 @@ void pdm_adapter_unregister(struct pdm_adapter *adapter)
 struct pdm_adapter *pdm_adapter_alloc(unsigned int data_size)
 {
     struct pdm_adapter *adapter;
-    size_t adapter_size = sizeof(struct pdm_adapter);
 
-    adapter = kzalloc(adapter_size + data_size, GFP_KERNEL);
+    adapter = kzalloc(sizeof(struct pdm_adapter) + data_size, GFP_KERNEL);
     if (!adapter) {
         OSA_ERROR("Failed to allocate memory for pdm_adapter.\n");
         return NULL;
@@ -353,20 +321,19 @@ struct pdm_adapter *pdm_adapter_alloc(unsigned int data_size)
 
     device_initialize(&adapter->dev);
     adapter->dev.release = pdm_adapter_dev_release;
-    pdm_adapter_devdata_set(adapter, (void *)adapter + adapter_size);
+    pdm_adapter_devdata_set(adapter, (void *)adapter + sizeof(struct pdm_adapter));
 
     INIT_LIST_HEAD(&adapter->client_list);
     mutex_init(&adapter->client_list_mutex_lock);
+    init_rwsem(&adapter->rwlock);
 
     return adapter;
 }
 
 /**
- * @brief 释放PDM Adapter结构
+ * @brief Frees a PDM Adapter structure.
  *
- * 该函数用于释放PDM Adapter结构。
- *
- * @param adapter PDM Adapter
+ * @param adapter Pointer to the PDM Adapter structure.
  */
 void pdm_adapter_free(struct pdm_adapter *adapter)
 {
@@ -376,12 +343,9 @@ void pdm_adapter_free(struct pdm_adapter *adapter)
 }
 
 /**
- * @brief 初始化 PDM  Adapter模块
+ * @brief Initializes the PDM Adapter module.
  *
- * 该函数用于初始化 PDM  Adapter模块，包括注册类和驱动。
- *
- * @return 0 - 成功
- *         负值 - 失败
+ * @return 0 on success, negative error code on failure.
  */
 int pdm_adapter_init(void)
 {
@@ -389,13 +353,11 @@ int pdm_adapter_init(void)
 
     status = class_register(&pdm_adapter_class);
     if (status < 0) {
-        OSA_ERROR("Failed to register PDM Client Class, error: %d.\n", status);
+        OSA_ERROR("Failed to register PDM Adapter Class, error: %d.\n", status);
         return status;
     }
-    OSA_DEBUG("PDM Client Class registered.\n");
+    OSA_DEBUG("PDM Adapter Class registered.\n");
 
-    INIT_LIST_HEAD(&pdm_adapter_list);
-    mutex_init(&pdm_adapter_list_mutex_lock);
     status = pdm_adapter_drivers_register();
     if (status < 0) {
         OSA_ERROR("Failed to register PDM Adapter Drivers, error: %d.\n", status);
@@ -408,9 +370,7 @@ int pdm_adapter_init(void)
 }
 
 /**
- * @brief 卸载 PDM  Adapter模块
- *
- * 该函数用于卸载 PDM  Adapter模块，包括注销类和驱动。
+ * @brief Cleans up the PDM Adapter module.
  */
 void pdm_adapter_exit(void)
 {
