@@ -137,7 +137,7 @@ static int pdm_led_setup(struct pdm_client *client)
     client->fops.write = pdm_led_write;
     client->fops.unlocked_ioctl = pdm_led_ioctl;
 
-    if (device_is_compatible(&client->pdmdev->dev, PDM_LED_COMPATIBLE_GPIO)) {
+    if (device_is_compatible(client->pdmdev->dev.parent, PDM_LED_COMPATIBLE_GPIO)) {
         status = pdm_led_gpio_setup(client);
         if (status) {
             OSA_ERROR("Failed to setup GPIO PDM Led\n");
