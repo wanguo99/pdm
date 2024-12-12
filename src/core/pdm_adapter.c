@@ -90,12 +90,9 @@ static struct attribute *pdm_adapter_device_attrs[] = {
 };
 ATTRIBUTE_GROUPS(pdm_adapter_device);
 
-/**
- * @brief PDM Adapter class.
- */
-static struct class pdm_adapter_class = {
-    .name = "pdm_adapter",
-    .dev_groups = pdm_adapter_device_groups,
+static const struct device_type pdm_adapter_device_type = {
+    .name   = "pdm_adapter",
+    .groups = pdm_adapter_device_groups,
 };
 
 /**
@@ -256,7 +253,7 @@ int pdm_adapter_register(struct pdm_adapter *adapter, const char *name)
     }
     mutex_unlock(&pdm_adapter_list_mutex_lock);
 
-    adapter->dev.class = &pdm_adapter_class;
+    adapter->dev.type = &pdm_adapter_device_type;
     dev_set_name(&adapter->dev, "pdm_%s", name);
     status = device_add(&adapter->dev);
     if (status) {
@@ -291,8 +288,16 @@ void pdm_adapter_unregister(struct pdm_adapter *adapter)
         OSA_ERROR("Invalid input parameters (adapter: %p).\n", adapter);
         return;
     }
+    if (!list_empty(&adapter->client_list)) {
+        OSA_ERROR("Client list is not empty.\n");
+        return;
+    }
 
     OSA_INFO("PDM Adapter unregistered: %s.\n", dev_name(&adapter->dev));
+
+    mutex_lock(&adapter->idr_mutex_lock);
+    idr_destroy(&adapter->device_idr);
+    mutex_unlock(&adapter->idr_mutex_lock);
 
     mutex_lock(&pdm_adapter_list_mutex_lock);
     list_del(&adapter->entry);
@@ -349,17 +354,9 @@ int pdm_adapter_init(void)
 {
     int status;
 
-    status = class_register(&pdm_adapter_class);
-    if (status < 0) {
-        OSA_ERROR("Failed to register PDM Adapter Class, error: %d.\n", status);
-        return status;
-    }
-    OSA_DEBUG("PDM Adapter Class registered.\n");
-
     status = pdm_adapter_drivers_register();
     if (status < 0) {
         OSA_ERROR("Failed to register PDM Adapter Drivers, error: %d.\n", status);
-        class_unregister(&pdm_adapter_class);
         return status;
     }
 
@@ -373,7 +370,6 @@ int pdm_adapter_init(void)
 void pdm_adapter_exit(void)
 {
     pdm_adapter_drivers_unregister();
-    class_unregister(&pdm_adapter_class);
     OSA_INFO("PDM Adapter unregistered.\n");
 }
 

@@ -176,10 +176,7 @@ static inline void pdm_client_put_device(struct pdm_client *client)
  */
 static void pdm_client_device_release(struct device *dev)
 {
-    struct pdm_client *client;
-
-    client = container_of(dev, struct pdm_client, dev);
-    pdm_client_put_device(client);
+    struct pdm_client *client = container_of(dev, struct pdm_client, dev);
     kfree(client);
 }
 
@@ -407,9 +404,7 @@ void pdm_client_exit(void)
     ida_destroy(&pdm_client_ida);
     unregister_chrdev_region(MKDEV(pdm_client_major, PDM_CLIENT_MIN_MINOR),
                              PDM_CLIENT_MAX_MINOR - PDM_CLIENT_MIN_MINOR + 1);
-
     class_unregister(&pdm_client_class);
-
     OSA_INFO("PDM Client cleaned up successfully.\n");
 }
 
