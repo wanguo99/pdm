@@ -12,7 +12,7 @@
  */
 static int pdm_led_gpio_set_state(struct pdm_client *client, int state)
 {
-    OSA_INFO("GPIO LED set state: %d for device: %s\n", state, dev_name(&client->dev));
+    OSA_INFO("GPIO PDM Led: Set %s's state to %d\n", dev_name(&client->dev), state);
 
     // Placeholder for actual GPIO control code
     return 0;

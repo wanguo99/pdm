@@ -19,7 +19,7 @@ static int pdm_led_set_state(struct pdm_client *client, struct pdm_led_ioctl_arg
 
     led_priv = (struct pdm_led_priv *)pdm_client_get_devdata(client);
     if (!led_priv) {
-        OSA_ERROR("Get PDM Client DevData Failed\n");
+        OSA_ERROR("Get PDM Client Device Data Failed\n");
         return -ENOMEM;
     }
 
@@ -59,7 +59,7 @@ static long pdm_led_ioctl(struct file *filp, unsigned int cmd, unsigned long arg
             if (copy_from_user(&args, (void __user *)arg, sizeof(args))) {
                 return -EFAULT;
             }
-            printk(KERN_INFO "PDM_LED_SET_STATE: name: %s, state: %d\n", dev_name(&client->dev), args.state);
+            OSA_INFO("PDM_LED: Set %s's state to %d\n", dev_name(&client->dev), args.state);
             status = pdm_led_set_state(client, &args);
             break;
         }
@@ -134,10 +134,7 @@ static int pdm_led_setup(struct pdm_client *client)
         return -EINVAL;
     }
 
-    client->fops.write = pdm_led_write;
-    client->fops.unlocked_ioctl = pdm_led_ioctl;
-
-    if (device_is_compatible(client->pdmdev->dev.parent, PDM_LED_COMPATIBLE_GPIO)) {
+    if (pdm_client_is_compatible(client, PDM_LED_COMPATIBLE_GPIO)) {
         status = pdm_led_gpio_setup(client);
         if (status) {
             OSA_ERROR("Failed to setup GPIO PDM Led\n");
@@ -147,6 +144,9 @@ static int pdm_led_setup(struct pdm_client *client)
         OSA_ERROR("Unsupport device type\n");
         return -ENOTSUPP;
     }
+
+    client->fops.write = pdm_led_write;
+    client->fops.unlocked_ioctl = pdm_led_ioctl;
 
     return 0;
 }

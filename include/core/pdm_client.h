@@ -33,6 +33,23 @@ struct pdm_client {
 };
 
 /**
+ * brief Check if the device's 'compatible' property matches a given string.
+ *
+ * @client: Pointer to the PDM client structure.
+ * @compat: Compatibility string to match.
+ *
+ * Returns true if the parent device of the PDM client has a matching 'compatible' property, otherwise false.
+ * Also returns false if any of the pointers are invalid.
+ */
+static inline bool pdm_client_is_compatible(struct pdm_client *client, const char *compat)
+{
+    if ((!client) || (!client->pdmdev) || (!client->pdmdev->dev.parent)) {
+        return false;
+    }
+    return device_is_compatible(client->pdmdev->dev.parent, compat);
+}
+
+/**
  * @brief Gets the private data associated with the device.
  *
  * @param client Pointer to the PDM Client.
