@@ -10,7 +10,6 @@
 
 
 struct pdm_led_ioctl_args {
-    int index;
     int state;
 };
 

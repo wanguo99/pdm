@@ -5,58 +5,31 @@
 
 static struct pdm_adapter *led_adapter = NULL;
 
-/**
- * @brief Finds a PDM client by index.
- *
- * @param index The device index to find.
- * @return Pointer to the found PDM client, or NULL if not found.
- */
-static struct pdm_client *pdm_led_find_client(int index)
-{
-    struct pdm_client *client;
-    int found_dev = 0;
-
-    list_for_each_entry(client, &led_adapter->client_list, entry) {
-        if (client->index == index) {
-            OSA_INFO("Found target LED device.\n");
-            found_dev = 1;
-            break;
-        }
-    }
-
-    if (!found_dev) {
-        OSA_ERROR("Cannot find target LED device, index: %d\n", index);
-        return NULL;
-    }
-
-    return client;
-}
 
 /**
  * @brief Sets the state of a specified PDM LED device.
  *
- * @param args Structure containing the device index and state.
+ * @param args Structure.
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_led_set_state(struct pdm_led_ioctl_args *args)
+static int pdm_led_set_state(struct pdm_client *client, struct pdm_led_ioctl_args *args)
 {
-    struct pdm_client *client;
+    struct pdm_led_priv *led_priv;
     int status = 0;
 
-    mutex_lock(&led_adapter->client_list_mutex_lock);
-
-    client = pdm_led_find_client(args->index);
-    if (!client) {
-        status = -EINVAL;
-        goto err_unlock;
+    led_priv = (struct pdm_led_priv *)pdm_client_get_devdata(client);
+    if (!led_priv) {
+        OSA_ERROR("Get PDM Client DevData Failed\n");
+        return -ENOMEM;
     }
 
-    mutex_unlock(&led_adapter->client_list_mutex_lock);
-    return 0;
+    status = led_priv->ops->set_state(client, args->state);
+    if (status) {
+        OSA_ERROR("PDM Led set_state failed, status: %d\n", status);
+        return status;
+    }
 
-err_unlock:
-    mutex_unlock(&led_adapter->client_list_mutex_lock);
-    return status;
+    return 0;
 }
 
 /**
@@ -67,10 +40,16 @@ err_unlock:
  * @param arg Command argument.
  * @return Returns 0 on success; negative error code on failure.
  */
-static long pdm_led_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+static long pdm_led_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
+    struct pdm_client *client = filp->private_data;
     struct pdm_led_ioctl_args args;
     int status = 0;
+
+    if (!client) {
+        OSA_ERROR("invalid argument\n");
+        return -EINVAL;
+    }
 
     OSA_DEBUG("ioctl, cmd=0x%02x, arg=0x%02lx\n", cmd, arg);
 
@@ -80,8 +59,8 @@ static long pdm_led_ioctl(struct file *file, unsigned int cmd, unsigned long arg
             if (copy_from_user(&args, (void __user *)arg, sizeof(args))) {
                 return -EFAULT;
             }
-            printk(KERN_INFO "PDM_LED_SET_STATE: index %d, state %d\n", args.index, args.state);
-            status = pdm_led_set_state(&args);
+            printk(KERN_INFO "PDM_LED_SET_STATE: name: %s, state: %d\n", dev_name(&client->dev), args.state);
+            status = pdm_led_set_state(client, &args);
             break;
         }
         default:
@@ -106,9 +85,15 @@ static long pdm_led_ioctl(struct file *file, unsigned int cmd, unsigned long arg
  */
 static ssize_t pdm_led_write(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
 {
+    struct pdm_client *client = filp->private_data;
     struct pdm_led_ioctl_args args;
     char kernel_buf[5];
     ssize_t bytes_read;
+
+    if (!client) {
+        OSA_ERROR("invalid argument\n");
+        return -EINVAL;
+    }
 
     OSA_INFO("Called pdm_led_write\n");
 
@@ -121,12 +106,12 @@ static ssize_t pdm_led_write(struct file *filp, const char __user *buf, size_t c
         return -EFAULT;
     }
 
-    if (sscanf(kernel_buf, "%d %d", &args.index, &args.state) != 2) {
+    if (sscanf(kernel_buf, "%d", &args.state) != 1) {
         OSA_ERROR("Invalid data: %s\n", kernel_buf);
         return -EINVAL;
     }
 
-    if (pdm_led_set_state(&args)) {
+    if (pdm_led_set_state(client, &args)) {
         OSA_ERROR("pdm_led_set_state failed\n");
         return -EINVAL;
     }
