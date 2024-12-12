@@ -149,6 +149,9 @@ static int pdm_led_setup(struct pdm_client *client)
         return -EINVAL;
     }
 
+    client->fops.write = pdm_led_write;
+    client->fops.unlocked_ioctl = pdm_led_ioctl;
+
     if (device_is_compatible(&client->pdmdev->dev, PDM_LED_COMPATIBLE_GPIO)) {
         status = pdm_led_gpio_setup(client);
         if (status) {
@@ -182,10 +185,8 @@ static int pdm_led_device_probe(struct pdm_device *pdmdev)
         return -ENOMEM;
     }
 
-    client->pdmdev = pdmdev;
     pdmdev->client = client;
-    client->fops.write = pdm_led_write;
-    client->fops.unlocked_ioctl = pdm_led_ioctl;
+    client->pdmdev = pdmdev;
     status = pdm_client_register(led_adapter, client);
     if (status) {
         OSA_ERROR("LED Adapter Add Device Failed, status=%d\n", status);
