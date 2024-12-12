@@ -1,91 +1,90 @@
 #ifndef _PDM_CLIENT_H_
 #define _PDM_CLIENT_H_
 
-
 /**
- * @brief PDM Client 设备名
+ * @brief PDM Client device name.
  */
 #define PDM_CLIENT_DEVICE_NAME              "pdm_client"
 
-
 /**
- * @brief PDM Client 起始次设备号
+ * @brief Minimum minor number for PDM Client devices.
  */
-#define PDM_CLIENT_MIN_MINOR        (0)
+#define PDM_CLIENT_MIN_MINOR                (0)
 
 /**
- * @brief PDM Client 最大次设备号
+ * @brief Maximum minor number for PDM Client devices.
  */
-#define PDM_CLIENT_MAX_MINOR         (1023)
+#define PDM_CLIENT_MAX_MINOR                (1023)
 
 /**
- * @brief PDM Client 结构体
+ * @brief PDM Client structure.
  *
- * 该结构体定义了 PDM Client 的基本信息。
+ * This structure defines the basic information for a PDM Client device.
  */
 struct pdm_client {
-    struct pdm_device *pdmdev;                  /**< pdm_deivce句柄 */
-    struct pdm_adapter *adapter;                /**< 指向所属的 PDM 主控制器 */
-    bool force_dts_id;                          /**< 是否强制从dts内指定ID */
-    int index;                                  /**< Adapter分配的 Client ID */
-    struct device dev;                          /**< 设备结构体 */
-    struct cdev cdev;                           /**< 字符设备结构体 */
-    struct file_operations fops;                /**< 文件操作结构体，每个client单独实现一套文件操作 */
-    struct list_head entry;                     /**< 设备链表节点 */
+    struct pdm_device *pdmdev;                  /**< Pointer to associated PDM device handle */
+    struct pdm_adapter *adapter;                /**< Pointer to the owning PDM adapter */
+    bool force_dts_id;                          /**< Flag indicating whether to force ID from DTS */
+    int index;                                  /**< Client ID allocated by the adapter */
+    struct device dev;                          /**< Kernel device structure */
+    struct cdev cdev;                           /**< Character device structure for device operations */
+    struct file_operations fops;                /**< File operations structure, defining operations for this device */
+    struct list_head entry;                     /**< List node for linking devices */
 };
 
-
 /**
- * @brief 注册 PDM 设备
+ * @brief Registers a PDM Client device.
  *
- * 该函数用于注册 PDM 设备。
+ * This function registers a new PDM Client device with the system.
  *
- * @param client PDM 设备结构体指针
- * @return 成功返回 0，失败返回负错误码
+ * @param adapter Pointer to the PDM adapter.
+ * @param client Pointer to the PDM Client device structure.
+ * @return 0 on success, negative error code on failure.
  */
 int pdm_client_register(struct pdm_adapter *adapter, struct pdm_client *client);
 
 /**
- * @brief 注销 PDM 设备
+ * @brief Unregisters a PDM Client device.
  *
- * 该函数用于注销 PDM 设备。
+ * This function unregisters a PDM Client device from the system and cleans up resources.
  *
- * @param client PDM 设备结构体指针
+ * @param adapter Pointer to the PDM adapter.
+ * @param client Pointer to the PDM Client device structure.
  */
 void pdm_client_unregister(struct pdm_adapter *adapter, struct pdm_client *client);
 
 /**
- * @brief 分配 PDM 设备结构体
+ * @brief Allocates a new PDM Client device structure.
  *
- * 该函数用于分配新的 PDM 设备结构体。
+ * This function allocates and initializes a new PDM Client device structure.
  *
- * @return 分配的 PDM 设备结构体指针，失败返回 NULL
+ * @param data_size Size in bytes of additional data space to allocate for the structure.
+ * @return Pointer to the allocated PDM Client device structure, or NULL on failure.
  */
 struct pdm_client *pdm_client_alloc(unsigned int data_size);
 
 /**
- * @brief 释放 PDM 设备结构体
+ * @brief Frees a PDM Client device structure.
  *
- * 该函数用于释放 PDM 设备结构体。
+ * This function frees an allocated PDM Client device structure and its associated resources.
  *
- * @param client PDM 设备结构体指针
+ * @param client Pointer to the PDM Client device structure.
  */
 void pdm_client_free(struct pdm_client *client);
 
-
 /**
- * @brief 初始化 PDM Client
+ * @brief Initializes the PDM Client module.
  *
- * 该函数用于初始化 PDM Client。
+ * This function initializes the PDM Client module, including registering necessary drivers and setting initial states.
  *
- * @return 成功返回 0，失败返回负错误码
+ * @return 0 on success, negative error code on failure.
  */
 int pdm_client_init(void);
 
 /**
- * @brief 退出 PDM Client
+ * @brief Exits the PDM Client module.
  *
- * 该函数用于退出 PDM Client。
+ * This function exits the PDM Client module, including unregistering drivers and cleaning up all resources.
  */
 void pdm_client_exit(void);
 

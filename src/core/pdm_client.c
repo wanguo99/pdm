@@ -1,41 +1,52 @@
-#include "linux/compat.h"
-
+#include <linux/compat.h>
 #include "pdm.h"
 
 /**
- * @brief PDM Client 类
+ * @brief PDM Client class.
  */
 static struct class pdm_client_class = {
     .name = "pdm_client",
 };
 
 /**
- * @brief PDM Client 主设备号
+ * @brief PDM Client major device number.
  */
 static dev_t pdm_client_major;
 
 /**
- * @brief PDM Client ida，用于分配次设备号
+ * @brief IDA for allocating minor device numbers.
  */
 static struct ida pdm_client_ida;
 
+/**
+ * @brief Allocates a new minor device number.
+ *
+ * @return The allocated minor number, or negative error code on failure.
+ */
 static int pdm_client_minor_alloc(void)
 {
     return ida_alloc_range(&pdm_client_ida, PDM_CLIENT_MIN_MINOR, PDM_CLIENT_MAX_MINOR, GFP_KERNEL);
 }
 
+/**
+ * @brief Frees a previously allocated minor device number.
+ *
+ * @param minor The minor number to free.
+ */
 static void pdm_client_minor_free(unsigned int minor)
 {
     ida_free(&pdm_client_ida, minor);
 }
 
 /**
- * @brief 默认打开函数
- * @inode: inode 结构
- * @filp: 文件结构
+ * @brief Default open function.
  *
- * 返回值:
- * 0 - 成功
+ * This function is called when the device file is opened.
+ *
+ * @param inode Pointer to the inode structure.
+ * @param filp Pointer to the file structure.
+ *
+ * @return 0 on success, negative error code on failure.
  */
 static int pdm_client_fops_default_open(struct inode *inode, struct file *filp)
 {
@@ -55,12 +66,14 @@ static int pdm_client_fops_default_open(struct inode *inode, struct file *filp)
 }
 
 /**
- * @brief 默认释放函数
- * @inode: inode 结构
- * @filp: 文件结构
+ * @brief Default release function.
  *
- * 返回值:
- * 0 - 成功
+ * This function is called when the device file is closed.
+ *
+ * @param inode Pointer to the inode structure.
+ * @param filp Pointer to the file structure.
+ *
+ * @return 0 on success.
  */
 static int pdm_client_fops_default_release(struct inode *inode, struct file *filp)
 {
@@ -69,14 +82,16 @@ static int pdm_client_fops_default_release(struct inode *inode, struct file *fil
 }
 
 /**
- * @brief 默认读取函数
- * @filp: 文件结构
- * @buf: 用户空间缓冲区
- * @count: 要读取的字节数
- * @ppos: 当前文件位置
+ * @brief Default read function.
  *
- * 返回值:
- * 0 - 成功
+ * This function is called when data is read from the device file.
+ *
+ * @param filp Pointer to the file structure.
+ * @param buf User-space buffer to read into.
+ * @param count Number of bytes to read.
+ * @param ppos Current file position.
+ *
+ * @return Number of bytes read, or negative error code on failure.
  */
 static ssize_t pdm_client_fops_default_read(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
 {
@@ -85,14 +100,16 @@ static ssize_t pdm_client_fops_default_read(struct file *filp, char __user *buf,
 }
 
 /**
- * @brief 默认写入函数
- * @filp: 文件结构
- * @buf: 用户空间缓冲区
- * @count: 要写入的字节数
- * @ppos: 当前文件位置
+ * @brief Default write function.
  *
- * 返回值:
- * 0 - 成功
+ * This function is called when data is written to the device file.
+ *
+ * @param filp Pointer to the file structure.
+ * @param buf User-space buffer to write from.
+ * @param count Number of bytes to write.
+ * @param ppos Current file position.
+ *
+ * @return Number of bytes written, or negative error code on failure.
  */
 static ssize_t pdm_client_fops_default_write(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
 {
@@ -101,13 +118,15 @@ static ssize_t pdm_client_fops_default_write(struct file *filp, const char __use
 }
 
 /**
- * @brief 默认ioctl函数
- * @filp: 文件结构
- * @cmd: ioctl命令
- * @arg: 命令参数
+ * @brief Default ioctl function.
  *
- * 返回值:
- * -ENOTSUPP - 不支持的ioctl操作
+ * This function handles ioctl operations.
+ *
+ * @param filp Pointer to the file structure.
+ * @param cmd Ioctl command.
+ * @param arg Command argument.
+ *
+ * @return 0 on success, negative error code on failure.
  */
 static long pdm_client_fops_default_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
@@ -116,14 +135,15 @@ static long pdm_client_fops_default_ioctl(struct file *filp, unsigned int cmd, u
 }
 
 /**
- * @brief 兼容层ioctl函数
+ * @brief Default compat ioctl function.
  *
- * 该函数处理兼容层的ioctl操作。
+ * This function handles compatibility layer ioctl operations.
  *
- * @param filp 文件结构
- * @param cmd ioctl命令
- * @param arg 命令参数
- * @return 返回底层unlocked_ioctl的结果
+ * @param filp Pointer to the file structure.
+ * @param cmd Ioctl command.
+ * @param arg Command argument.
+ *
+ * @return Result of underlying unlocked_ioctl function.
  */
 static long pdm_client_fops_default_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
@@ -136,12 +156,24 @@ static long pdm_client_fops_default_compat_ioctl(struct file *filp, unsigned int
     return filp->f_op->unlocked_ioctl(filp, cmd, arg);
 }
 
+/**
+ * @brief Decrements the reference count on the device.
+ *
+ * @param client Pointer to the PDM Client.
+ */
 static inline void pdm_client_put_device(struct pdm_client *client)
 {
     if (client)
         put_device(&client->dev);
 }
 
+/**
+ * @brief Releases the device structure.
+ *
+ * This function is called when the last reference to the device is dropped.
+ *
+ * @param dev Pointer to the device structure.
+ */
 static void pdm_client_device_release(struct device *dev)
 {
     struct pdm_client *client;
@@ -151,23 +183,35 @@ static void pdm_client_device_release(struct device *dev)
     kfree(client);
 }
 
+/**
+ * @brief Gets the private data associated with the device.
+ *
+ * @param client Pointer to the PDM Client.
+ * @return Pointer to the private data.
+ */
 static inline void *pdm_client_get_devdata(struct pdm_client *client)
 {
     return dev_get_drvdata(&client->dev);
 }
 
+/**
+ * @brief Sets the private data associated with the device.
+ *
+ * @param client Pointer to the PDM Client.
+ * @param data Pointer to the private data.
+ */
 static inline void pdm_client_set_devdata(struct pdm_client *client, void *data)
 {
     dev_set_drvdata(&client->dev, data);
 }
 
 /**
- * @brief 添加 PDM Client 字符设备
+ * @brief Registers a PDM Client character device.
  *
- * 该函数用于注册 PDM Client 字符设备。
+ * This function registers a new PDM Client character device with the system.
  *
- * @param client  PDM Client
- * @return 成功返回 0，失败返回负错误码
+ * @param client Pointer to the PDM Client.
+ * @return 0 on success, negative error code on failure.
  */
 static int pdm_client_device_register(struct pdm_client *client)
 {
@@ -176,17 +220,15 @@ static int pdm_client_device_register(struct pdm_client *client)
 
     if (!client) {
         OSA_ERROR("Invalid input parameter.\n");
-        status = -EINVAL;
-        goto err_out;
+        return -EINVAL;
     }
 
     minor = pdm_client_minor_alloc();
     if (minor < 0) {
-        status = minor;
-        OSA_ERROR("Failed to alloc new minor: %d\n", status);
-        goto err_out;
+        OSA_ERROR("Failed to allocate new minor: %d\n", minor);
+        return minor;
     }
-    OSA_DEBUG("client minor: %d\n", minor);
+    OSA_DEBUG("Client minor: %d\n", minor);
 
     dev_set_name(&client->dev, "%s.%d", dev_name(&client->adapter->dev), client->index);
 
@@ -196,12 +238,13 @@ static int pdm_client_device_register(struct pdm_client *client)
     client->dev.release = pdm_client_device_release;
     device_initialize(&client->dev);
 
+    memset(&client->fops, 0, sizeof(client->fops));
     client->fops.open = pdm_client_fops_default_open;
     client->fops.release = pdm_client_fops_default_release;
     client->fops.read = pdm_client_fops_default_read;
     client->fops.write = pdm_client_fops_default_write;
     client->fops.unlocked_ioctl = pdm_client_fops_default_ioctl;
-    client->fops.compat_ioctl =  pdm_client_fops_default_compat_ioctl;
+    client->fops.compat_ioctl = pdm_client_fops_default_compat_ioctl;
     cdev_init(&client->cdev, &client->fops);
 
     status = cdev_device_add(&client->cdev, &client->dev);
@@ -217,38 +260,37 @@ static int pdm_client_device_register(struct pdm_client *client)
     return 0;
 
 err_free_minor:
-    pdm_client_put_device(client);
     pdm_client_minor_free(minor);
-err_out:
     return status;
 }
 
 /**
- * @brief 删除 PDM Client 字符设备
+ * @brief Unregisters a PDM Client character device.
  *
- * 该函数用于注销 PDM Client 字符设备。
+ * This function unregisters a PDM Client character device from the system.
  *
- * @param client  PDM Client
+ * @param client Pointer to the PDM Client.
  */
 static void pdm_client_device_unregister(struct pdm_client *client)
 {
     if (!client) {
         OSA_ERROR("Invalid input parameter.\n");
+        return;
     }
     cdev_device_del(&client->cdev, &client->dev);
     pdm_client_minor_free(MINOR(client->dev.devt));
 
-    OSA_DEBUG("PDM Master Device Unregistered.\n");
+    OSA_DEBUG("PDM Client Device Unregistered.\n");
 }
 
 /**
- * @brief 向PDM Adapter添加设备
+ * @brief Adds a device to the PDM Adapter.
  *
- * 该函数用于向PDM Adapter添加一个新的PDM设备。
+ * This function adds a new PDM device to the specified PDM Adapter.
  *
- * @param adapter PDM Adapter
- * @param pdmdev 要添加的PDM设备
- * @return 成功返回 0，参数无效返回 -EINVAL
+ * @param adapter Pointer to the PDM Adapter.
+ * @param client Pointer to the PDM Client to add.
+ * @return 0 on success, negative error code on failure.
  */
 int pdm_client_register(struct pdm_adapter *adapter, struct pdm_client *client)
 {
@@ -268,28 +310,25 @@ int pdm_client_register(struct pdm_adapter *adapter, struct pdm_client *client)
     client->adapter = adapter;
     status = pdm_client_device_register(client);
     if (status) {
-        OSA_ERROR("Failed to add cdev, error: %d.\n", status);
-        goto err_free_id;
+        OSA_ERROR("Failed to register device, error: %d.\n", status);
+        pdm_adapter_id_free(adapter, client);
+        return status;
     }
 
     mutex_lock(&adapter->client_list_mutex_lock);
     list_add_tail(&client->entry, &adapter->client_list);
     mutex_unlock(&adapter->client_list_mutex_lock);
 
-err_free_id:
-    pdm_adapter_id_free(adapter, client);
-
     return 0;
 }
 
 /**
- * @brief 从PDM Adapter删除设备
+ * @brief Removes a device from the PDM Adapter.
  *
- * 该函数用于从PDM Adapter中删除一个PDM设备。
+ * This function removes a PDM device from the specified PDM Adapter.
  *
- * @param adapter PDM Adapter
- * @param pdmdev 要删除的PDM设备
- * @return 成功返回 0，参数无效返回 -EINVAL
+ * @param adapter Pointer to the PDM Adapter.
+ * @param client Pointer to the PDM Client to remove.
  */
 void pdm_client_unregister(struct pdm_adapter *adapter, struct pdm_client *client)
 {
@@ -305,16 +344,15 @@ void pdm_client_unregister(struct pdm_adapter *adapter, struct pdm_client *clien
 
     pdm_client_device_unregister(client);
     pdm_adapter_id_free(adapter, client);
-    return;
 }
 
 /**
- * @brief 分配PDM Client 结构
+ * @brief Allocates a PDM Client structure.
  *
- * 该函数用于分配PDM Client 结构及其私有数据。
+ * This function allocates and initializes a new PDM Client structure along with its private data.
  *
- * @param data_size 私有数据的大小
- * @return 指向分配的PDM Client 的指针，或NULL（失败）
+ * @param data_size Size of the private data to allocate.
+ * @return Pointer to the allocated PDM Client structure, or NULL on failure.
  */
 struct pdm_client *pdm_client_alloc(unsigned int data_size)
 {
@@ -330,11 +368,11 @@ struct pdm_client *pdm_client_alloc(unsigned int data_size)
 }
 
 /**
- * @brief 释放PDM Client 结构
+ * @brief Frees a PDM Client structure.
  *
- * 该函数用于释放PDM Client 结构。
+ * This function frees an allocated PDM Client structure and any associated resources.
  *
- * @param client PDM Client
+ * @param client Pointer to the PDM Client structure.
  */
 void pdm_client_free(struct pdm_client *client)
 {
@@ -344,11 +382,11 @@ void pdm_client_free(struct pdm_client *client)
 }
 
 /**
- * @brief 初始化 PDM Client 模块
+ * @brief Initializes the PDM Client module.
  *
- * 返回值:
- * 0 - 成功
- * 负值 - 失败
+ * This function initializes the PDM Client module by registering necessary drivers and setting initial states.
+ *
+ * @return 0 on success, negative error code on failure.
  */
 int pdm_client_init(void)
 {
@@ -362,34 +400,40 @@ int pdm_client_init(void)
     }
     OSA_DEBUG("PDM Client Class registered.\n");
 
-    status = alloc_chrdev_region(&dev, 0, 1, PDM_CLIENT_DEVICE_NAME);
+    status = alloc_chrdev_region(&dev, PDM_CLIENT_MIN_MINOR,
+                                 PDM_CLIENT_MAX_MINOR - PDM_CLIENT_MIN_MINOR + 1,
+                                 PDM_CLIENT_DEVICE_NAME);
     if (status < 0) {
-        OSA_ERROR("Failed to allocate device region for %s, error: %d.\n", PDM_CLIENT_DEVICE_NAME, status);
+        OSA_ERROR("Failed to allocate device region for %s, error: %d.\n",
+                  PDM_CLIENT_DEVICE_NAME, status);
         class_unregister(&pdm_client_class);
         return status;
     }
 
     pdm_client_major = MAJOR(dev);
-    OSA_DEBUG("client major: %d\n", pdm_client_major);
+    OSA_DEBUG("Client major: %d\n", pdm_client_major);
 
     ida_init(&pdm_client_ida);
 
-    OSA_INFO("PDM Client Initialize OK.\n");
+    OSA_INFO("PDM Client initialized successfully.\n");
     return 0;
 }
 
 /**
- * @brief 卸载 PDM Client 模块
+ * @brief Cleans up the PDM Client module.
+ *
+ * This function unregisters the PDM Client module, including unregistering drivers and cleaning up all resources.
  */
 void pdm_client_exit(void)
 {
     ida_destroy(&pdm_client_ida);
-    unregister_chrdev_region(MKDEV(pdm_client_major, 0), 1);
+    unregister_chrdev_region(MKDEV(pdm_client_major, PDM_CLIENT_MIN_MINOR),
+                             PDM_CLIENT_MAX_MINOR - PDM_CLIENT_MIN_MINOR + 1);
+
     class_unregister(&pdm_client_class);
 
-    OSA_INFO("PDM Client Cleanup OK.\n");
+    OSA_INFO("PDM Client cleaned up successfully.\n");
 }
-
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("<guohaoprc@163.com>");
