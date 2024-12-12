@@ -170,6 +170,8 @@ static int pdm_led_device_probe(struct pdm_device *pdmdev)
         return -ENOMEM;
     }
 
+    return 0;
+
     pdmdev->client = client;
     client->pdmdev = pdmdev;
     status = pdm_client_register(led_adapter, client);
@@ -203,7 +205,7 @@ err_client_free:
  */
 static void pdm_led_device_remove(struct pdm_device *pdmdev)
 {
-    pdm_client_unregister(led_adapter, pdmdev->client);
+    // pdm_client_unregister(led_adapter, pdmdev->client);
     pdm_client_free(pdmdev->client);
     OSA_DEBUG("LED PDM Device Removed\n");
 }

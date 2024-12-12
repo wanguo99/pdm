@@ -196,7 +196,7 @@ static int pdm_client_device_register(struct pdm_client *client)
     int status;
     int minor;
 
-    if (!client) {
+    if (!client || !client->adapter) {
         OSA_ERROR("Invalid input parameter.\n");
         return -EINVAL;
     }
