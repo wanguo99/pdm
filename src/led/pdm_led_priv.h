@@ -2,35 +2,59 @@
 #define _PDM_LED_PRIV_H_
 
 /**
- * @file pdm_led.h
- * @brief PDM 模板驱动接口
+ * @file pdm_led_priv.h
+ * @brief PDM LED Driver Private Interface
  *
- * 本文件定义了 PDM 模板驱动的结构体和相关函数，用于管理和操作 PDM 模板设备。
+ * This file defines the private structures and related functions for the PDM LED driver,
+ * used to manage and operate PDM LED devices.
  */
 
-#define PDM_LED_NAME        "led"      /* 控制器名字 */
+#include "pdm.h"
+
+/**
+ * @def PDM_LED_NAME
+ * @brief Controller name
+ */
+#define PDM_LED_NAME "led"
 
 /**
  * @struct pdm_led_operations
- * @brief PDM LED 设备操作结构体
+ * @brief PDM LED Device Operations Structure
  *
- * 该结构体定义了 PDM LED 设备的操作函数，包括开灯和关灯。
+ * This structure defines the operation functions for a PDM LED device, including setting the LED state (on/off).
  */
 struct pdm_led_operations {
-    int (*set_state)(struct pdm_client *client, int state);      /**< 设置开关灯 */
+    int (*set_state)(struct pdm_client *client, int state);  ///< Function to set the LED state
 };
 
 /**
  * @struct pdm_led_priv
- * @brief PDM LED 设备私有数据结构体
+ * @brief PDM LED Device Private Data Structure
  *
- * 该结构体用于存储 PDM LED 设备的私有数据，包括操作函数指针。
+ * This structure is used to store private data for a PDM LED device, including pointers to operation functions.
  */
 struct pdm_led_priv {
-    struct pdm_led_operations *ops;  /**< 操作函数回调 */
+    const struct pdm_led_operations *ops;  ///< Pointer to operation function callbacks
 };
 
+/**
+ * @brief Initializes GPIO settings for a PDM LED device.
+ *
+ * This function initializes the GPIO settings for the specified PDM LED device and sets up the operation functions.
+ *
+ * @param client Pointer to the PDM client structure.
+ * @return Returns 0 on success; negative error code on failure.
+ */
 int pdm_led_gpio_setup(struct pdm_client *client);
+
+/**
+ * @brief Initializes PWM settings for a PDM LED device.
+ *
+ * This function initializes the PWM settings for the specified PDM LED device and sets up the operation functions.
+ *
+ * @param client Pointer to the PDM client structure.
+ * @return Returns 0 on success; negative error code on failure.
+ */
 int pdm_led_pwm_setup(struct pdm_client *client);
 
 #endif /* _PDM_LED_PRIV_H_ */

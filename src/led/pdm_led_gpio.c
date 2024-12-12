@@ -3,43 +3,49 @@
 
 #if 0
 /**
- * @brief 设置 GPIO LED 状态
+ * @brief Sets the state of a GPIO LED.
  *
- * 该函数用于设置指定 PDM 设备的 GPIO LED。
+ * This function sets the state (on/off) of the specified PDM device's GPIO LED.
  *
- * @param pdmdev PDM 设备指针
- * @param state LED 状态（0 表示关，1 表示开）
- * @return 成功返回 0，失败返回负错误码
+ * @param client Pointer to the PDM client structure.
+ * @param state LED state (0 for off, 1 for on).
+ * @return Returns 0 on success; negative error code on failure.
  */
 static int pdm_led_gpio_set_state(struct pdm_client *client, int state)
 {
-    OSA_INFO("PWM LED set state: %d for device: %s\n", state, client->name);
-    // 这里可以添加实际的 GPIO 控制代码
+    OSA_INFO("GPIO LED set state: %d for device: %s\n", state, dev_name(&client->dev));
+
+    // Placeholder for actual GPIO control code
     return 0;
 }
 
 /**
  * @struct pdm_led_operations
- * @brief PDM LED 设备操作结构体 (GPIO 版本)
+ * @brief PDM LED device operations structure (GPIO version).
  *
- * 该结构体定义了 PDM LED 设备的操作函数，包括设置状态。
+ * This structure defines the operation functions for a PDM LED device using GPIO.
  */
-static struct pdm_led_operations pdm_device_led_ops_gpio = {
+static const struct pdm_led_operations pdm_device_led_ops_gpio = {
     .set_state = pdm_led_gpio_set_state,
 };
 #endif
 
 /**
- * @brief 初始化 GPIO 设置
+ * @brief Initializes GPIO settings for a PDM device.
  *
- * 该函数用于初始化指定 PDM 设备的 GPIO 设置，并设置操作函数。
+ * This function initializes the GPIO settings for the specified PDM device and sets up the operation functions.
  *
- * @param pdmdev PDM 设备指针
- * @return 成功返回 0，失败返回负错误码
+ * @param client Pointer to the PDM client structure.
+ * @return Returns 0 on success; negative error code on failure.
  */
 int pdm_led_gpio_setup(struct pdm_client *client)
 {
-    OSA_INFO("pdm_led_gpio_setup for device: %s\n", dev_name(&client->dev));
+    OSA_INFO("Initializing GPIO setup for device: %s\n", dev_name(&client->dev));
+
+    // Set the operation functions for this client
+    // client->ops = &pdm_device_led_ops_gpio;
+
+    // Initialize GPIO hardware here if necessary
 
     return 0;
 }

@@ -7,10 +7,10 @@ static struct pdm_adapter *led_adapter = NULL;
 
 #if 0
 /**
- * @brief 查找指定索引的 PDM 设备
+ * @brief Finds a PDM client by index.
  *
- * @param index 设备索引
- * @return 找到的 PDM 设备指针，未找到返回 NULL
+ * @param index The device index to find.
+ * @return Pointer to the found PDM client, or NULL if not found.
  */
 static struct pdm_client *pdm_led_find_client(int index)
 {
@@ -34,15 +34,15 @@ static struct pdm_client *pdm_led_find_client(int index)
 }
 
 /**
- * @brief 设置指定索引的 PDM LED 设备的状态
+ * @brief Sets the state of a specified PDM LED device.
  *
- * @param args 包含设备索引和状态的结构体
- * @return 成功返回 0，失败返回负错误码
+ * @param args Structure containing the device index and state.
+ * @return Returns 0 on success; negative error code on failure.
  */
 static int pdm_led_set_state(struct pdm_led_ioctl_args *args)
 {
     struct pdm_client *client;
-    int status;
+    int status = 0;
 
     mutex_lock(&led_adapter->client_list_mutex_lock);
 
@@ -61,27 +61,24 @@ err_unlock:
 }
 
 /**
- * @brief 处理 IOCTL 命令
+ * @brief Handles IOCTL commands from user space.
  *
- * 该函数用于处理来自用户空间的 IOCTL 命令。
- *
- * @param file 文件描述符
- * @param cmd IOCTL 命令
- * @param arg 命令参数
- * @return 成功返回 0，失败返回负错误码
+ * @param file File descriptor.
+ * @param cmd IOCTL command.
+ * @param arg Command argument.
+ * @return Returns 0 on success; negative error code on failure.
  */
 static long pdm_led_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
     struct pdm_led_ioctl_args args;
-    int status;
+    int status = 0;
 
     OSA_DEBUG("ioctl, cmd=0x%02x, arg=0x%02lx\n", cmd, arg);
 
-    memset(&args, 0, sizeof(struct pdm_led_ioctl_args));
+    memset(&args, 0, sizeof(args));
     switch (cmd) {
         case PDM_LED_SET_STATE: {
-            if (copy_from_user(&args, (struct pdm_led_ioctl_args __user *)arg,
-                                        sizeof(struct pdm_led_ioctl_args))) {
+            if (copy_from_user(&args, (void __user *)arg, sizeof(args))) {
                 return -EFAULT;
             }
             printk(KERN_INFO "PDM_LED_SET_STATE: index %d, state %d\n", args.index, args.state);
@@ -100,15 +97,13 @@ static long pdm_led_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 }
 
 /**
- * @brief 处理写操作
+ * @brief Handles write operations from user space.
  *
- * 该函数用于处理写操作，从用户空间复制数据并设置 LED 状态。
- *
- * @param filp 文件描述符
- * @param buf 用户空间缓冲区
- * @param count 缓冲区大小
- * @param ppos 文件偏移量
- * @return 写入的字节数，或负错误码
+ * @param filp File descriptor.
+ * @param buf User space buffer.
+ * @param count Buffer size.
+ * @param ppos File offset.
+ * @return Number of bytes written, or negative error code on failure.
  */
 static ssize_t pdm_led_write(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
 {
@@ -134,6 +129,7 @@ static ssize_t pdm_led_write(struct file *filp, const char __user *buf, size_t c
 
     if (pdm_led_set_state(&args)) {
         OSA_ERROR("pdm_led_set_state failed\n");
+        return -EINVAL;
     }
 
     return count;
@@ -141,21 +137,21 @@ static ssize_t pdm_led_write(struct file *filp, const char __user *buf, size_t c
 #endif
 
 /**
- * @brief LED PDM 设备探测函数
+ * @brief Probes the LED PDM device.
  *
- * 该函数在 PDM 设备被探测到时调用，负责将设备添加到主设备中。
+ * This function is called when a PDM device is detected and adds the device to the main device.
  *
- * @param pdmdev PDM 设备指针
- * @return 成功返回 0，失败返回负错误码
+ * @param pdmdev Pointer to the PDM device.
+ * @return Returns 0 on success; negative error code on failure.
  */
 static int pdm_led_device_probe(struct pdm_device *pdmdev)
 {
-    int status;
     struct pdm_client *client;
+    int status;
 
     client = pdm_client_alloc(sizeof(void *));
     if (!client) {
-        OSA_ERROR("LED Client Alloc Failed, status=%d\n", status);
+        OSA_ERROR("LED Client Alloc Failed\n");
         return -ENOMEM;
     }
 
@@ -164,6 +160,7 @@ static int pdm_led_device_probe(struct pdm_device *pdmdev)
     status = pdm_client_register(led_adapter, client);
     if (status) {
         OSA_ERROR("LED Adapter Add Device Failed, status=%d\n", status);
+        pdm_client_free(client);
         return status;
     }
 
@@ -172,22 +169,23 @@ static int pdm_led_device_probe(struct pdm_device *pdmdev)
 }
 
 /**
- * @brief LED PDM 设备移除函数
+ * @brief Removes the LED PDM device.
  *
- * 该函数在 PDM 设备被移除时调用，负责将设备从主设备中删除。
+ * This function is called when a PDM device is removed and deletes the device from the main device.
  *
- * @param pdmdev PDM 设备指针
+ * @param pdmdev Pointer to the PDM device.
  */
 static void pdm_led_device_remove(struct pdm_device *pdmdev)
 {
     pdm_client_unregister(led_adapter, pdmdev->client);
+    pdm_client_free(pdmdev->client);
     OSA_DEBUG("LED PDM Device Removed\n");
 }
 
 /**
- * @brief 设备树匹配表
+ * @brief Device tree match table.
  *
- * 该表定义了支持的设备树兼容属性。
+ * Defines the supported device tree compatible properties.
  */
 static const struct of_device_id of_pdm_led_match[] = {
     { .compatible = "led,pdm-device-pwm", },
@@ -197,9 +195,9 @@ static const struct of_device_id of_pdm_led_match[] = {
 MODULE_DEVICE_TABLE(of, of_pdm_led_match);
 
 /**
- * @brief LED PDM 驱动结构体
+ * @brief LED PDM driver structure.
  *
- * 该结构体定义了 LED PDM 驱动的基本信息和操作函数。
+ * Defines the basic information and operation functions of the LED PDM driver.
  */
 static struct pdm_driver pdm_led_driver = {
     .probe = pdm_led_device_probe,
@@ -211,11 +209,11 @@ static struct pdm_driver pdm_led_driver = {
 };
 
 /**
- * @brief 初始化 LED PDM 主设备驱动
+ * @brief Initializes the LED PDM adapter driver.
  *
- * 该函数用于初始化 LED PDM 主设备驱动，分配和注册主设备及驱动。
+ * Allocates and registers the adapter and driver.
  *
- * @return 成功返回 0，失败返回负错误码
+ * @return Returns 0 on success; negative error code on failure.
  */
 int pdm_led_driver_init(void)
 {
@@ -235,7 +233,7 @@ int pdm_led_driver_init(void)
 
     status = pdm_bus_register_driver(THIS_MODULE, &pdm_led_driver);
     if (status) {
-        OSA_ERROR("Failed to register LED PDM Adapter Driver, status=%d\n", status);
+        OSA_ERROR("Failed to register LED PDM Driver, status=%d\n", status);
         goto err_adapter_unregister;
     }
 
@@ -250,9 +248,9 @@ err_adapter_free:
 }
 
 /**
- * @brief 退出 LED PDM 主设备驱动
+ * @brief Exits the LED PDM adapter driver.
  *
- * 该函数用于退出 LED PDM 主设备驱动，注销驱动和主设备，释放相关资源。
+ * Unregisters the driver and adapter, releasing related resources.
  */
 void pdm_led_driver_exit(void)
 {

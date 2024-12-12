@@ -2,36 +2,34 @@
 #define _PDM_ADAPTER_PRIV_H_
 
 /**
- * @brief 初始化 PDM 主控制器驱动
+ * @brief Registers all PDM adapter drivers.
  *
- * 该函数用于初始化所有 PDM 主控制器驱动程序。
+ * Initializes all PDM adapter drivers within the system.
  *
- * @return 0 - 成功
- *         负值 - 失败
+ * @return Returns 0 on success; negative error code on failure.
  */
 int pdm_adapter_drivers_register(void);
 
 /**
- * @brief 卸载 PDM 主控制器驱动
+ * @brief Unregisters all PDM adapter drivers.
  *
- * 该函数用于卸载所有 PDM 主控制器驱动程序。
+ * Cleans up and unregisters all PDM adapter drivers from the system.
  */
 void pdm_adapter_drivers_unregister(void);
 
 /**
- * @brief 初始化 LED 主设备驱动
+ * @brief Initializes the LED main device driver.
  *
- * 该函数用于初始化 LED 主设备驱动程序。
+ * Sets up and registers the LED main device driver.
  *
- * @return 0 - 成功
- *         负值 - 失败
+ * @return Returns 0 on success; negative error code on failure.
  */
 int pdm_led_driver_init(void);
 
 /**
- * @brief 退出 LED 主设备驱动
+ * @brief Exits the LED main device driver.
  *
- * 该函数用于退出 LED 主设备驱动程序，并释放相关资源。
+ * Cleans up and unregisters the LED main device driver, releasing associated resources.
  */
 void pdm_led_driver_exit(void);
 

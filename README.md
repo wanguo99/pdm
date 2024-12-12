@@ -1,52 +1,51 @@
 # Peripheral Driver Module (PDM)
 
-## 简介
+## Introduction
 
-PDM (Peripheral Driver Module) 是一个用于提供通用外设访问框架的驱动模块。它通过定义一套统一的接口和模型，简化了外设的访问和管理流程，使其更加标准化。
+The Peripheral Driver Module (PDM) is a driver module designed to provide a generic framework for peripheral access. It simplifies the process of accessing and managing peripherals by defining a unified set of interfaces and models, making it more standardized.
 
-PDM 主要由以下几个部分组成：
-- **PDM Core**: 驱动的核心入口，负责 PDM 总线的注册、PDM 主设备的初始化、子模块的初始化以及外设驱动的注册。
-- **PDM Adapter**: 一个通用的外设适配器类型，提供了一个统一的外设访问模型。
-- **PDM Device**: 一个通用的外设抽象模型，提供了统一的外设设备模型。
+PDM mainly consists of the following components:
+- **PDM Core**: The core entry point of the driver, responsible for registering the PDM bus, initializing the PDM master device, initializing sub-modules, and registering peripheral drivers.
+- **PDM Adapter**: A generic peripheral adapter type that provides a unified peripheral access model.
+- **PDM Device**: A generic peripheral abstraction model that offers a unified peripheral device model.
 
+## Compilation
 
-## 编译
+### Prerequisites
 
-### 前提条件
-
-确保你已经安装了以下工具和库：
+Ensure you have the following tools and libraries installed:
 - `make`
 - `gcc`
-- `kernel headers` 和 `kernel build system`
+- `kernel headers` and `kernel build system`
 
-### 编译步骤
+### Compilation Steps
 
-1. **克隆仓库**：
+1. **Clone the Repository**
 
    ```sh
    git clone https://github.com/yourusername/pdm.git
    cd pdm
    ```
 
-2. **本地编译**：
+2. **Local Compilation**
 
-   - 编译:
+   - Compile:
 
      ```sh
      make
      ```
 
-   - 清理:
+   - Clean:
 
      ```sh
      make clean
      ```
 
-   这将编译 PDM 模块，并生成 `pdm.ko` 文件。
+   This will compile the PDM module and generate the `pdm.ko` file.
 
-3. **交叉编译**（针对嵌入式系统）：
+3. **Cross-Compilation** (for embedded systems)
 
-   - 设置交叉编译环境变量：
+   - Set up cross-compilation environment variables:
 
      ```sh
      export ARCH=arm
@@ -54,109 +53,104 @@ PDM 主要由以下几个部分组成：
      export KERNELDIR="/path/to/your/kernel/build/directory"
      ```
 
-   - 执行交叉编译命令：
+   - Execute the cross-compilation command:
 
      ```sh
      make
      ```
 
-4. **编译选项**：
+4. **Compilation Options**
 
-   - **日志管理**：
-     该驱动支持日志打印信息的配置：
+   - **Logging Management**
+     The driver supports configuration of log printing options
 
-     - **日志总开关**：
-       要关闭所有日志打印功能，可以在编译时使用以下命令：
+     - **Global Log Switch**：
+       To disable all log printing, use the following command during compilation:
 
        ```sh
        make osa_log_enable=0
        ```
 
-     - **开启文件名、行号和函数名信息打印**：
-       要开启日志打印并包含文件名、行号和函数名信息，可以在编译时使用以下命令：
+     - **Enable File Name, Line Number, and Function Name Logging**：
+       To enable logging with file name, line number, and function name information, use the following command during compilation:
 
        ```sh
        make osa_log_enable=1 osa_log_with_function=1 osa_log_with_file_line=1
        ```
 
-## 安装
+## Installation
 
-### 安装步骤
+### Installation Steps
 
-1. **安装模块**：
+1. **Install the Module**：
 
-   默认情况下，模块将安装到当前目录下的 `_install` 文件夹中。你可以通过设置 `DESTDIR` 环境变量来指定其他安装目录。
+   By default, the module will be installed in the `_install` directory under the current directory. You can specify another installation directory by setting the `DESTDIR` environment variable.
 
    ```sh
    sudo make install DESTDIR="/path/to/install/directory"
    ```
 
-   如果不指定 `DESTDIR`，则默认安装到当前目录下的 `_install` 文件夹中。
+   If `DESTDIR` is not specified, it defaults to the `_install` directory under the current directory.
 
-2. **加载模块**：
+2. **Load the Module**：
 
    ```sh
    sudo insmod pdm.ko
    ```
 
-3. **验证模块是否加载成功**：
+3. **Verify Successful Module Loading**：
 
    ```sh
    lsmod | grep pdm
    ```
 
-   如果看到 `pdm` 模块在列表中，说明模块加载成功。
+   If the `pdm` module appears in the list, the module has been loaded successfully.
 
-## 卸载
+## Uninstallation
 
-### 卸载步骤
+### Uninstallation Steps
 
-1. **卸载模块**：
+1. **Unload the Module**：
 
    ```sh
    sudo rmmod pdm
    ```
 
-2. **清理安装目录**：
+2. **Clean Up the Installation Directory**：
 
    ```sh
    sudo make uninstall DESTDIR="/path/to/install/directory"
    ```
 
-   如果不指定 `DESTDIR`，则默认清理当前目录下的 `_install` 文件夹。
+   If `DESTDIR` is not specified, it defaults to cleaning up the `_install` directory under the current directory.
 
-## 调试
+## Debugging
 
-### 调试文件系统
+### Debug File System
 
-PDM 模块支持通过 `debugfs` 进行调试。在模块加载后，可以在 `/sys/kernel/debug/pdm` 目录下找到相关的调试文件。
+	The PDM module supports debugging via `debugfs` and `procfs`. After loading the module, you can find related debug files in the `/sys/kernel/debug/pdm` and `/proc/pdm` directory.
 
-### 示例
+### Example
 
-待完善
+	To be completed.
 
 
-## 许可证
+## License
 
-PDM 模块遵循 GPL 许可证。更多信息请参见 [LICENSE](LICENSE) 文件。
+	The PDM module is licensed under the GPL license. For more information, see the LICENSE file.
 
-## 贡献
+## Contributions
 
-欢迎贡献代码和提出改进建议！
+	Contributions and suggestions are welcome!
 
-## 联系方式
+## Contact
 
-如果有任何问题或建议，请联系：
+	If you have any questions or suggestions, please contact:
+	- Author: wanguo
+	- Email: guohaoprc@163.com
 
-- 作者：wanguo
-- 邮箱：guohaoprc@163.com
+	Thank you for using and supporting this project!
 
-感谢你的使用和支持！
-
-## 项目地址
+## Project Address
 
 - GitHub: [https://github.com/wanguo99/PDM](https://github.com/wanguo99/PDM)
-
-## 版本历史
-
-- v1.0.0: 初始版本
