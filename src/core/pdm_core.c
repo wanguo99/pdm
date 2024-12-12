@@ -59,6 +59,7 @@ static struct pdm_component pdm_core_components[] = {
         .init = pdm_adapter_init,
         .exit = pdm_adapter_exit,
     },
+    { }
 };
 
 /**

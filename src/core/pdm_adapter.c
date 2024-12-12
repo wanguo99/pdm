@@ -18,6 +18,7 @@ static struct pdm_component pdm_adapter_drivers[] = {
         .init = pdm_led_driver_init,
         .exit = pdm_led_driver_exit,
     },
+    { }
 };
 
 /**
@@ -301,12 +302,10 @@ void pdm_adapter_unregister(struct pdm_adapter *adapter)
 }
 
 /**
- * @brief 分配PDM Adapter结构
+ * @brief Allocates and initializes a PDM Adapter structure.
  *
- * 该函数用于分配PDM Adapter结构及其私有数据。
- *
- * @param data_size 私有数据的大小
- * @return 指向分配的PDM Adapter的指针，或NULL（失败）
+ * @param data_size Size in bytes of the private data to allocate.
+ * @return Pointer to the allocated PDM Adapter, or NULL on failure.
  */
 struct pdm_adapter *pdm_adapter_alloc(unsigned int data_size)
 {

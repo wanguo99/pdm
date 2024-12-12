@@ -2,66 +2,69 @@
 #define _PDM_DEVICE_PRIV_H_
 
 /**
- * @brief 初始化 PDM 设备驱动
+ * @brief Initializes the PDM device drivers.
  *
- * 该函数用于初始化 PDM 设备驱动，包括注册设备类和设备驱动。
+ * Registers the device class and device drivers for the PDM devices.
  *
- * @return 成功返回 0，失败返回负错误码
+ * @return Returns 0 on success; negative error code on failure.
  */
 int pdm_device_drivers_register(void);
 
 /**
- * @brief 卸载 PDM 设备驱动
+ * @brief Unregisters the PDM device drivers.
  *
- * 该函数用于卸载 PDM 设备驱动，包括注销设备驱动。
+ * Cleans up and unregisters the device drivers for the PDM devices.
  */
 void pdm_device_drivers_unregister(void);
 
+/* I2C Driver Initialization and Cleanup */
 /**
- * @brief 初始化 I2C 驱动
+ * @brief Initializes the I2C driver.
  *
- * 该函数用于初始化 I2C 驱动并将其注册到系统中。
+ * Registers the I2C driver with the system.
  *
- * @return 成功返回 0，失败返回负错误码
+ * @return Returns 0 on success; negative error code on failure.
  */
 int pdm_device_i2c_driver_init(void);
 
 /**
- * @brief 退出 I2C 驱动
+ * @brief Exits the I2C driver.
  *
- * 该函数用于退出 I2C 驱动并将其从系统中注销。
+ * Unregisters the I2C driver from the system.
  */
 void pdm_device_i2c_driver_exit(void);
 
+/* PLATFORM Driver Initialization and Cleanup */
 /**
- * @brief 初始化 PLATFORM 驱动
+ * @brief Initializes the PLATFORM driver.
  *
- * 该函数用于初始化 PLATFORM 驱动并将其注册到系统中。
+ * Registers the PLATFORM driver with the system.
  *
- * @return 成功返回 0，失败返回负错误码
+ * @return Returns 0 on success; negative error code on failure.
  */
 int pdm_device_platform_driver_init(void);
 
 /**
- * @brief 退出 PLATFORM 驱动
+ * @brief Exits the PLATFORM driver.
  *
- * 该函数用于退出 PLATFORM 驱动并将其从系统中注销。
+ * Unregisters the PLATFORM driver from the system.
  */
 void pdm_device_platform_driver_exit(void);
 
+/* SPI Driver Initialization and Cleanup */
 /**
- * @brief 初始化 SPI 驱动
+ * @brief Initializes the SPI driver.
  *
- * 该函数用于初始化 SPI 驱动并将其注册到系统中。
+ * Registers the SPI driver with the system.
  *
- * @return 成功返回 0，失败返回负错误码
+ * @return Returns 0 on success; negative error code on failure.
  */
 int pdm_device_spi_driver_init(void);
 
 /**
- * @brief 退出 SPI 驱动
+ * @brief Exits the SPI driver.
  *
- * 该函数用于退出 SPI 驱动并将其从系统中注销。
+ * Unregisters the SPI driver from the system.
  */
 void pdm_device_spi_driver_exit(void);
 

@@ -4,12 +4,12 @@
 #include "pdm_device_priv.h"
 
 /**
- * @brief PLATFORM 设备探测函数
+ * @brief Probes the PLATFORM device and initializes the PDM device.
  *
- * 该函数在 PLATFORM 设备被探测到时调用，负责初始化和注册 PDM 设备。
+ * This function is called when a PLATFORM device is detected, responsible for initializing and registering the PDM device.
  *
- * @param pdev 指向 PLATFORM 设备的指针
- * @return 成功返回 0，失败返回负错误码
+ * @param pdev Pointer to the PLATFORM device structure.
+ * @return Returns 0 on success; negative error code on failure.
  */
 static int pdm_device_platform_probe(struct platform_device *pdev) {
     struct pdm_device *pdmdev;
@@ -27,35 +27,31 @@ static int pdm_device_platform_probe(struct platform_device *pdev) {
     status = pdm_device_register(pdmdev);
     if (status) {
         OSA_ERROR("Failed to register pdm device, status=%d.\n", status);
-        goto free_pdmdev;
+        pdm_device_free(pdmdev);
+        return status;
     }
 
     OSA_DEBUG("PDM Device PLATFORM Device Probed.\n");
     return 0;
-
-free_pdmdev:
-    pdm_device_free(pdmdev);
-    return status;
 }
 
 /**
- * @brief PLATFORM 设备移除函数
+ * @brief Removes the PLATFORM device and unregisters the PDM device.
  *
- * 该函数在 PLATFORM 设备被移除时调用，负责注销和释放 PDM 设备。
+ * This function is called when a PLATFORM device is removed, responsible for unregistering and freeing the PDM device.
  *
- * @param pdev 指向 PLATFORM 设备的指针
- * @return 成功返回 0，失败返回负错误码
+ * @param pdev Pointer to the PLATFORM device structure.
+ * @return Returns 0 on success; negative error code on failure.
  */
 static int pdm_device_platform_real_remove(struct platform_device *pdev) {
-    struct pdm_device *pdmdev;
+    struct pdm_device *pdmdev = pdm_bus_find_device_by_parent(&pdev->dev);
 
-    pdmdev = pdm_bus_find_device_by_parent(&pdev->dev);
     if (!pdmdev) {
         OSA_ERROR("Failed to find pdm device from bus.\n");
         return -ENODEV;
-    } else {
-        OSA_DEBUG("Found SPI PDM Device: %s", dev_name(&pdmdev->dev));
     }
+
+    OSA_DEBUG("Found PLATFORM PDM Device: %s\n", dev_name(&pdmdev->dev));
 
     pdm_device_unregister(pdmdev);
 
@@ -63,20 +59,29 @@ static int pdm_device_platform_real_remove(struct platform_device *pdev) {
     return 0;
 }
 
-/**
- * @brief 兼容旧内核版本的 PLATFORM 移除函数
- *
- * 该函数用于兼容 Linux 内核版本低于 6.10.0 的情况。
- *
- * @param pdev PLATFORM 设备指针
- */
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 10, 0)
+/**
+ * @brief Compatibility remove function for older kernel versions.
+ *
+ * This function is used for Linux kernel versions below 6.10.0.
+ *
+ * @param pdev Pointer to the PLATFORM device structure.
+ * @return Returns 0 on success; negative error code on failure.
+ */
 static int pdm_device_platform_remove(struct platform_device *pdev) {
     return pdm_device_platform_real_remove(pdev);
 }
 #else
+/**
+ * @brief Removes the PLATFORM device and unregisters the PDM device.
+ *
+ * This function is called when a PLATFORM device is removed, responsible for unregistering and freeing the PDM device.
+ *
+ * @param pdev Pointer to the PLATFORM device structure.
+ */
 static void pdm_device_platform_remove(struct platform_device *pdev) {
     int status;
+
     status = pdm_device_platform_real_remove(pdev);
     if (status) {
         OSA_ERROR("pdm_device_platform_real_remove failed.\n");
@@ -85,35 +90,35 @@ static void pdm_device_platform_remove(struct platform_device *pdev) {
 #endif
 
 /**
- * @brief PLATFORM 设备 ID 表
+ * @brief PLATFORM device ID table.
  *
- * 该表定义了支持的 PLATFORM 设备 ID。
+ * Defines the supported PLATFORM device IDs.
  */
 static const struct platform_device_id pdm_device_platform_ids[] = {
     { .name = "pdm-device-platform" },
     { .name = "pdm-device-gpio" },
     { .name = "pdm-device-pwm" },
     { .name = "pdm-device-tty" },
-    { },  // 终止符
+    { }
 };
 MODULE_DEVICE_TABLE(platform, pdm_device_platform_ids);
 
 /**
- * @brief DEVICE_TREE 匹配表
+ * @brief DEVICE_TREE match table.
  *
- * 该表定义了支持的 DEVICE_TREE 兼容性字符串。
+ * Defines the supported DEVICE_TREE compatibility strings.
  */
 static const struct of_device_id pdm_device_platform_of_match[] = {
     { .compatible = "led,pdm-device-gpio" },
     { .compatible = "led,pdm-device-pwm" },
-    { },  // 终止符
+    { }
 };
 MODULE_DEVICE_TABLE(of, pdm_device_platform_of_match);
 
 /**
- * @brief PLATFORM 驱动结构体
+ * @brief PLATFORM driver structure.
  *
- * 该结构体定义了 PLATFORM 驱动的基本信息和操作函数。
+ * Defines the basic information and operation functions of the PLATFORM driver.
  */
 static struct platform_driver pdm_device_platform_driver = {
     .probe = pdm_device_platform_probe,
@@ -126,11 +131,11 @@ static struct platform_driver pdm_device_platform_driver = {
 };
 
 /**
- * @brief 初始化 PLATFORM 驱动
+ * @brief Initializes the PLATFORM driver.
  *
- * 该函数用于初始化 PLATFORM 驱动，并将其注册到系统中。
+ * Registers the PLATFORM driver with the system.
  *
- * @return 成功返回 0，失败返回负错误码
+ * @return Returns 0 on success; negative error code on failure.
  */
 int pdm_device_platform_driver_init(void) {
     int status;
@@ -145,9 +150,9 @@ int pdm_device_platform_driver_init(void) {
 }
 
 /**
- * @brief 退出 PLATFORM 驱动
+ * @brief Exits the PLATFORM driver.
  *
- * 该函数用于退出 PLATFORM 驱动，并将其从系统中注销。
+ * Unregisters the PLATFORM driver from the system.
  */
 void pdm_device_platform_driver_exit(void) {
     platform_driver_unregister(&pdm_device_platform_driver);

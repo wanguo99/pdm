@@ -35,6 +35,7 @@ static struct pdm_component pdm_device_drivers[] = {
         .init = pdm_device_platform_driver_init,
         .exit = pdm_device_platform_driver_exit
     },
+    { }
 };
 
 /**
