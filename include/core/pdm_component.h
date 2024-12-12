@@ -2,54 +2,59 @@
 #define _PDM_COMPONENT_H_
 
 /**
- * @file pdm_driver_manager.h
- * @brief PDM 驱动管理接口
+ * @file pdm_component.h
+ * @brief PDM Component Management Interface.
  *
- * 本文件定义了 PDM 驱动管理模块的接口和结构体，用于注册和注销驱动。
+ * This file defines the interfaces and structures for managing PDM components, including registration and
+ * unregistration of drivers.
  */
+
+#include <linux/list.h>
 
 /**
  * @struct pdm_component
- * @brief PDM 组件结构体定义
+ * @brief PDM Component structure definition.
  *
- * 该结构体用于定义 PDM 组件的基本信息和操作函数。
+ * This structure defines the basic information and operation functions for a PDM component.
  */
 struct pdm_component {
-    bool status;                /**< 驱动是否加载，默认为false，设置为true后开启 */
-    bool ignore_failures;       /**< 是否忽略驱动初始化失败 */
-    const char *name;           /**< 组件的名称 */
-    int (*init)(void);          /**< 组件的初始化函数 */
-    void (*exit)(void);         /**< 组件的退出函数 */
-    struct list_head list;      /**< 用于链表管理的节点 */
+    bool status;                /**< Whether the driver is loaded. Default is false. Set to true to enable. */
+    bool ignore_failures;       /**< Whether to ignore initialization failures. */
+    const char *name;           /**< Name of the component. */
+    int (*init)(void);          /**< Initialization function for the component. */
+    void (*exit)(void);         /**< Exit function for the component. */
+    struct list_head list;      /**< List node for management in a linked list. */
 };
 
 /**
- * @brief 组件注册参数结构体
+ * @struct pdm_component_params
+ * @brief Structure for encapsulating all parameters required for component registration.
  *
- * 该结构体用于封装组件注册所需的所有参数。
+ * This structure is used to pass an array of components and other necessary parameters to the registration function.
  */
 struct pdm_component_params {
-    struct pdm_component *components;      /**< 要注册的组件数组 */
-    int count;                          /**< 组件数组的长度 */
-    struct list_head *list;             /**< 组件链表头指针 */
+    struct pdm_component *components;  /**< Array of components to register. */
+    int count;                         /**< Length of the components array. */
+    struct list_head *list;            /**< Pointer to the head of the component list. */
 };
 
 /**
- * @brief 卸载链表中所有的驱动
+ * @brief Unregisters all components from the given list.
  *
- * 该函数用于卸载所有已注册的 PDM 组件，依次调用每个组件的退出函数。
+ * This function unregisters all registered PDM components by calling their exit functions in sequence.
  *
- * @param list 组件链表头指针
+ * @param list Pointer to the head of the component list.
  */
 void pdm_component_unregister(struct list_head *list);
 
 /**
- * @brief 注册数组中所有的驱动并保存至链表
+ * @brief Registers all components specified in the params structure and adds them to the list.
  *
- * 该函数用于注册所有 PDM 组件，依次调用每个组件的初始化函数。
+ * This function registers all PDM components specified in the params structure by calling their initialization
+ * functions in sequence.
  *
- * @param params 组件注册参数结构体指针
- * @return 成功返回 0，失败返回负错误码
+ * @param params Pointer to the pdm_component_params structure containing registration details.
+ * @return 0 on success, negative error code on failure.
  */
 int pdm_component_register(struct pdm_component_params *params);
 

@@ -6,7 +6,7 @@
 /**
  * @brief List to store all registered PDM device drivers.
  */
-static LIST_HEAD(pdm_device_driver_list);
+static struct list_head pdm_device_driver_list;
 
 /**
  * @brief Array of PDM device drivers.
@@ -14,12 +14,27 @@ static LIST_HEAD(pdm_device_driver_list);
  * Each `pdm_component` structure contains the driver's name, init and exit functions.
  */
 static struct pdm_component pdm_device_drivers[] = {
-    { .name = "SPI PDM Device", .status = true, .ignore_failures = true,
-      .init = pdm_device_spi_driver_init, .exit = pdm_device_spi_driver_exit },
-    { .name = "I2C PDM Device", .status = true, .ignore_failures = true,
-      .init = pdm_device_i2c_driver_init, .exit = pdm_device_i2c_driver_exit },
-    { .name = "PLATFORM PDM Device", .status = true, .ignore_failures = true,
-      .init = pdm_device_platform_driver_init, .exit = pdm_device_platform_driver_exit },
+    {
+        .name = "SPI PDM Device",
+        .status = true,
+        .ignore_failures = true,
+        .init = pdm_device_spi_driver_init,
+        .exit = pdm_device_spi_driver_exit
+    },
+    {
+        .name = "I2C PDM Device",
+        .status = true,
+        .ignore_failures = true,
+        .init = pdm_device_i2c_driver_init,
+        .exit = pdm_device_i2c_driver_exit
+    },
+    {
+        .name = "PLATFORM PDM Device",
+        .status = true,
+        .ignore_failures = true,
+        .init = pdm_device_platform_driver_init,
+        .exit = pdm_device_platform_driver_exit
+    },
 };
 
 /**
@@ -31,14 +46,14 @@ static struct pdm_component pdm_device_drivers[] = {
  */
 int pdm_device_drivers_register(void)
 {
-    struct pdm_component_params params;
     int status;
+    struct pdm_component_params params = {
+        .components = pdm_device_drivers,
+        .count = ARRAY_SIZE(pdm_device_drivers),
+        .list = &pdm_device_driver_list,
+    };
 
     INIT_LIST_HEAD(&pdm_device_driver_list);
-
-    params.components = pdm_device_drivers;
-    params.count = ARRAY_SIZE(pdm_device_drivers);
-    params.list = &pdm_device_driver_list;
     status = pdm_component_register(&params);
     if (status < 0) {
         OSA_ERROR("Failed to register PDM Device Drivers, error: %d.\n", status);

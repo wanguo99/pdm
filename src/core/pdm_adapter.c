@@ -5,7 +5,7 @@
 /**
  * @brief List of registered PDM Adapter drivers.
  */
-static struct list_head pdm_adapter_driver_list = LIST_HEAD_INIT(pdm_adapter_driver_list);
+static struct list_head pdm_adapter_driver_list;
 
 /**
  * @brief Array of PDM Adapter drivers to be registered.
@@ -18,7 +18,6 @@ static struct pdm_component pdm_adapter_drivers[] = {
         .init = pdm_led_driver_init,
         .exit = pdm_led_driver_exit,
     },
-    {}  /* end of array */
 };
 
 /**

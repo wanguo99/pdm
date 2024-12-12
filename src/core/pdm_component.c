@@ -2,13 +2,14 @@
 #include "pdm_component.h"
 
 /**
- * @brief 注册一个组件
+ * @brief Registers a single PDM component.
  *
- * 该函数用于注册单个 PDM 组件，调用其初始化函数并将其添加到组件链表中。
+ * This function registers a single PDM component by calling its initialization function and adding it to the
+ * component list.
  *
- * @param driver 要注册的组件结构体指针
- * @param list 组件链表头指针
- * @return 成功返回 0，失败返回负错误码
+ * @param driver Pointer to the component structure to register.
+ * @param list Pointer to the head of the component list.
+ * @return 0 on success, negative error code on failure.
  */
 static int pdm_component_register_single(struct pdm_component *driver, struct list_head *list) {
     int status = 0;
@@ -17,9 +18,12 @@ static int pdm_component_register_single(struct pdm_component *driver, struct li
         status = driver->init();
         if (status) {
             if (driver->ignore_failures) {
-                OSA_WARN("Failed to register component <%s>, status = %d.\n", driver->name ? driver->name : "Unknown", status);
+                OSA_WARN("Failed to register component <%s>, status = %d.\n",
+                         driver->name ? driver->name : "Unknown", status);
+                return status;
             } else {
-                OSA_ERROR("Failed to register component <%s>, status = %d.\n", driver->name ? driver->name : "Unknown", status);
+                OSA_ERROR("Failed to register component <%s>, status = %d.\n",
+                          driver->name ? driver->name : "Unknown", status);
                 return status;
             }
         }
@@ -30,47 +34,53 @@ static int pdm_component_register_single(struct pdm_component *driver, struct li
 }
 
 /**
- * @brief 卸载一个组件
+ * @brief Unregisters a single PDM component.
  *
- * 该函数用于卸载单个 PDM 组件，调用其退出函数并将其从组件链表中移除。
+ * This function unregisters a single PDM component by calling its exit function and removing it from the
+ * component list.
  *
- * @param driver 要卸载的组件结构体指针
+ * @param driver Pointer to the component structure to unregister.
  */
-static void pdm_component_unregister_single(struct pdm_component *driver) {
+static void pdm_component_unregister_single(struct pdm_component *driver, struct list_head *list) {
     if (driver->status && driver->exit) {
         driver->exit();
     }
-    list_del(&driver->list);
+
+    if (!list_empty(&driver->list)) {
+        list_del(&driver->list);
+    }
 }
 
 /**
- * @brief 卸载链表中所有的组件
+ * @brief Unregisters all components in the given list.
  *
- * 该函数用于卸载所有已注册的 PDM 组件，依次调用每个组件的退出函数。
+ * This function unregisters all registered PDM components by calling their exit functions in reverse order.
  *
- * @param list 组件链表头指针
+ * @param list Pointer to the head of the component list.
  */
 void pdm_component_unregister(struct list_head *list) {
     struct pdm_component *driver, *tmp;
 
-    if (!list) {
+    if (!list || list_empty(list)) {
         OSA_ERROR("Invalid or uninitialized list pointer.\n");
         return;
     }
 
     list_for_each_entry_safe_reverse(driver, tmp, list, list) {
-        pdm_component_unregister_single(driver);
+        pdm_component_unregister_single(driver, list);
     }
 }
 
 /**
- * @brief 注册数组中所有的组件并保存至链表
+ * @brief Registers all components specified in the params structure and adds them to the list.
  *
- * 该函数用于注册所有 PDM 组件，依次调用每个组件的初始化函数。
- * 根据 `ignore_failures` 参数决定是否忽略某些组件初始化失败的情况。
+ * This function registers all PDM components specified in the params structure by calling their initialization
+ * functions in sequence.
+ * If any component fails to initialize and ignore_failures is false, it will stop further registration and clean up
+ * previously registered components.
  *
- * @param params 组件注册参数结构体指针
- * @return 成功返回 0，失败返回负错误码
+ * @param params Pointer to the pdm_component_params structure containing registration details.
+ * @return 0 on success, negative error code on failure.
  */
 int pdm_component_register(struct pdm_component_params *params) {
     int i, status = 0;
@@ -87,7 +97,6 @@ int pdm_component_register(struct pdm_component_params *params) {
                       params->components[i].name ? params->components[i].name : "Unknown", status);
             pdm_component_unregister(params->list);
             return status;
-
         }
     }
     return 0;
