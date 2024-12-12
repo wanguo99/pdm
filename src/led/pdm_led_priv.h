@@ -18,6 +18,16 @@
 #define PDM_LED_NAME "led"
 
 /**
+ * @def PDM_LED_COMPATIBLE_GPIO
+ * @def PDM_LED_COMPATIBLE_PWM
+ *
+ * @brief Compatibility strings for different types of PDM LED devices.
+ */
+#define PDM_LED_COMPATIBLE_GPIO     "led,pdm-device-gpio"
+#define PDM_LED_COMPATIBLE_PWM      "led,pdm-device-pwm"
+
+
+/**
  * @struct pdm_led_operations
  * @brief PDM LED Device Operations Structure
  *

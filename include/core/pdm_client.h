@@ -33,6 +33,28 @@ struct pdm_client {
 };
 
 /**
+ * @brief Gets the private data associated with the device.
+ *
+ * @param client Pointer to the PDM Client.
+ * @return Pointer to the private data.
+ */
+static inline void *pdm_client_get_devdata(struct pdm_client *client)
+{
+    return dev_get_drvdata(&client->dev);
+}
+
+/**
+ * @brief Sets the private data associated with the device.
+ *
+ * @param client Pointer to the PDM Client.
+ * @param data Pointer to the private data.
+ */
+static inline void pdm_client_set_devdata(struct pdm_client *client, void *data)
+{
+    dev_set_drvdata(&client->dev, data);
+}
+
+/**
  * @brief Registers a PDM Client device.
  *
  * This function registers a new PDM Client device with the system.

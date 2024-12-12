@@ -5,7 +5,6 @@
 
 static struct pdm_adapter *led_adapter = NULL;
 
-#if 0
 /**
  * @brief Finds a PDM client by index.
  *
@@ -134,7 +133,35 @@ static ssize_t pdm_led_write(struct file *filp, const char __user *buf, size_t c
 
     return count;
 }
-#endif
+
+/**
+ * @brief Setup the PDM LED device.
+ *
+ * @param client Pointer to the pdm_client structure.
+ * @return Returns 0 on success; negative error code on failure.
+ */
+static int pdm_led_setup(struct pdm_client *client)
+{
+    int status;
+
+    if (!client) {
+        OSA_ERROR("invalid argument\n");
+        return -EINVAL;
+    }
+
+    if (device_is_compatible(&client->pdmdev->dev, PDM_LED_COMPATIBLE_GPIO)) {
+        status = pdm_led_gpio_setup(client);
+        if (status) {
+            OSA_ERROR("Failed to setup GPIO PDM Led\n");
+            return status;
+        }
+    } else {
+        OSA_ERROR("Unsupport device type\n");
+        return -ENOTSUPP;
+    }
+
+    return 0;
+}
 
 /**
  * @brief Probes the LED PDM device.
@@ -149,7 +176,7 @@ static int pdm_led_device_probe(struct pdm_device *pdmdev)
     struct pdm_client *client;
     int status;
 
-    client = pdm_client_alloc(sizeof(void *));
+    client = pdm_client_alloc(sizeof(struct pdm_led_priv));
     if (!client) {
         OSA_ERROR("LED Client Alloc Failed\n");
         return -ENOMEM;
@@ -157,15 +184,28 @@ static int pdm_led_device_probe(struct pdm_device *pdmdev)
 
     client->pdmdev = pdmdev;
     pdmdev->client = client;
+    client->fops.write = pdm_led_write;
+    client->fops.unlocked_ioctl = pdm_led_ioctl;
     status = pdm_client_register(led_adapter, client);
     if (status) {
         OSA_ERROR("LED Adapter Add Device Failed, status=%d\n", status);
-        pdm_client_free(client);
-        return status;
+        goto err_client_free;
+    }
+
+    status = pdm_led_setup(client);
+    if (status) {
+        OSA_ERROR("PDM LED setup Failed\n");
+        goto err_client_unregister;
     }
 
     OSA_DEBUG("LED PDM Device Probed\n");
     return 0;
+
+err_client_unregister:
+    pdm_client_unregister(led_adapter, client);
+err_client_free:
+    pdm_client_free(client);
+    return status;
 }
 
 /**
@@ -188,8 +228,8 @@ static void pdm_led_device_remove(struct pdm_device *pdmdev)
  * Defines the supported device tree compatible properties.
  */
 static const struct of_device_id of_pdm_led_match[] = {
-    { .compatible = "led,pdm-device-pwm", },
-    { .compatible = "led,pdm-device-gpio", },
+    { .compatible = PDM_LED_COMPATIBLE_GPIO, },
+    { .compatible = PDM_LED_COMPATIBLE_PWM, },
     {},
 };
 MODULE_DEVICE_TABLE(of, of_pdm_led_match);

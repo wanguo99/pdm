@@ -1,7 +1,6 @@
 #include "pdm.h"
 #include "pdm_led_priv.h"
 
-#if 0
 /**
  * @brief Sets the state of a GPIO LED.
  *
@@ -28,7 +27,6 @@ static int pdm_led_gpio_set_state(struct pdm_client *client, int state)
 static const struct pdm_led_operations pdm_device_led_ops_gpio = {
     .set_state = pdm_led_gpio_set_state,
 };
-#endif
 
 /**
  * @brief Initializes GPIO settings for a PDM device.
@@ -40,12 +38,21 @@ static const struct pdm_led_operations pdm_device_led_ops_gpio = {
  */
 int pdm_led_gpio_setup(struct pdm_client *client)
 {
+    struct pdm_led_priv *led_priv;
+
+    if (!client) {
+        OSA_ERROR("Invalid client\n");
+    }
+
     OSA_INFO("Initializing GPIO setup for device: %s\n", dev_name(&client->dev));
 
-    // Set the operation functions for this client
-    // client->ops = &pdm_device_led_ops_gpio;
+    led_priv = (struct pdm_led_priv *)pdm_client_get_devdata(client);
+    if (!led_priv) {
+        OSA_ERROR("Get PDM Client DevData Failed\n");
+        return -ENOMEM;
+    }
 
-    // Initialize GPIO hardware here if necessary
+    led_priv->ops = &pdm_device_led_ops_gpio;
 
     return 0;
 }
