@@ -87,7 +87,7 @@
 /*
  * Disable log printing macro.
  */
-#define OSA_PRINTK(level, fmt, ...) /* 日志禁用时不输出任何内容 */
+#define OSA_PRINTK(level, fmt, ...)
 #endif
 
 /*
