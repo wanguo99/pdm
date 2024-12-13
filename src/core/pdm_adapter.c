@@ -261,12 +261,12 @@ int pdm_adapter_register(struct pdm_adapter *adapter, const char *name)
         goto err_device_put;
     }
 
+    mutex_init(&adapter->ida_mutex_lock);
+    ida_init(&adapter->client_ida);
+
     mutex_lock(&pdm_adapter_list_mutex_lock);
     list_add_tail(&adapter->entry, &pdm_adapter_list);
     mutex_unlock(&pdm_adapter_list_mutex_lock);
-
-    mutex_init(&adapter->ida_mutex_lock);
-    ida_init(&adapter->client_ida);
 
     OSA_DEBUG("PDM Adapter %s Registered\n", name);
 
