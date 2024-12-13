@@ -7,14 +7,9 @@
 #define PDM_CLIENT_DEVICE_NAME              "pdm_client"
 
 /**
- * @brief Minimum minor number for PDM Client devices.
+ * @brief minor count for PDM Client devices.
  */
-#define PDM_CLIENT_MIN_MINOR                (0)
-
-/**
- * @brief Maximum minor number for PDM Client devices.
- */
-#define PDM_CLIENT_MAX_MINOR                (1023)
+#define PDM_CLIENT_MINORS                   (MINORMASK + 1)
 
 /**
  * @brief PDM Client structure.
