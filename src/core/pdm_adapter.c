@@ -70,22 +70,45 @@ static struct mutex pdm_adapter_list_mutex_lock = __MUTEX_INITIALIZER(pdm_adapte
 /**
  * @brief Sysfs attribute for showing device name.
  */
+static ssize_t client_list_show(struct device *dev, struct device_attribute *da, char *buf)
+{
+    struct pdm_adapter *adapter = dev_to_pdm_adapter(dev);
+    struct pdm_client *client;
+
+    down_read(&adapter->rwlock);
+    sysfs_emit(buf, "PDM Adapter %s's client list:\n", dev_name(&adapter->dev));
+    list_for_each_entry(client, &adapter->client_list, entry) {
+        if (sysfs_emit(buf, "%s\n", dev_name(&client->dev))) {
+            OSA_WARN("sysfs_emit error\n");
+        }
+    }
+    up_read(&adapter->rwlock);
+
+    return 0;
+}
+static DEVICE_ATTR_RO(client_list);
+
+/**
+ * @brief Sysfs attribute for showing device name.
+ */
 static ssize_t name_show(struct device *dev, struct device_attribute *da, char *buf)
 {
     struct pdm_adapter *adapter = dev_to_pdm_adapter(dev);
-    ssize_t status;
 
     down_read(&adapter->rwlock);
-    status = sysfs_emit(buf, "%s\n", dev_name(&adapter->dev));
+    if (sysfs_emit(buf, "%s\n", dev_name(&adapter->dev))) {
+        OSA_WARN("sysfs_emit error\n");
+    }
     up_read(&adapter->rwlock);
 
-    OSA_INFO("Device name: %s.\n", dev_name(&adapter->dev));
-    return status;
+    OSA_INFO("PDM Adapter name: %s.\n", dev_name(&adapter->dev));
+    return 0;
 }
 static DEVICE_ATTR_RO(name);
 
 static struct attribute *pdm_adapter_device_attrs[] = {
     &dev_attr_name.attr,
+    &dev_attr_client_list.attr,
     NULL,
 };
 ATTRIBUTE_GROUPS(pdm_adapter_device);
