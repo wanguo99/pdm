@@ -29,8 +29,8 @@ struct pdm_adapter {
     struct list_head entry;                 /**< List node handle */
     struct list_head client_list;           /**< List of child devices */
     struct mutex client_list_mutex_lock;    /**< Mutex to protect the client list */
-    struct idr device_idr;                  /**< IDR for allocating unique IDs to clients */
-    struct mutex idr_mutex_lock;            /**< Mutex to protect the IDR */
+    struct ida client_ida;                  /**< IDA for allocating unique IDs to clients */
+    struct mutex ida_mutex_lock;            /**< Mutex to protect the IDA */
     struct device dev;                      /**< Kernel device structure */
     struct rw_semaphore rwlock;             /**< Read-write semaphore for sysfs attribute access */
 };
