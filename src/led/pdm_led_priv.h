@@ -15,7 +15,7 @@
  * @def PDM_LED_NAME
  * @brief Controller name
  */
-#define PDM_LED_NAME "led"
+#define PDM_LED_NAME "pdm_led"
 
 /**
  * @def PDM_LED_COMPATIBLE_GPIO

@@ -101,6 +101,7 @@ static const struct device_type pdm_adapter_device_type = {
 static void pdm_adapter_dev_release(struct device *dev)
 {
     struct pdm_adapter *adapter = dev_to_pdm_adapter(dev);
+    WARN(!list_empty(&adapter->client_list), "Client list is not empty!");
     kfree(adapter);
 }
 
@@ -253,8 +254,7 @@ int pdm_adapter_register(struct pdm_adapter *adapter, const char *name)
     }
     mutex_unlock(&pdm_adapter_list_mutex_lock);
 
-    adapter->dev.type = &pdm_adapter_device_type;
-    dev_set_name(&adapter->dev, "pdm_%s", name);
+    dev_set_name(&adapter->dev, "%s", name);
     status = device_add(&adapter->dev);
     if (status) {
         OSA_ERROR("Failed to add device: %s, error: %d.\n", dev_name(&adapter->dev), status);
@@ -324,6 +324,7 @@ struct pdm_adapter *pdm_adapter_alloc(unsigned int data_size)
 
     device_initialize(&adapter->dev);
     adapter->dev.release = pdm_adapter_dev_release;
+    adapter->dev.type = &pdm_adapter_device_type;
     pdm_adapter_devdata_set(adapter, (void *)adapter + sizeof(struct pdm_adapter));
 
     INIT_LIST_HEAD(&adapter->client_list);
@@ -341,7 +342,7 @@ struct pdm_adapter *pdm_adapter_alloc(unsigned int data_size)
 void pdm_adapter_free(struct pdm_adapter *adapter)
 {
     if (adapter) {
-        kfree(adapter);
+        pdm_adapter_put(adapter);
     }
 }
 

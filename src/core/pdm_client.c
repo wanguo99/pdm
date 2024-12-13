@@ -250,10 +250,15 @@ int pdm_client_register(struct pdm_adapter *adapter, struct pdm_client *client)
         return -EINVAL;
     }
 
+    if (pdm_adapter_get(adapter)) {
+        OSA_ERROR("Failed to get adapter.\n");
+        return -EBUSY;
+    }
+
     status = pdm_adapter_id_alloc(adapter, client);
     if (status) {
         OSA_ERROR("Alloc id for client failed: %d\n", status);
-        return status;
+        goto err_put_adapter;
     }
 
     client->adapter = adapter;
@@ -272,6 +277,9 @@ int pdm_client_register(struct pdm_adapter *adapter, struct pdm_client *client)
 
 err_free_id:
     pdm_adapter_id_free(adapter, client);
+
+err_put_adapter:
+    pdm_adapter_put(adapter);
     return status;
 }
 
@@ -297,6 +305,7 @@ void pdm_client_unregister(struct pdm_adapter *adapter, struct pdm_client *clien
 
     pdm_client_device_unregister(client);
     pdm_adapter_id_free(adapter, client);
+    pdm_adapter_put(adapter);
 }
 
 /**
