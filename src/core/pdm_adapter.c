@@ -125,7 +125,7 @@ static struct attribute *pdm_adapter_device_attrs[] = {
 };
 ATTRIBUTE_GROUPS(pdm_adapter_device);
 
-static const struct class pdm_adapter_class = {
+static struct class pdm_adapter_class = {
     .name   = "pdm_adapter",
     .dev_groups = pdm_adapter_device_groups,
 };
