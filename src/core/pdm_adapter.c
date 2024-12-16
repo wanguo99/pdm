@@ -125,9 +125,9 @@ static struct attribute *pdm_adapter_device_attrs[] = {
 };
 ATTRIBUTE_GROUPS(pdm_adapter_device);
 
-static const struct device_type pdm_adapter_device_type = {
+static const struct class pdm_adapter_class = {
     .name   = "pdm_adapter",
-    .groups = pdm_adapter_device_groups,
+    .dev_groups = pdm_adapter_device_groups,
 };
 
 /**
@@ -359,7 +359,7 @@ struct pdm_adapter *pdm_adapter_alloc(unsigned int data_size)
 
     device_initialize(&adapter->dev);
     adapter->dev.release = pdm_adapter_dev_release;
-    adapter->dev.type = &pdm_adapter_device_type;
+    adapter->dev.class = &pdm_adapter_class;
     pdm_adapter_devdata_set(adapter, (void *)adapter + sizeof(struct pdm_adapter));
 
     INIT_LIST_HEAD(&adapter->client_list);
@@ -390,9 +390,17 @@ int pdm_adapter_init(void)
 {
     int status;
 
+    status = class_register(&pdm_adapter_class);
+    if (status < 0) {
+        OSA_ERROR("Failed to register PDM Adapter Class, error: %d.\n", status);
+        return status;
+    }
+    OSA_DEBUG("PDM Adapter Class registered.\n");
+
     status = pdm_adapter_drivers_register();
     if (status < 0) {
         OSA_ERROR("Failed to register PDM Adapter Drivers, error: %d.\n", status);
+        class_unregister(&pdm_adapter_class);
         return status;
     }
 
@@ -406,6 +414,7 @@ int pdm_adapter_init(void)
 void pdm_adapter_exit(void)
 {
     pdm_adapter_drivers_unregister();
+    class_unregister(&pdm_adapter_class);
     OSA_INFO("PDM Adapter unregistered.\n");
 }
 
