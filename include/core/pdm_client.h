@@ -41,7 +41,7 @@ static inline bool pdm_client_is_compatible(struct pdm_client *client, const cha
     if ((!client) || (!client->pdmdev) || (!client->pdmdev->dev.parent)) {
         return false;
     }
-    return device_is_compatible(client->pdmdev->dev.parent, compat);
+    return of_device_is_compatible(client->pdmdev->dev.parent->of_node, compat);
 }
 
 /**
