@@ -20,7 +20,7 @@ static int pdm_component_register_single(struct pdm_component *driver, struct li
             if (driver->ignore_failures) {
                 OSA_WARN("Failed to register component <%s>, status = %d.\n",
                          driver->name ? driver->name : "Unknown", status);
-                return status;
+                return 0;
             } else {
                 OSA_ERROR("Failed to register component <%s>, status = %d.\n",
                           driver->name ? driver->name : "Unknown", status);

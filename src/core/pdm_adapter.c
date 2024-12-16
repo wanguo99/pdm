@@ -74,19 +74,32 @@ static ssize_t client_list_show(struct device *dev, struct device_attribute *da,
 {
     struct pdm_adapter *adapter = dev_to_pdm_adapter(dev);
     struct pdm_client *client;
+    ssize_t status = 0;
+    ssize_t offset = 0;
 
     down_read(&adapter->rwlock);
-    sysfs_emit(buf, "PDM Adapter %s's client list:\n", dev_name(&adapter->dev));
-    list_for_each_entry(client, &adapter->client_list, entry) {
-        if (sysfs_emit(buf, "%s\n", dev_name(&client->dev))) {
-            OSA_WARN("sysfs_emit error\n");
-        }
+
+    status = sysfs_emit_at(buf, offset, "PDM Adapter %s's client list:\n", dev_name(&adapter->dev));
+    if (status < 0) {
+        goto unlock;
     }
+    offset += status;
+
+    list_for_each_entry(client, &adapter->client_list, entry) {
+        status = sysfs_emit_at(buf, offset, " - %s\n", dev_name(&client->dev));
+        if (status < 0) {
+            goto unlock;
+        }
+        offset += status;
+    }
+
+unlock:
     up_read(&adapter->rwlock);
 
-    return 0;
+    return offset ? : status;
 }
 static DEVICE_ATTR_RO(client_list);
+
 
 /**
  * @brief Sysfs attribute for showing device name.
@@ -94,17 +107,16 @@ static DEVICE_ATTR_RO(client_list);
 static ssize_t name_show(struct device *dev, struct device_attribute *da, char *buf)
 {
     struct pdm_adapter *adapter = dev_to_pdm_adapter(dev);
+    ssize_t status;
 
     down_read(&adapter->rwlock);
-    if (sysfs_emit(buf, "%s\n", dev_name(&adapter->dev))) {
-        OSA_WARN("sysfs_emit error\n");
-    }
+    status = sysfs_emit(buf, "%s\n", dev_name(&adapter->dev));
     up_read(&adapter->rwlock);
 
-    OSA_INFO("PDM Adapter name: %s.\n", dev_name(&adapter->dev));
-    return 0;
+    return status;
 }
 static DEVICE_ATTR_RO(name);
+
 
 static struct attribute *pdm_adapter_device_attrs[] = {
     &dev_attr_name.attr,

@@ -282,7 +282,6 @@ void pdm_led_driver_exit(void)
 {
     pdm_bus_unregister_driver(&pdm_led_driver);
     pdm_adapter_unregister(led_adapter);
-    pdm_adapter_free(led_adapter);
     OSA_INFO("LED PDM Adapter Driver Exited\n");
 }
 

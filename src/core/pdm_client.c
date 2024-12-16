@@ -250,7 +250,7 @@ int pdm_client_register(struct pdm_adapter *adapter, struct pdm_client *client)
         return -EINVAL;
     }
 
-    if (pdm_adapter_get(adapter)) {
+    if (!pdm_adapter_get(adapter)) {
         OSA_ERROR("Failed to get adapter.\n");
         return -EBUSY;
     }
