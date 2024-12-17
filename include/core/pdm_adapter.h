@@ -51,7 +51,7 @@ struct pdm_adapter {
  * @param adapter Pointer to the PDM Adapter structure.
  * @return Pointer to the private data.
  */
-void *pdm_adapter_devdata_get(struct pdm_adapter *adapter);
+void *pdm_adapter_drvdata_get(struct pdm_adapter *adapter);
 
 /**
  * @brief Sets private data for a PDM Adapter.
@@ -61,17 +61,35 @@ void *pdm_adapter_devdata_get(struct pdm_adapter *adapter);
  * @param adapter Pointer to the PDM Adapter structure.
  * @param data Pointer to the private data.
  */
-void pdm_adapter_devdata_set(struct pdm_adapter *adapter, void *data);
+void pdm_adapter_drvdata_set(struct pdm_adapter *adapter, void *data);
 
 /**
  * @brief Gets a reference to a PDM Adapter.
  *
- * This function increments the reference count of a PDM Adapter.
- *
  * @param adapter Pointer to the PDM Adapter structure.
  * @return Pointer to the PDM Adapter structure, or NULL on failure.
  */
-struct pdm_adapter *pdm_adapter_get(struct pdm_adapter *adapter);
+static inline struct pdm_adapter *pdm_adapter_get(struct pdm_adapter *adapter)
+{
+    if (!adapter || !get_device(&adapter->dev)) {
+        OSA_ERROR("Invalid input parameter or unable to get device reference (adapter: %p).\n", adapter);
+        return NULL;
+    }
+
+    return adapter;
+}
+
+/**
+ * @brief Releases a reference to a PDM Adapter.
+ *
+ * @param adapter Pointer to the PDM Adapter structure.
+ */
+static inline void pdm_adapter_put(struct pdm_adapter *adapter)
+{
+    if (adapter) {
+        put_device(&adapter->dev);
+    }
+}
 
 /**
  * @brief Allocates a unique ID for a PDM Client.
@@ -132,15 +150,6 @@ void pdm_adapter_unregister(struct pdm_adapter *adapter);
  * @return Pointer to the allocated PDM Adapter structure, or NULL on failure.
  */
 struct pdm_adapter *pdm_adapter_alloc(unsigned int size);
-
-/**
- * @brief Frees a PDM Adapter structure.
- *
- * This function frees an allocated PDM Adapter structure and its associated resources.
- *
- * @param adapter Pointer to the PDM Adapter structure.
- */
-void pdm_adapter_free(struct pdm_adapter *adapter);
 
 /**
  * @brief Initializes the PDM Adapter module.

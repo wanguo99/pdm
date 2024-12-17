@@ -58,6 +58,68 @@ void pdm_adapter_drivers_unregister(void)
 }
 
 /**
+ * @brief Allocates a unique ID for a PDM Client.
+ *
+ * @param adapter Pointer to the PDM Adapter structure.
+ * @param client Pointer to the PDM Client structure.
+ * @return 0 on success, negative error code on failure.
+ */
+int pdm_adapter_id_alloc(struct pdm_adapter *adapter, struct pdm_client *client)
+{
+    int id;
+    int index = 0;
+
+    if (!client || !adapter) {
+        OSA_ERROR("Invalid input parameters.\n");
+        return -EINVAL;
+    }
+
+    if (!of_property_read_s32(client->pdmdev->dev.parent->of_node, "index", &index)) {
+        if (client->force_dts_id && index < 0) {
+            OSA_ERROR("Cannot get valid index from dts, force_dts_id was set\n");
+            return -EINVAL;
+        }
+    } else {
+        OSA_DEBUG("Cannot get index from dts\n");
+    }
+
+    mutex_lock(&adapter->ida_mutex_lock);
+    id = ida_alloc_range(&adapter->client_ida, index, PDM_CLIENT_MINORS, GFP_KERNEL);
+    mutex_unlock(&adapter->ida_mutex_lock);
+
+    if (id < 0) {
+        if (id == -ENOSPC) {
+            OSA_ERROR("No available IDs in the range.\n");
+            return -EBUSY;
+        } else {
+            OSA_ERROR("Failed to allocate ID: %d.\n", id);
+            return id;
+        }
+    }
+
+    client->index = id;
+    return 0;
+}
+
+/**
+ * @brief Frees the ID allocated for a PDM Client.
+ *
+ * @param adapter Pointer to the PDM Adapter structure.
+ * @param client Pointer to the PDM Client structure.
+ */
+void pdm_adapter_id_free(struct pdm_adapter *adapter, struct pdm_client *client)
+{
+    if (!adapter || !client) {
+        OSA_ERROR("Invalid input parameters.\n");
+        return;
+    }
+
+    mutex_lock(&adapter->ida_mutex_lock);
+    ida_free(&adapter->client_ida, client->index);
+    mutex_unlock(&adapter->ida_mutex_lock);
+}
+
+/**
  * @brief List of registered PDM Adapters.
  */
 static struct list_head pdm_adapter_list = LIST_HEAD_INIT(pdm_adapter_list);
@@ -146,7 +208,7 @@ static void pdm_adapter_dev_release(struct device *dev)
  * @param adapter Pointer to the PDM Adapter structure.
  * @return Pointer to the private data.
  */
-void *pdm_adapter_devdata_get(struct pdm_adapter *adapter)
+void *pdm_adapter_drvdata_get(struct pdm_adapter *adapter)
 {
     if (!adapter) {
         OSA_ERROR("Invalid input parameter (adapter: %p).\n", adapter);
@@ -162,7 +224,7 @@ void *pdm_adapter_devdata_get(struct pdm_adapter *adapter)
  * @param adapter Pointer to the PDM Adapter structure.
  * @param data Pointer to the private data.
  */
-void pdm_adapter_devdata_set(struct pdm_adapter *adapter, void *data)
+void pdm_adapter_drvdata_set(struct pdm_adapter *adapter, void *data)
 {
     if (!adapter) {
         OSA_ERROR("Invalid input parameter (adapter: %p).\n", adapter);
@@ -172,94 +234,19 @@ void pdm_adapter_devdata_set(struct pdm_adapter *adapter, void *data)
     dev_set_drvdata(&adapter->dev, data);
 }
 
-/**
- * @brief Allocates a unique ID for a PDM Client.
- *
- * @param adapter Pointer to the PDM Adapter structure.
- * @param client Pointer to the PDM Client structure.
- * @return 0 on success, negative error code on failure.
- */
-int pdm_adapter_id_alloc(struct pdm_adapter *adapter, struct pdm_client *client)
+static int pdm_adapter_is_exist(const char *name)
 {
-    int id;
-    int index = 0;
+    struct pdm_adapter *existing_adapter;
 
-    if (!client || !adapter) {
-        OSA_ERROR("Invalid input parameters.\n");
-        return -EINVAL;
-    }
-
-    if (!of_property_read_s32(client->pdmdev->dev.parent->of_node, "index", &index)) {
-        if (client->force_dts_id && index < 0) {
-            OSA_ERROR("Cannot get valid index from dts, force_dts_id was set\n");
-            return -EINVAL;
-        }
-    } else {
-        OSA_DEBUG("Cannot get index from dts\n");
-    }
-
-    mutex_lock(&adapter->ida_mutex_lock);
-    id = ida_alloc_range(&adapter->client_ida, index, PDM_CLIENT_MINORS, GFP_KERNEL);
-    mutex_unlock(&adapter->ida_mutex_lock);
-
-    if (id < 0) {
-        if (id == -ENOSPC) {
-            OSA_ERROR("No available IDs in the range.\n");
-            return -EBUSY;
-        } else {
-            OSA_ERROR("Failed to allocate ID: %d.\n", id);
-            return id;
+    mutex_lock(&pdm_adapter_list_mutex_lock);
+    list_for_each_entry(existing_adapter, &pdm_adapter_list, entry) {
+        if (!strcmp(dev_name(&existing_adapter->dev), name)) {
+            mutex_unlock(&pdm_adapter_list_mutex_lock);
+            return -EEXIST;
         }
     }
-
-    client->index = id;
+    mutex_unlock(&pdm_adapter_list_mutex_lock);
     return 0;
-}
-
-/**
- * @brief Frees the ID allocated for a PDM Client.
- *
- * @param adapter Pointer to the PDM Adapter structure.
- * @param client Pointer to the PDM Client structure.
- */
-void pdm_adapter_id_free(struct pdm_adapter *adapter, struct pdm_client *client)
-{
-    if (!adapter || !client) {
-        OSA_ERROR("Invalid input parameters.\n");
-        return;
-    }
-
-    mutex_lock(&adapter->ida_mutex_lock);
-    ida_free(&adapter->client_ida, client->index);
-    mutex_unlock(&adapter->ida_mutex_lock);
-}
-
-/**
- * @brief Gets a reference to a PDM Adapter.
- *
- * @param adapter Pointer to the PDM Adapter structure.
- * @return Pointer to the PDM Adapter structure, or NULL on failure.
- */
-struct pdm_adapter *pdm_adapter_get(struct pdm_adapter *adapter)
-{
-    if (!adapter || !get_device(&adapter->dev)) {
-        OSA_ERROR("Invalid input parameter or unable to get device reference (adapter: %p).\n", adapter);
-        return NULL;
-    }
-
-    return adapter;
-}
-
-/**
- * @brief Releases a reference to a PDM Adapter.
- *
- * @param adapter Pointer to the PDM Adapter structure.
- */
-void pdm_adapter_put(struct pdm_adapter *adapter)
-{
-    if (adapter) {
-        put_device(&adapter->dev);
-    }
 }
 
 /**
@@ -271,7 +258,6 @@ void pdm_adapter_put(struct pdm_adapter *adapter)
  */
 int pdm_adapter_register(struct pdm_adapter *adapter, const char *name)
 {
-    struct pdm_adapter *existing_adapter;
     int status;
 
     if (!adapter || !name) {
@@ -279,15 +265,10 @@ int pdm_adapter_register(struct pdm_adapter *adapter, const char *name)
         return -EINVAL;
     }
 
-    mutex_lock(&pdm_adapter_list_mutex_lock);
-    list_for_each_entry(existing_adapter, &pdm_adapter_list, entry) {
-        if (!strcmp(dev_name(&existing_adapter->dev), name)) {
-            OSA_ERROR("Adapter already exists: %s.\n", name);
-            mutex_unlock(&pdm_adapter_list_mutex_lock);
-            return -EEXIST;
-        }
+    if (pdm_adapter_is_exist(name)) {
+        OSA_ERROR("Adapter already exists: %s.\n", name);
+        return -EEXIST;
     }
-    mutex_unlock(&pdm_adapter_list_mutex_lock);
 
     dev_set_name(&adapter->dev, "%s", name);
     status = device_add(&adapter->dev);
@@ -339,6 +320,7 @@ void pdm_adapter_unregister(struct pdm_adapter *adapter)
     mutex_unlock(&pdm_adapter_list_mutex_lock);
 
     device_unregister(&adapter->dev);
+    adapter = NULL;
 }
 
 /**
@@ -356,29 +338,17 @@ struct pdm_adapter *pdm_adapter_alloc(unsigned int data_size)
         OSA_ERROR("Failed to allocate memory for pdm_adapter.\n");
         return NULL;
     }
+    pdm_adapter_drvdata_set(adapter, (void *)adapter + sizeof(struct pdm_adapter));
 
-    device_initialize(&adapter->dev);
-    adapter->dev.release = pdm_adapter_dev_release;
     adapter->dev.class = &pdm_adapter_class;
-    pdm_adapter_devdata_set(adapter, (void *)adapter + sizeof(struct pdm_adapter));
+    adapter->dev.release = pdm_adapter_dev_release;
+    device_initialize(&adapter->dev);
 
     INIT_LIST_HEAD(&adapter->client_list);
     mutex_init(&adapter->client_list_mutex_lock);
     init_rwsem(&adapter->rwlock);
 
     return adapter;
-}
-
-/**
- * @brief Frees a PDM Adapter structure.
- *
- * @param adapter Pointer to the PDM Adapter structure.
- */
-void pdm_adapter_free(struct pdm_adapter *adapter)
-{
-    if (adapter) {
-        pdm_adapter_put(adapter);
-    }
 }
 
 /**

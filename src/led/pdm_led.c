@@ -254,7 +254,7 @@ int pdm_led_driver_init(void)
     status = pdm_adapter_register(led_adapter, PDM_LED_NAME);
     if (status) {
         OSA_ERROR("Failed to register LED PDM Adapter, status=%d\n", status);
-        goto err_adapter_free;
+        return status;
     }
 
     status = pdm_bus_register_driver(THIS_MODULE, &pdm_led_driver);
@@ -268,8 +268,6 @@ int pdm_led_driver_init(void)
 
 err_adapter_unregister:
     pdm_adapter_unregister(led_adapter);
-err_adapter_free:
-    pdm_adapter_free(led_adapter);
     return status;
 }
 
