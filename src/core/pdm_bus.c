@@ -189,11 +189,8 @@ static void pdm_bus_device_remove(struct device *dev)
  * @param drv Pointer to the driver.
  * @return Returns 1 if a match is found; otherwise, returns 0.
  */
-static int pdm_bus_device_real_match(struct device *dev, const struct device_driver *drv) {
-    if (dev->type != &pdm_device_type) {
-        return 0;
-    }
-
+static int pdm_bus_device_real_match(struct device *dev, const struct device_driver *drv)
+{
     /* Attempt an OF style match */
     if (of_driver_match_device(dev->parent, drv)) {
         return 1;

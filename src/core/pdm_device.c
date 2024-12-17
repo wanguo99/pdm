@@ -93,59 +93,6 @@ static int pdm_device_verify(struct pdm_device *pdmdev)
     return 0;
 }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 0)
-static int pdm_device_uevent(struct device *dev, struct kobj_uevent_env *env)
-#else
-static int pdm_device_uevent(const struct device *dev, struct kobj_uevent_env *env)
-#endif
-{
-    struct pdm_device *pdmdev = dev_to_pdm_device(dev);
-    if (pdm_device_verify(pdmdev)) {
-        return -EINVAL;
-    }
-
-    OSA_DEBUG("Generating MODALIAS for device %s\n", dev_name(dev));
-    return add_uevent_var(env, "MODALIAS=pdm:%04X", pdmdev->id);
-}
-
-/**
- * @brief Shows the compatible string for the device.
- *
- * @param dev Pointer to the device structure.
- * @param da Pointer to the device attribute structure.
- * @param buf Output buffer.
- * @return Number of bytes written or -EINVAL on failure.
- */
-static ssize_t compatible_show(struct device *dev, struct device_attribute *da, char *buf)
-{
-    struct pdm_device *pdmdev = dev_to_pdm_device(dev);
-    if (pdm_device_verify(pdmdev)) {
-        return -EINVAL;
-    }
-
-    OSA_INFO("Showing compatible string for device %s\n", dev_name(dev));
-    return 0;
-
-    // TODO: Implement compatible parsing logic.
-    // return sysfs_emit(buf, "%s\n", pdmdev->physical_info.compatible);
-}
-static DEVICE_ATTR_RO(compatible);
-
-/**
- * @brief Attribute array for PDM devices.
- */
-static struct attribute *pdm_device_attrs[] = {
-    &dev_attr_compatible.attr,
-    NULL,
-};
-ATTRIBUTE_GROUPS(pdm_device);
-
-const struct device_type pdm_device_type = {
-    .name   = "pdm_device",
-    .groups = pdm_device_groups,
-    .uevent = pdm_device_uevent,
-};
-
 /**
  * @brief Releases resources associated with a PDM device.
  *
@@ -157,7 +104,7 @@ static void pdm_device_release(struct device *dev)
 {
     struct pdm_device *pdmdev = dev_to_pdm_device(dev);
     if (pdmdev) {
-        OSA_DEBUG("PDM Device Released: %s\n", dev_name(dev));
+        OSA_INFO("PDM Device Released: %s\n", dev_name(dev));
         kfree(pdmdev);
     }
 }
@@ -167,46 +114,29 @@ static void pdm_device_release(struct device *dev)
  *
  * @return Pointer to the allocated PDM device structure, or NULL on failure.
  */
-struct pdm_device *pdm_device_alloc(void)
+struct pdm_device *pdm_device_alloc(struct device *dev)
 {
     struct pdm_device *pdmdev;
-    int status;
+
+    if (!dev) {
+        OSA_ERROR("invalid device pointer.\n");
+        return ERR_PTR(-ENODEV);
+    }
 
     pdmdev = kzalloc(sizeof(*pdmdev), GFP_KERNEL);
     if (!pdmdev) {
         OSA_ERROR("Failed to allocate memory for PDM device.\n");
-        return NULL;
+        return ERR_PTR(-ENOMEM);
     }
 
-    status = pdm_bus_device_id_alloc(pdmdev);
-    if (status) {
-        OSA_ERROR("ID allocation failed, status %d\n", status);
-        kfree(pdmdev);
-        return NULL;
-    }
-
-    device_initialize(&pdmdev->dev);
+    pdmdev->dev.parent = dev;
     pdmdev->dev.bus = &pdm_bus_type;
-    pdmdev->dev.type = &pdm_device_type;
     pdmdev->dev.release = pdm_device_release;
 
+    device_initialize(&pdmdev->dev);
     return pdmdev;
 }
 
-/**
- * @brief Frees a PDM device structure.
- *
- * Decrements the device reference count; when it reaches zero, the device is freed.
- *
- * @param pdmdev Pointer to the PDM device structure.
- */
-void pdm_device_free(struct pdm_device *pdmdev)
-{
-    if (pdmdev) {
-        pdm_bus_device_id_free(pdmdev);
-        put_device(&pdmdev->dev);
-    }
-}
 /**
  * @brief Registers a PDM device.
  *
@@ -225,8 +155,13 @@ int pdm_device_register(struct pdm_device *pdmdev)
 
     if (pdm_bus_find_device_by_parent(pdmdev->dev.parent)) {
         OSA_ERROR("Device with parent %s already exists\n", dev_name(pdmdev->dev.parent));
-        status = -EEXIST;
-        goto err_out;
+        return -EEXIST;
+    }
+
+    status = pdm_bus_device_id_alloc(pdmdev);
+    if (status) {
+        OSA_ERROR("ID allocation failed, status %d\n", status);
+        return status;
     }
 
     dev_set_name(&pdmdev->dev, "pdmdev-%d", pdmdev->id);
@@ -240,8 +175,8 @@ int pdm_device_register(struct pdm_device *pdmdev)
     return 0;
 
 err_free_id:
+    pdm_device_put(pdmdev);
     pdm_bus_device_id_free(pdmdev);
-err_out:
     return status;
 }
 
@@ -255,12 +190,12 @@ err_out:
 void pdm_device_unregister(struct pdm_device *pdmdev)
 {
     if (!pdmdev) {
-        OSA_ERROR("Invalid PDM device pointer.\n");
         return;
     }
 
     OSA_DEBUG("Unregistering device %s.\n", dev_name(&pdmdev->dev));
     device_unregister(&pdmdev->dev);
+    pdm_bus_device_id_free(pdmdev);
 }
 
 /**

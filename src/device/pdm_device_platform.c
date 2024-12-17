@@ -17,17 +17,15 @@ static int pdm_device_platform_probe(struct platform_device *pdev) {
 
     OSA_DEBUG("PDM Device PLATFORM Device Probe.\n");
 
-    pdmdev = pdm_device_alloc();
-    if (!pdmdev) {
+    pdmdev = pdm_device_alloc(&pdev->dev);
+    if (IS_ERR(pdmdev)) {
         OSA_ERROR("Failed to allocate pdm_device.\n");
-        return -ENOMEM;
+        return PTR_ERR(pdmdev);
     }
 
-    pdmdev->dev.parent = &pdev->dev;
     status = pdm_device_register(pdmdev);
     if (status) {
         OSA_ERROR("Failed to register pdm device, status=%d.\n", status);
-        pdm_device_free(pdmdev);
         return status;
     }
 

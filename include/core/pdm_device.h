@@ -7,13 +7,6 @@
 #include <linux/platform_device.h>
 
 /**
- * @brief Definition of the PDM device type.
- *
- * This variable defines the type for PDM devices.
- */
-extern const struct device_type pdm_device_type;
-
-/**
  * @brief Maximum length of device names.
  */
 #define PDM_DEVICE_NAME_SIZE (64)
@@ -43,11 +36,33 @@ struct pdm_device {
 #define dev_to_pdm_device(__dev) container_of(__dev, struct pdm_device, dev)
 
 /**
+ * @brief pdm_device_get.
+ *
+ * @param pdmdev Pointer to the PDM device structure.
+ * @return Pointer to the PDM device structure, or NULL on failure.
+ */
+static inline struct pdm_device *pdm_device_get(struct pdm_device *pdmdev)
+{
+	return (pdmdev && get_device(&pdmdev->dev)) ? pdmdev : NULL;
+}
+
+/**
+ * @brief pdm_device_put.
+ *
+ * @param pdmdev Pointer to the PDM device structure.
+ */
+static inline void pdm_device_put(struct pdm_device *pdmdev)
+{
+	if (pdmdev)
+		put_device(&pdmdev->dev);
+}
+
+/**
  * @brief Allocates a new PDM device structure.
  *
  * @return Pointer to the allocated PDM device structure, or NULL on failure.
  */
-struct pdm_device *pdm_device_alloc(void);
+struct pdm_device *pdm_device_alloc(struct device *dev);
 
 /**
  * @brief Frees a PDM device structure.

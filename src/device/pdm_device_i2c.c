@@ -28,17 +28,15 @@ static int pdm_device_i2c_real_probe(struct i2c_client *client, const struct i2c
     struct pdm_device *pdmdev;
     int status;
 
-    pdmdev = pdm_device_alloc();
-    if (!pdmdev) {
+    pdmdev = pdm_device_alloc(&client->dev);
+    if (IS_ERR(pdmdev)) {
         OSA_ERROR("Failed to allocate pdm_device.\n");
-        return -ENOMEM;
+        return PTR_ERR(pdmdev);
     }
 
-    pdmdev->dev.parent = &client->dev;
     status = pdm_device_register(pdmdev);
     if (status) {
         OSA_ERROR("Failed to register pdm device, status=%d.\n", status);
-        pdm_device_free(pdmdev);
         return status;
     }
 
