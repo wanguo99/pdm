@@ -164,48 +164,26 @@ static int pdm_led_device_probe(struct pdm_device *pdmdev)
     struct pdm_client *client;
     int status;
 
-    client = pdm_client_alloc(sizeof(struct pdm_led_priv));
-    if (!client) {
+    client = devm_pdm_client_alloc(pdmdev, sizeof(struct pdm_led_priv));
+    if (IS_ERR(client)) {
         OSA_ERROR("LED Client Alloc Failed\n");
-        return -ENOMEM;
+        return PTR_ERR(client);
     }
 
-    pdmdev->client = client;
-    client->pdmdev = pdmdev;
-    status = pdm_client_register(led_adapter, client);
+    status = devm_pdm_client_register(led_adapter, client);
     if (status) {
         OSA_ERROR("LED Adapter Add Device Failed, status=%d\n", status);
-        goto err_client_free;
+        return status;
     }
 
     status = pdm_led_setup(client);
     if (status) {
         OSA_ERROR("PDM LED setup Failed\n");
-        goto err_client_unregister;
+        return status;
     }
 
     OSA_DEBUG("LED PDM Device Probed\n");
     return 0;
-
-err_client_unregister:
-    pdm_client_unregister(led_adapter, client);
-err_client_free:
-    pdm_client_free(client);
-    return status;
-}
-
-/**
- * @brief Removes the LED PDM device.
- *
- * This function is called when a PDM device is removed and deletes the device from the main device.
- *
- * @param pdmdev Pointer to the PDM device.
- */
-static void pdm_led_device_remove(struct pdm_device *pdmdev)
-{
-    pdm_client_unregister(led_adapter, pdmdev->client);
-    pdm_client_free(pdmdev->client);
-    OSA_DEBUG("LED PDM Device Removed\n");
 }
 
 /**
@@ -227,7 +205,6 @@ MODULE_DEVICE_TABLE(of, of_pdm_led_match);
  */
 static struct pdm_driver pdm_led_driver = {
     .probe = pdm_led_device_probe,
-    .remove = pdm_led_device_remove,
     .driver = {
         .name = "pdm-led",
         .of_match_table = of_pdm_led_match,

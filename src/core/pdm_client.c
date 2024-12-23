@@ -1,6 +1,16 @@
 #include <linux/compat.h>
 #include "pdm.h"
 
+/**
+ * @brief Constructs the device node path for PDM Client devices.
+ *
+ * This function generates the full path for the device node, prefixed with "pdm_client/".
+ *
+ * @param dev Pointer to the device structure.
+ * @param mode Pointer to the file permissions mode (optional).
+ *
+ * @return Dynamically allocated string of the full device node path. Caller must free with kfree().
+ */
 static char *pdm_client_devnode(const struct device *dev, umode_t *mode)
 {
     return kasprintf(GFP_KERNEL, "pdm_client/%s", dev_name(dev));
@@ -11,7 +21,7 @@ static char *pdm_client_devnode(const struct device *dev, umode_t *mode)
  */
 static struct class pdm_client_class = {
     .name = "pdm_client",
-    .devnode	= pdm_client_devnode,
+    .devnode = pdm_client_devnode,
 };
 
 /**
@@ -31,17 +41,15 @@ static dev_t pdm_client_major;
  */
 static int pdm_client_fops_default_open(struct inode *inode, struct file *filp)
 {
-    struct pdm_client *client;
+    struct pdm_client *client = container_of(inode->i_cdev, struct pdm_client, cdev);
 
-    OSA_INFO("fops_default_open.\n");
-
-    client = container_of(inode->i_cdev, struct pdm_client, cdev);
     if (!client) {
         OSA_ERROR("Invalid client.\n");
         return -EINVAL;
     }
 
     filp->private_data = client;
+    OSA_INFO("fops_default_open for %s\n", dev_name(&client->dev));
 
     return 0;
 }
@@ -58,7 +66,8 @@ static int pdm_client_fops_default_open(struct inode *inode, struct file *filp)
  */
 static int pdm_client_fops_default_release(struct inode *inode, struct file *filp)
 {
-    OSA_INFO("fops_default_release.\n");
+    struct pdm_client *client = filp->private_data;
+    OSA_INFO("fops_default_release for %s\n", dev_name(&client->dev));
     return 0;
 }
 
@@ -76,7 +85,8 @@ static int pdm_client_fops_default_release(struct inode *inode, struct file *fil
  */
 static ssize_t pdm_client_fops_default_read(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
 {
-    OSA_INFO("fops_default_read.\n");
+    struct pdm_client *client = filp->private_data;
+    OSA_INFO("fops_default_read for %s\n", dev_name(&client->dev));
     return 0;
 }
 
@@ -94,7 +104,8 @@ static ssize_t pdm_client_fops_default_read(struct file *filp, char __user *buf,
  */
 static ssize_t pdm_client_fops_default_write(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
 {
-    OSA_INFO("fops_default_write.\n");
+    struct pdm_client *client = filp->private_data;
+    OSA_INFO("fops_default_write for %s\n", dev_name(&client->dev));
     return count;
 }
 
@@ -128,7 +139,7 @@ static long pdm_client_fops_default_ioctl(struct file *filp, unsigned int cmd, u
  */
 static long pdm_client_fops_default_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
-    OSA_INFO("pdm_client_fops_default_compat_ioctl.\n");
+    OSA_INFO("pdm_client_fops_default_compat_ioctl for %s\n", dev_name(filp->private_data));
 
     if (_IOC_DIR(cmd) & (_IOC_READ | _IOC_WRITE)) {
         arg = (unsigned long)compat_ptr(arg);
@@ -137,29 +148,6 @@ static long pdm_client_fops_default_compat_ioctl(struct file *filp, unsigned int
     return filp->f_op->unlocked_ioctl(filp, cmd, arg);
 }
 
-/**
- * @brief Decrements the reference count on the device.
- *
- * @param client Pointer to the PDM Client.
- */
-static inline void pdm_client_put_device(struct pdm_client *client)
-{
-    if (client)
-        put_device(&client->dev);
-}
-
-/**
- * @brief Releases the device structure.
- *
- * This function is called when the last reference to the device is dropped.
- *
- * @param dev Pointer to the device structure.
- */
-static void pdm_client_device_release(struct device *dev)
-{
-    struct pdm_client *client = container_of(dev, struct pdm_client, dev);
-    kfree(client);
-}
 
 /**
  * @brief Registers a PDM Client character device.
@@ -169,7 +157,7 @@ static void pdm_client_device_release(struct device *dev)
  * @param client Pointer to the PDM Client.
  * @return 0 on success, negative error code on failure.
  */
-static int pdm_client_device_register(struct pdm_client *client)
+static int __pdm_client_device_register(struct pdm_client *client)
 {
     int status;
 
@@ -183,19 +171,6 @@ static int pdm_client_device_register(struct pdm_client *client)
         return -ENODEV;
     }
 
-    device_initialize(&client->dev);
-    client->dev.devt = MKDEV(pdm_client_major, client->index);
-    client->dev.class = &pdm_client_class;
-    client->dev.parent = &client->pdmdev->dev;
-    client->dev.release = pdm_client_device_release;
-
-    status = dev_set_name(&client->dev, "%s.%d", dev_name(&client->adapter->dev), client->index);
-    if (status) {
-        OSA_ERROR("Failed to set client name, error:%d.\n", status);
-        goto err_put_device;
-    }
-
-    memset(&client->fops, 0, sizeof(client->fops));
     client->fops.open = pdm_client_fops_default_open;
     client->fops.release = pdm_client_fops_default_release;
     client->fops.read = pdm_client_fops_default_read;
@@ -204,51 +179,78 @@ static int pdm_client_device_register(struct pdm_client *client)
     client->fops.compat_ioctl = pdm_client_fops_default_compat_ioctl;
     cdev_init(&client->cdev, &client->fops);
 
+    client->dev.devt = MKDEV(pdm_client_major, client->index);
+    status = dev_set_name(&client->dev, "%s.%d", dev_name(&client->adapter->dev), client->index);
+    if (status) {
+        OSA_ERROR("Failed to set client name, error:%d.\n", status);
+        return status;
+    }
+
     status = cdev_device_add(&client->cdev, &client->dev);
     if (status < 0) {
         OSA_ERROR("Failed to add char device for %s, error: %d.\n", dev_name(&client->dev), status);
-        goto err_put_device;
+        return status;
     }
-
-    pdm_client_set_devdata(client, (void *)(client + sizeof(struct pdm_client)));
 
     OSA_DEBUG("PDM Client %s Device Registered.\n", dev_name(&client->dev));
     return 0;
-
-err_put_device:
-    pdm_client_put_device(client);
-    return status;
 }
 
 /**
- * @brief Unregisters a PDM Client character device.
+ * @brief Unregisters a PDM Client device and releases associated resources.
  *
- * This function unregisters a PDM Client character device from the system.
+ * This function removes the character device from the system and decreases the reference count of the client.
  *
- * @param client Pointer to the PDM Client.
+ * @param client Pointer to the PDM Client structure.
  */
-static void pdm_client_device_unregister(struct pdm_client *client)
+static void __pdm_client_device_unregister(struct pdm_client *client)
 {
-    if (!client) {
-        OSA_ERROR("Invalid input parameter.\n");
-        return;
-    }
     cdev_device_del(&client->cdev, &client->dev);
     pdm_client_put_device(client);
-    OSA_DEBUG("PDM Client Device Unregistered.\n");
 }
 
 /**
- * @brief Adds a device to the PDM Adapter.
+ * @brief Unregisters a PDM Client managed by devres.
  *
- * This function adds a new PDM device to the specified PDM Adapter.
+ * This function safely unregisters a PDM Client device using devres management, ensuring all resources are properly released.
  *
- * @param adapter Pointer to the PDM Adapter.
- * @param client Pointer to the PDM Client to add.
+ * @param dev Pointer to the parent device structure.
+ * @param res Pointer to the resource data.
+ */
+static void __devm_pdm_client_unregister(struct device *dev, void *res)
+{
+    struct pdm_client_devres *devres = res;
+    struct pdm_client *client = devres->client;
+
+    if ((!client) || (!client->adapter)) {
+        OSA_ERROR("Invalid input parameters (adapter: %p, client: %p).\n", client->adapter, client);
+        return;
+    }
+    OSA_DEBUG("Device %s unregistered.\n", dev_name(&client->dev));
+
+    mutex_lock(&client->adapter->client_list_mutex_lock);
+    list_del(&client->entry);
+    mutex_unlock(&client->adapter->client_list_mutex_lock);
+
+    __pdm_client_device_unregister(client);
+
+    pdm_adapter_id_free(client->adapter, client);
+    pdm_adapter_put(client->adapter);
+}
+
+/**
+ * @brief Registers a PDM client with the associated PDM adapter.
+ *
+ * This function registers the PDM client with the PDM adapter, setting up the necessary
+ * resources and file operations, and linking the client to the adapter's client list.
+ *
+ * @param adapter Pointer to the PDM adapter structure.
+ * @param client Pointer to the PDM client structure.
  * @return 0 on success, negative error code on failure.
  */
-int pdm_client_register(struct pdm_adapter *adapter, struct pdm_client *client)
+int devm_pdm_client_register(struct pdm_adapter *adapter, struct pdm_client *client)
 {
+    struct pdm_client_devres *devres = NULL;
     int status;
 
     if (!adapter || !client) {
@@ -256,9 +258,17 @@ int pdm_client_register(struct pdm_adapter *adapter, struct pdm_client *client)
         return -EINVAL;
     }
 
+    devres = devres_alloc(__devm_pdm_client_unregister, sizeof(*devres), GFP_KERNEL);
+    if (!devres) {
+        OSA_ERROR("Failed to allocate devres for pdm_client.\n");
+        return -ENOMEM;
+    }
+    devres->client = client;
+
     if (!pdm_adapter_get(adapter)) {
         OSA_ERROR("Failed to get adapter.\n");
-        return -EBUSY;
+        status = -EBUSY;
+        goto err_devres_free;
     }
 
     status = pdm_adapter_id_alloc(adapter, client);
@@ -268,7 +278,7 @@ int pdm_client_register(struct pdm_adapter *adapter, struct pdm_client *client)
     }
 
     client->adapter = adapter;
-    status = pdm_client_device_register(client);
+    status = __pdm_client_device_register(client);
     if (status) {
         OSA_ERROR("Failed to register device, error: %d.\n", status);
         goto err_free_id;
@@ -279,75 +289,96 @@ int pdm_client_register(struct pdm_adapter *adapter, struct pdm_client *client)
     mutex_unlock(&adapter->client_list_mutex_lock);
 
     OSA_DEBUG("PDM Client %s registered.\n", dev_name(&client->dev));
+    devres_add(client->dev.parent, devres);
+
     return 0;
 
 err_free_id:
     pdm_adapter_id_free(adapter, client);
-
 err_put_adapter:
     pdm_adapter_put(adapter);
+err_devres_free:
+    devres_free(devres);
     return status;
 }
 
 /**
- * @brief Removes a device from the PDM Adapter.
+ * @brief Releases the device structure when the last reference is dropped.
  *
- * This function removes a PDM device from the specified PDM Adapter.
+ * This function is called by the kernel when the last reference to the device is dropped, freeing the allocated memory.
  *
- * @param adapter Pointer to the PDM Adapter.
- * @param client Pointer to the PDM Client to remove.
+ * @param dev Pointer to the device structure.
  */
-void pdm_client_unregister(struct pdm_adapter *adapter, struct pdm_client *client)
+static void __pdm_client_device_release(struct device *dev)
 {
-    if (!adapter || !client) {
-        OSA_ERROR("Invalid input parameters (adapter: %p, client: %p).\n", adapter, client);
-        return;
-    }
-    OSA_DEBUG("Device %s unregistered.\n", dev_name(&client->dev));
-
-    mutex_lock(&adapter->client_list_mutex_lock);
-    list_del(&client->entry);
-    mutex_unlock(&adapter->client_list_mutex_lock);
-
-    pdm_client_device_unregister(client);
-    pdm_adapter_id_free(adapter, client);
-    pdm_adapter_put(adapter);
+    struct pdm_client *client = container_of(dev, struct pdm_client, dev);
+    kfree(client);
 }
 
 /**
- * @brief Allocates a PDM Client structure.
+ * @brief Frees a PDM Client managed by devres.
  *
- * This function allocates and initializes a new PDM Client structure along with its private data.
+ * This function drops the reference to the PDM Client and ensures it is properly freed when no longer needed.
  *
- * @param data_size Size of the private data to allocate.
- * @return Pointer to the allocated PDM Client structure, or NULL on failure.
+ * @param dev Pointer to the parent device structure.
+ * @param res Pointer to the resource data.
  */
-struct pdm_client *pdm_client_alloc(unsigned int data_size)
+static void __devm_pdm_client_free(struct device *dev, void *res)
+{
+    struct pdm_client_devres *devres = res;
+    struct pdm_client *client = devres->client;
+
+    OSA_INFO("Dropping reference to %s\n", dev_name(&client->dev));
+    pdm_client_put_device(client);
+}
+
+/**
+ * @brief Allocates and initializes a pdm_client structure, along with its associated resources.
+ *
+ * This function allocates memory for a new PDM client, initializes the structure, and returns
+ * a pointer to the newly allocated pdm_client.
+ *
+ * @param pdmdev Pointer to the PDM device structure to which the client is associated.
+ * @param data_size Size of additional data to allocate for the client.
+ * @return Pointer to the newly allocated pdm_client structure, or ERR_PTR on failure.
+ */
+struct pdm_client *devm_pdm_client_alloc(struct pdm_device *pdmdev, unsigned int data_size)
 {
     struct pdm_client *client;
+    struct pdm_client_devres *devres;
+    unsigned int client_size = sizeof(struct pdm_client);
+    unsigned int total_size = ALIGN(client_size + data_size, 8);
 
-    client = kzalloc(sizeof(struct pdm_client) + data_size, GFP_KERNEL);
+    if (!pdmdev) {
+        OSA_ERROR("Invalid pdm_device pointer.\n");
+        return ERR_PTR(-EINVAL);
+    }
+
+    devres = devres_alloc(__devm_pdm_client_free, sizeof(*devres), GFP_KERNEL);
+    if (!devres) {
+        return ERR_PTR(-ENOMEM);
+    }
+
+    client = kzalloc(total_size, GFP_KERNEL);
     if (!client) {
         OSA_ERROR("Failed to allocate memory for pdm_client.\n");
-        return NULL;
+        devres_free(devres);
+        return ERR_PTR(-ENOMEM);
     }
+
+    client->dev.class = &pdm_client_class;
+    client->dev.release = __pdm_client_device_release;
+    client->dev.parent = &pdmdev->dev;
+    device_initialize(&client->dev);
+
+    pdm_client_set_drvdata(client, (void *)(client + client_size));
+
+    devres->client = client;
+    devres_add(&pdmdev->dev, devres);
 
     return client;
 }
 
-/**
- * @brief Frees a PDM Client structure.
- *
- * This function frees an allocated PDM Client structure and any associated resources.
- *
- * @param client Pointer to the PDM Client structure.
- */
-void pdm_client_free(struct pdm_client *client)
-{
-    if (client) {
-        kfree(client);
-    }
-}
 
 /**
  * @brief Initializes the PDM Client module.
