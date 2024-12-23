@@ -206,7 +206,6 @@ static int __pdm_client_device_register(struct pdm_client *client)
 static void __pdm_client_device_unregister(struct pdm_client *client)
 {
     cdev_device_del(&client->cdev, &client->dev);
-    pdm_client_put_device(client);
 }
 
 /**
