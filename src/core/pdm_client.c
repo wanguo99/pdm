@@ -1,11 +1,17 @@
 #include <linux/compat.h>
 #include "pdm.h"
 
+static char *pdm_client_devnode(const struct device *dev, umode_t *mode)
+{
+    return kasprintf(GFP_KERNEL, "pdm_client/%s", dev_name(dev));
+}
+
 /**
  * @brief PDM Client class.
  */
 static struct class pdm_client_class = {
     .name = "pdm_client",
+    .devnode	= pdm_client_devnode,
 };
 
 /**

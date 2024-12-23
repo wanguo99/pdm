@@ -38,6 +38,107 @@ static struct pdm_component pdm_device_drivers[] = {
     { }
 };
 
+
+static atomic_t pdm_device_no = ATOMIC_INIT(-1);
+
+/**
+ * @brief Validates a PDM device.
+ *
+ * Checks if the provided PDM device pointer is valid.
+ *
+ * @param pdmdev Pointer to the PDM device structure.
+ * @return 0 on success, -EINVAL on failure.
+ */
+static int pdm_device_verify(struct pdm_device *pdmdev)
+{
+    if (!pdmdev || !pdmdev->dev.parent) {
+        OSA_ERROR("%s is null\n", !pdmdev ? "pdmdev" : "parent");
+        return -EINVAL;
+    }
+    return 0;
+}
+
+/**
+ * @brief 生成 PDM 设备的 uevent 事件
+ *
+ * @param dev 设备结构体指针
+ * @param env uevent 环境变量结构体指针
+ * @return 成功返回 0，失败返回 -EINVAL
+ */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 0)
+static int pdm_device_uevent(struct device *dev, struct kobj_uevent_env *env)
+#else
+static int pdm_device_uevent(const struct device *dev, struct kobj_uevent_env *env)
+#endif
+{
+    struct pdm_device *pdmdev = dev_to_pdm_device(dev);
+    if (pdm_device_verify(pdmdev)) {
+        return -EINVAL;
+    }
+
+    OSA_DEBUG("Generating MODALIAS for device %s\n", dev_name(dev));
+    return add_uevent_var(env, "MODALIAS=%s", dev_name(dev));
+}
+
+/**
+ * id_show - 显示设备ID
+ * @dev: 设备结构
+ * @da: 设备属性结构
+ * @buf: 输出缓冲区
+ *
+ * 返回值:
+ * 实际写入的字节数
+ */
+static ssize_t name_show(struct device *dev, struct device_attribute *da, char *buf)
+{
+    struct pdm_device *pdmdev = dev_to_pdm_device(dev);
+    if (pdm_device_verify(pdmdev)) {
+        return -EINVAL;
+    }
+
+    return sysfs_emit(buf, "%s\n", dev_name(dev));
+}
+static DEVICE_ATTR_RO(name);
+
+/**
+ * @brief 定义 PDM 设备的属性数组
+ *
+ * 这个数组包含 PDM 设备的所有属性，每个属性都是一个 `struct attribute` 类型的指针。
+ * 属性数组以 NULL 结尾，表示属性列表的结束。
+ * 使用 `ATTRIBUTE_GROUPS` 宏将属性数组转换为属性组，以便在设备模型中注册。
+ */
+static struct attribute *pdm_device_attrs[] = {
+    &dev_attr_name.attr,
+    NULL,
+};
+ATTRIBUTE_GROUPS(pdm_device);
+
+/**
+ * @brief Releases resources associated with a PDM device.
+ *
+ * Frees the memory allocated for the PDM device structure.
+ *
+ * @param dev Pointer to the device structure.
+ */
+static void pdm_device_release(struct device *dev)
+{
+    struct pdm_device *pdmdev = dev_to_pdm_device(dev);
+    if (pdmdev) {
+        OSA_INFO("PDM Device Released: %s\n", dev_name(dev));
+        kfree(pdmdev);
+    }
+}
+
+/**
+ * pdm_device_type - PDM设备类型
+ */
+const struct device_type pdm_device_type = {
+    .name   = "pdm_device",
+    .groups = pdm_device_groups,
+    .release = pdm_device_release,
+    .uevent = pdm_device_uevent,
+};
+
 /**
  * @brief Registers PDM device drivers.
  *
@@ -76,38 +177,6 @@ void pdm_device_drivers_unregister(void)
     OSA_DEBUG("PDM Device Drivers exited successfully.\n");
 }
 
-/**
- * @brief Validates a PDM device.
- *
- * Checks if the provided PDM device pointer is valid.
- *
- * @param pdmdev Pointer to the PDM device structure.
- * @return 0 on success, -EINVAL on failure.
- */
-static int pdm_device_verify(struct pdm_device *pdmdev)
-{
-    if (!pdmdev || !pdmdev->dev.parent) {
-        OSA_ERROR("%s is null\n", !pdmdev ? "pdmdev" : "parent");
-        return -EINVAL;
-    }
-    return 0;
-}
-
-/**
- * @brief Releases resources associated with a PDM device.
- *
- * Frees the memory allocated for the PDM device structure.
- *
- * @param dev Pointer to the device structure.
- */
-static void pdm_device_release(struct device *dev)
-{
-    struct pdm_device *pdmdev = dev_to_pdm_device(dev);
-    if (pdmdev) {
-        OSA_INFO("PDM Device Released: %s\n", dev_name(dev));
-        kfree(pdmdev);
-    }
-}
 
 /**
  * @brief Allocates a new PDM device structure.
@@ -116,7 +185,6 @@ static void pdm_device_release(struct device *dev)
  */
 struct pdm_device *pdm_device_alloc(struct device *dev)
 {
-    static atomic_t pdmdev_no = ATOMIC_INIT(-1);
     struct pdm_device *pdmdev;
 
     if (!dev) {
@@ -132,11 +200,11 @@ struct pdm_device *pdm_device_alloc(struct device *dev)
 
     pdmdev->dev.parent = dev;
     pdmdev->dev.bus = &pdm_bus_type;
-    pdmdev->dev.release = pdm_device_release;
+    pdmdev->dev.type = &pdm_device_type;
     device_initialize(&pdmdev->dev);
 
     dev_set_name(&pdmdev->dev, "pdmdev%lu",
-            (unsigned long)atomic_inc_return(&pdmdev_no));
+            (unsigned long)atomic_inc_return(&pdm_device_no));
 
     return pdmdev;
 }
