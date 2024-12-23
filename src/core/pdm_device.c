@@ -116,6 +116,7 @@ static void pdm_device_release(struct device *dev)
  */
 struct pdm_device *pdm_device_alloc(struct device *dev)
 {
+    static atomic_t pdmdev_no = ATOMIC_INIT(-1);
     struct pdm_device *pdmdev;
 
     if (!dev) {
@@ -132,8 +133,11 @@ struct pdm_device *pdm_device_alloc(struct device *dev)
     pdmdev->dev.parent = dev;
     pdmdev->dev.bus = &pdm_bus_type;
     pdmdev->dev.release = pdm_device_release;
-
     device_initialize(&pdmdev->dev);
+
+    dev_set_name(&pdmdev->dev, "pdmdev%lu",
+            (unsigned long)atomic_inc_return(&pdmdev_no));
+
     return pdmdev;
 }
 
@@ -158,13 +162,6 @@ int pdm_device_register(struct pdm_device *pdmdev)
         return -EEXIST;
     }
 
-    status = pdm_bus_device_id_alloc(pdmdev);
-    if (status) {
-        OSA_ERROR("ID allocation failed, status %d\n", status);
-        return status;
-    }
-
-    dev_set_name(&pdmdev->dev, "pdmdev-%d", pdmdev->id);
     status = device_add(&pdmdev->dev);
     if (status) {
         OSA_ERROR("Failed to add device %s, error: %d\n", dev_name(&pdmdev->dev), status);
@@ -176,7 +173,6 @@ int pdm_device_register(struct pdm_device *pdmdev)
 
 err_free_id:
     pdm_device_put(pdmdev);
-    pdm_bus_device_id_free(pdmdev);
     return status;
 }
 
@@ -195,7 +191,6 @@ void pdm_device_unregister(struct pdm_device *pdmdev)
 
     OSA_DEBUG("Unregistering device %s.\n", dev_name(&pdmdev->dev));
     device_unregister(&pdmdev->dev);
-    pdm_bus_device_id_free(pdmdev);
 }
 
 /**

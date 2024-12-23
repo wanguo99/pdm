@@ -64,29 +64,6 @@ struct pdm_driver {
 };
 
 /**
- * @fn int pdm_bus_device_id_alloc(struct pdm_device *pdmdev)
- * @brief Allocates a unique ID to a PDM device.
- *
- * Allocates an unused ID from a predefined range to the specified PDM device.
- *
- * @param[in] pdmdev Pointer to the PDM device to allocate an ID for.
- * @return 0 on success, -EINVAL on invalid parameters, -EBUSY if no IDs are
- *         available, or other error codes indicating different types of failures.
- */
-int pdm_bus_device_id_alloc(struct pdm_device *pdmdev);
-
-/**
- * @fn void pdm_bus_device_id_free(struct pdm_device *pdmdev)
- * @brief Frees the ID allocated to a PDM device.
- *
- * Returns the previously allocated ID of the specified PDM device back to the
- * available pool.
- *
- * @param[in] pdmdev Pointer to the PDM device that had an ID allocated.
- */
-void pdm_bus_device_id_free(struct pdm_device *pdmdev);
-
-/**
  * @fn struct pdm_device *pdm_bus_find_device_by_parent(struct device *parent)
  * @brief Finds a PDM device by its parent device.
  *

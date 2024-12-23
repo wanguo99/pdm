@@ -35,57 +35,6 @@ struct pdm_device *pdm_bus_find_device_by_parent(struct device *parent)
 }
 
 /**
- * @brief Allocates a unique ID for a PDM device.
- *
- * @param pdmdev Pointer to the PDM device.
- * @return Returns 0 on success, -EINVAL for invalid parameters, -EBUSY if no IDs are available, and
- * other negative values for other errors.
- */
-int pdm_bus_device_id_alloc(struct pdm_device *pdmdev)
-{
-    int id;
-
-    if (!pdmdev) {
-        OSA_ERROR("Invalid input parameters (pdmdev: %p).\n", pdmdev);
-        return -EINVAL;
-    }
-
-    mutex_lock(&pdm_bus_priv_data.idr_mutex_lock);
-    id = idr_alloc(&pdm_bus_priv_data.device_idr, pdmdev, PDM_BUS_DEVICE_IDR_START,
-                                                PDM_BUS_DEVICE_IDR_END, GFP_KERNEL);
-    mutex_unlock(&pdm_bus_priv_data.idr_mutex_lock);
-    if (id < 0) {
-        if (id == -ENOSPC) {
-            OSA_ERROR("No available IDs in the range.\n");
-            return -EBUSY;
-        } else {
-            OSA_ERROR("Failed to allocate ID: %d.\n", id);
-            return id;
-        }
-    }
-
-    pdmdev->id = id;
-    return 0;
-}
-
-/**
- * @brief Frees the ID previously allocated for a PDM device.
- *
- * @param pdmdev Pointer to the PDM device.
- */
-void pdm_bus_device_id_free(struct pdm_device *pdmdev)
-{
-    if (!pdmdev) {
-        OSA_ERROR("Invalid input parameters (pdmdev: %p).\n", pdmdev);
-        return;
-    }
-
-    mutex_lock(&pdm_bus_priv_data.idr_mutex_lock);
-    idr_remove(&pdm_bus_priv_data.device_idr, pdmdev->id);
-    mutex_unlock(&pdm_bus_priv_data.idr_mutex_lock);
-}
-
-/**
  * @brief Registers a PDM driver with the kernel.
  *
  * @param owner Pointer to the module that owns this driver.

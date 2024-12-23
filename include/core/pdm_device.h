@@ -19,7 +19,6 @@
  * device structure, and client handle.
  */
 struct pdm_device {
-    int id;                     /**< ID allocated by the bus. */
     struct device dev;          /**< Device structure. */
     struct pdm_client *client;  /**< PDM Client handle. */
 };
