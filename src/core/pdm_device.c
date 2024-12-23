@@ -75,8 +75,6 @@ static int pdm_device_uevent(const struct device *dev, struct kobj_uevent_env *e
     if (pdm_device_verify(pdmdev)) {
         return -EINVAL;
     }
-
-    OSA_DEBUG("Generating MODALIAS for device %s\n", dev_name(dev));
     return add_uevent_var(env, "MODALIAS=%s", dev_name(dev));
 }
 
@@ -132,7 +130,7 @@ static void pdm_device_release(struct device *dev)
 /**
  * pdm_device_type - PDM设备类型
  */
-const struct device_type pdm_device_type = {
+static const struct device_type pdm_device_type = {
     .name   = "pdm_device",
     .groups = pdm_device_groups,
     .release = pdm_device_release,
