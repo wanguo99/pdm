@@ -94,7 +94,7 @@
  * Simple print without code information.
  */
 #define OSA_print(fmt, ...) \
-    OSA_PRINTK(KERN_ERR, "", fmt, ##__VA_ARGS__)
+    printk(KERN_INFO fmt, ##__VA_ARGS__)
 
 /*
  * Standard logging macros with different severity levels.

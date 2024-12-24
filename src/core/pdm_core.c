@@ -117,6 +117,26 @@ static void pdm_bus_debug_fs_exit(void)
 }
 
 /**
+ * @brief Displays module information, including name, build time, and version.
+ *
+ * This function logs the module's name, build time, and version using the OSA_INFO macro.
+ * The information displayed includes:
+ * - Module name (from KBUILD_MODNAME)
+ * - Build time (from KBUILD_MODULE_BUILD_TIME)
+ * - Version (from KBUILD_MODULE_VERSION)
+ *
+ * This function does not modify any state or interact with the filesystem.
+ */
+static void pdm_show_module_info(void)
+{
+    OSA_INFO("----------------------------------\n");
+    OSA_INFO("| Name   : %s\n", KBUILD_MODNAME);
+    OSA_INFO("| Build  : %s\n", KBUILD_MODULE_BUILD_TIME);
+    OSA_INFO("| Version: %s\n", KBUILD_MODULE_VERSION);
+    OSA_INFO("----------------------------------\n");
+}
+
+/**
  * @brief Initializes the PDM module.
  *
  * This function initializes the PDM module, including registering the bus, initializing main devices, and submodules.
@@ -132,7 +152,10 @@ static int __init pdm_init(void)
         .list = &pdm_core_component_list,
     };
 
+    OSA_print("\n");
     OSA_INFO("===== PDM Init =====\n");
+
+    pdm_show_module_info();
 
     INIT_LIST_HEAD(&pdm_core_component_list);
     status = pdm_component_register(&params);
@@ -152,6 +175,7 @@ static int __init pdm_init(void)
  */
 static void __exit pdm_exit(void)
 {
+    OSA_print("\n");
     OSA_INFO("===== PDM Exit =====\n");
     pdm_component_unregister(&pdm_core_component_list);
     OSA_INFO("----- PDM Exited -----\n");
