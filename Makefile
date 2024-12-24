@@ -20,9 +20,27 @@ MODULE_INSTALL_DIR := $(DESTDIR)/lib/modules/$(KERNEL_VERSION)
 SYMBOL_INSTALL_DIR := $(DESTDIR)/lib/modules/$(KERNEL_VERSION)/symvers/$(MODULE_NAME)
 
 # Log printing options: default to print filename and line number; function name needs to be manually enabled
-DEBUG_OSA_LOG_ENABLE ?= $(if $(filter 0,$(strip $(osa_log_enable))),0,1)
-DEBUG_OSA_LOG_WITH_FILE_LINE ?= $(if $(filter 0,$(strip $(osa_log_with_file_line))),0,1)
-DEBUG_OSA_LOG_WITH_FUNCTION ?= $(if $(filter 0,$(strip $(osa_log_with_function))),0,1)
+DEBUG_OSA_LOG_ENABLE ?= 1
+DEBUG_OSA_LOG_WITH_FILE_LINE ?= 1
+DEBUG_OSA_LOG_WITH_FUNCTION ?= 0
+
+ifeq ($(strip $(osa_log_enable)),0)
+DEBUG_OSA_LOG_ENABLE := 0
+else ifeq ($(strip $(osa_log_enable)),1)
+DEBUG_OSA_LOG_ENABLE := 1
+endif
+
+ifeq ($(strip $(osa_log_with_file_line)),0)
+DEBUG_OSA_LOG_WITH_FILE_LINE := 0
+else ifeq ($(strip $(osa_log_with_file_line)),1)
+DEBUG_OSA_LOG_WITH_FILE_LINE := 1
+endif
+
+ifeq ($(strip $(osa_log_with_function)),0)
+DEBUG_OSA_LOG_WITH_FUNCTION := 0
+else ifeq ($(strip $(osa_log_with_function)),1)
+DEBUG_OSA_LOG_WITH_FUNCTION := 1
+endif
 
 # Define debug-specific CFLAGS for OSA logging
 DEBUG_OSA_LOG_CFLAGS = -DDEBUG_OSA_LOG_ENABLE=$(DEBUG_OSA_LOG_ENABLE) \
