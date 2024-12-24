@@ -12,6 +12,8 @@
 
 static int pdm_bus_debug_fs_init(void);
 static void pdm_bus_debug_fs_exit(void);
+static int pdm_bus_proc_fs_init(void);
+static void pdm_bus_proc_fs_exit(void);
 
 /**
  * @struct pdm_core_component_list
@@ -26,93 +28,117 @@ static struct list_head pdm_core_component_list;
 static struct pdm_component pdm_core_components[] = {
     {
         .name = "Debug Filesystem",
-        .status = true,
+        .enable = true,
         .ignore_failures = true,
         .init = pdm_bus_debug_fs_init,
         .exit = pdm_bus_debug_fs_exit,
     },
     {
+        .name = "Proc Filesystem",
+        .enable = true,
+        .ignore_failures = true,
+        .init = pdm_bus_proc_fs_init,
+        .exit = pdm_bus_proc_fs_exit,
+    },
+    {
         .name = "PDM Bus",
-        .status = true,
+        .enable = true,
         .ignore_failures = false,
         .init = pdm_bus_init,
         .exit = pdm_bus_exit,
     },
     {
         .name = "PDM Device",
-        .status = true,
+        .enable = true,
         .ignore_failures = false,
         .init = pdm_device_init,
         .exit = pdm_device_exit,
     },
     {
         .name = "PDM Client",
-        .status = true,
+        .enable = true,
         .ignore_failures = false,
         .init = pdm_client_init,
         .exit = pdm_client_exit,
     },
     {
         .name = "PDM Adapter",
-        .status = true,
+        .enable = true,
         .ignore_failures = false,
         .init = pdm_adapter_init,
         .exit = pdm_adapter_exit,
     },
-    { }
+    {  .name = NULL }
 };
 
 /**
  * @brief Pointer to the PDM debug filesystem directory.
  */
 static struct dentry *pdm_debugfs_dir;
-static struct proc_dir_entry *pdm_procfs_dir;
 
 /**
  * @brief Initializes the PDM debugging filesystem.
  *
- * This function creates the necessary directories in debugfs and procfs for PDM.
+ * This function creates the necessary directories in debugfs for PDM.
  *
  * @return 0 on success, negative error code on failure.
  */
 static int pdm_bus_debug_fs_init(void)
 {
     pdm_debugfs_dir = debugfs_create_dir(PDM_DEBUG_FS_DIR_NAME, NULL);
-    if (IS_ERR(pdm_debugfs_dir)) {
+    if (IS_ERR_OR_NULL(pdm_debugfs_dir)) {
         OSA_WARN("Failed to register PDM debugfs, error %ld\n", PTR_ERR(pdm_debugfs_dir));
-        pdm_debugfs_dir = NULL;  // Set to NULL to indicate failure
-    } else {
-        OSA_INFO("PDM debugfs registered\n");
+        return PTR_ERR(pdm_debugfs_dir);
     }
 
-    pdm_procfs_dir = proc_mkdir(PDM_DEBUG_FS_DIR_NAME, NULL);
-    if (!pdm_procfs_dir) {
-        OSA_WARN("Failed to register PDM procfs\n");
-        if (pdm_debugfs_dir) {
-            debugfs_remove_recursive(pdm_debugfs_dir);
-            pdm_debugfs_dir = NULL;
-        }
-    } else {
-        OSA_INFO("PDM procfs registered\n");
-    }
-
+    OSA_INFO("PDM debugfs registered\n");
     return 0;
 }
 
 /**
  * @brief Unregisters the PDM debugging filesystem.
  *
- * This function removes the directories created in debugfs and procfs for PDM.
+ * This function removes the directories created in debugfs for PDM.
  */
 static void pdm_bus_debug_fs_exit(void)
 {
-    if (pdm_debugfs_dir) {
+    if (!IS_ERR_OR_NULL(pdm_debugfs_dir)) {
         debugfs_remove_recursive(pdm_debugfs_dir);
         OSA_INFO("PDM debugfs unregistered\n");
     }
+}
+
+static struct proc_dir_entry *pdm_procfs_dir;
+
+/**
+ * @brief Initializes the PDM proc filesystem.
+ *
+ * This function creates the necessary directories in procfs for PDM.
+ *
+ * @return 0 on success, negative error code on failure.
+ */
+static int pdm_bus_proc_fs_init(void)
+{
+    pdm_procfs_dir = proc_mkdir(PDM_DEBUG_FS_DIR_NAME, NULL);
+    if (!pdm_procfs_dir) {
+        OSA_WARN("Failed to register PDM procfs\n");
+        return -ENOMEM;
+    }
+
+    OSA_INFO("PDM proc fs registered\n");
+    return 0;
+}
+
+/**
+ * @brief Unregisters the PDM proc filesystem.
+ *
+ * This function removes the directories created in procfs for PDM.
+ */
+static void pdm_bus_proc_fs_exit(void)
+{
     if (pdm_procfs_dir) {
         remove_proc_entry(PDM_DEBUG_FS_DIR_NAME, NULL);
-        OSA_INFO("PDM procfs unregistered\n");
+        OSA_INFO("PDM proc fs unregistered\n");
     }
 }
 

@@ -18,12 +18,12 @@
  * This structure defines the basic information and operation functions for a PDM component.
  */
 struct pdm_component {
-    bool status;                /**< Whether the driver is loaded. Default is false. Set to true to enable. */
+    bool enable;                /**< Whether the driver need loaded. Default is false. Set to true to enable. */
     bool ignore_failures;       /**< Whether to ignore initialization failures. */
     const char *name;           /**< Name of the component. */
     int (*init)(void);          /**< Initialization function for the component. */
     void (*exit)(void);         /**< Exit function for the component. */
-    struct list_head list;      /**< List node for management in a linked list. */
+    struct list_head entry;      /**< List node for management in a linked entry. */
 };
 
 /**

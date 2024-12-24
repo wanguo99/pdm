@@ -13,7 +13,7 @@ static struct list_head pdm_adapter_driver_list;
 static struct pdm_component pdm_adapter_drivers[] = {
     {
         .name = "LED Adapter",
-        .status = true,
+        .enable = true,
         .ignore_failures = true,
         .init = pdm_led_driver_init,
         .exit = pdm_led_driver_exit,

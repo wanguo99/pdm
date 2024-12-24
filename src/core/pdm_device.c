@@ -16,21 +16,21 @@ static struct list_head pdm_device_driver_list;
 static struct pdm_component pdm_device_drivers[] = {
     {
         .name = "SPI PDM Device",
-        .status = true,
+        .enable = true,
         .ignore_failures = true,
         .init = pdm_device_spi_driver_init,
         .exit = pdm_device_spi_driver_exit
     },
     {
         .name = "I2C PDM Device",
-        .status = true,
+        .enable = true,
         .ignore_failures = true,
         .init = pdm_device_i2c_driver_init,
         .exit = pdm_device_i2c_driver_exit
     },
     {
         .name = "PLATFORM PDM Device",
-        .status = true,
+        .enable = true,
         .ignore_failures = true,
         .init = pdm_device_platform_driver_init,
         .exit = pdm_device_platform_driver_exit
