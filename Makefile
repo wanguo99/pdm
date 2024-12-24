@@ -2,8 +2,8 @@
 MODULE_NAME ?= pdm
 
 # module info
-KBUILD_MODULE_VERSION := $(shell git describe --tags --always --dirty --long 2>/dev/null || echo unknown)
-KBUILD_MODULE_BUILD_TIME := $(shell date +'%Y-%m-%d %H:%M:%S')
+MODULE_VERSIONS := $(shell git describe --tags --always --dirty --long 2>/dev/null || echo unknown)
+MODULE_BUILD_TIME := $(shell date +'%Y-%m-%d %H:%M:%S')
 
 # kernel info
 KERNELDIR ?= /lib/modules/$(shell uname -r)/build
@@ -21,8 +21,8 @@ DEBUG_OSA_LOG_WITH_FILE_LINE := $(if $(findstring 0,$(osa_log_with_file_line)),0
 DEBUG_OSA_LOG_WITH_FUNCTION := $(if $(findstring 1,$(osa_log_with_function)),1,0)
 
 # module info micro defination
-PRIVATE_CFLAGS += -DKBUILD_MODULE_VERSION="\"${KBUILD_MODULE_VERSION}\"" \
-				  -DKBUILD_MODULE_BUILD_TIME="\"${KBUILD_MODULE_BUILD_TIME}\""
+PRIVATE_CFLAGS += -DMODULE_VERSIONS="\"${MODULE_VERSIONS}\"" \
+				  -DMODULE_BUILD_TIME="\"${MODULE_BUILD_TIME}\""
 
 # log configuration micro defination
 PRIVATE_CFLAGS += -DDEBUG_OSA_LOG_ENABLE=$(DEBUG_OSA_LOG_ENABLE) \

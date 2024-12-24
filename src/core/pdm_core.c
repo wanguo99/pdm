@@ -130,9 +130,9 @@ static void pdm_bus_debug_fs_exit(void)
 static void pdm_show_module_info(void)
 {
     OSA_INFO("----------------------------------\n");
-    OSA_INFO("| Name   : %s\n", KBUILD_MODNAME);
-    OSA_INFO("| Build  : %s\n", KBUILD_MODULE_BUILD_TIME);
-    OSA_INFO("| Version: %s\n", KBUILD_MODULE_VERSION);
+    OSA_INFO("| Name   : %s\n", PDM_MODULE_NAME);
+    OSA_INFO("| Build  : %s\n", PDM_MODULE_BUILD_TIME);
+    OSA_INFO("| Version: %s\n", PDM_MODULE_VERSIONS);
     OSA_INFO("----------------------------------\n");
 }
 
@@ -184,6 +184,7 @@ static void __exit pdm_exit(void)
 module_init(pdm_init);
 module_exit(pdm_exit);
 
+MODULE_VERSION(PDM_MODULE_VERSIONS);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("<guohaoprc@163.com>");
 MODULE_DESCRIPTION("PDM <Peripheral Driver Module>");
