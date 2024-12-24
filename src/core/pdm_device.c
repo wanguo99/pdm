@@ -121,10 +121,9 @@ ATTRIBUTE_GROUPS(pdm_device);
 static void pdm_device_release(struct device *dev)
 {
     struct pdm_device *pdmdev = dev_to_pdm_device(dev);
-    if (pdmdev) {
-        OSA_INFO("PDM Device Released: %s\n", dev_name(dev));
-        kfree(pdmdev);
-    }
+
+    OSA_DEBUG("PDM Device Released: %s\n", dev_name(dev));
+    kfree(pdmdev);
 }
 
 /**
@@ -208,6 +207,20 @@ struct pdm_device *pdm_device_alloc(struct device *dev)
 }
 
 /**
+ * @brief Frees a PDM device structure.
+ *
+ * Decrements the device reference count; when it reaches zero, the device is freed.
+ *
+ * @param pdmdev Pointer to the PDM device structure.
+ */
+void pdm_device_free(struct pdm_device *pdmdev)
+{
+    if (pdmdev) {
+        pdm_device_put(pdmdev);
+    }
+}
+
+/**
  * @brief Registers a PDM device.
  *
  * Verifies the device, allocates an ID, checks for duplicates, sets the device name,
@@ -252,6 +265,7 @@ err_free_id:
 void pdm_device_unregister(struct pdm_device *pdmdev)
 {
     if (!pdmdev) {
+        OSA_ERROR("Invalid input parameters (pdmdev: %p).\n", pdmdev);
         return;
     }
 

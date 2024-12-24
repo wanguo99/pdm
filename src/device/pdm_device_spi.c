@@ -24,6 +24,7 @@ static int pdm_device_spi_probe(struct spi_device *spi) {
     status = pdm_device_register(pdmdev);
     if (status) {
         OSA_ERROR("Failed to register pdm device, status=%d.\n", status);
+        pdm_device_free(pdmdev);
         return status;
     }
 
@@ -47,9 +48,8 @@ static int pdm_device_spi_real_remove(struct spi_device *spi) {
         return -ENODEV;
     }
 
-    OSA_DEBUG("Found SPI PDM Device: %s\n", dev_name(&pdmdev->dev));
-
     pdm_device_unregister(pdmdev);
+    pdm_device_free(pdmdev);
     OSA_DEBUG("PDM SPI Device Removed.\n");
     return 0;
 }

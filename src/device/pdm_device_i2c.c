@@ -37,6 +37,7 @@ static int pdm_device_i2c_real_probe(struct i2c_client *client, const struct i2c
     status = pdm_device_register(pdmdev);
     if (status) {
         OSA_ERROR("Failed to register pdm device, status=%d.\n", status);
+        pdm_device_free(pdmdev);
         return status;
     }
 
@@ -60,9 +61,8 @@ static int pdm_device_i2c_real_remove(struct i2c_client *client) {
         return -ENODEV;
     }
 
-    OSA_DEBUG("Found I2C PDM Device: %s\n", dev_name(&pdmdev->dev));
-
     pdm_device_unregister(pdmdev);
+    pdm_device_free(pdmdev);
 
     OSA_DEBUG("PDM I2C Device Removed.\n");
     return 0;

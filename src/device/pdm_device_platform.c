@@ -26,6 +26,7 @@ static int pdm_device_platform_probe(struct platform_device *pdev) {
     status = pdm_device_register(pdmdev);
     if (status) {
         OSA_ERROR("Failed to register pdm device, status=%d.\n", status);
+        pdm_device_free(pdmdev);
         return status;
     }
 
@@ -49,10 +50,8 @@ static int pdm_device_platform_real_remove(struct platform_device *pdev) {
         return -ENODEV;
     }
 
-    OSA_DEBUG("Found PLATFORM PDM Device: %s\n", dev_name(&pdmdev->dev));
-
     pdm_device_unregister(pdmdev);
-
+    pdm_device_free(pdmdev);
     OSA_DEBUG("PDM Device PLATFORM Device Removed.\n");
     return 0;
 }

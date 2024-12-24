@@ -201,6 +201,8 @@ static void pdm_adapter_dev_release(struct device *dev)
 {
     struct pdm_adapter *adapter = dev_to_pdm_adapter(dev);
     WARN(!list_empty(&adapter->client_list), "Client list is not empty!");
+
+    OSA_DEBUG("PDM Adapter Released: %s\n", dev_name(dev));
     kfree(adapter);
 }
 

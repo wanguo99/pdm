@@ -311,6 +311,8 @@ err_devres_free:
 static void __pdm_client_device_release(struct device *dev)
 {
     struct pdm_client *client = container_of(dev, struct pdm_client, dev);
+
+    OSA_DEBUG("PDM Client Released: %s\n", dev_name(dev));
     kfree(client);
 }
 
