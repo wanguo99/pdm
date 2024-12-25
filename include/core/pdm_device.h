@@ -86,6 +86,17 @@ int pdm_device_register(struct pdm_device *pdmdev);
 void pdm_device_unregister(struct pdm_device *pdmdev);
 
 /**
+ * @brief Retrieves match data for a PDM device from the device tree.
+ *
+ * This function looks up the device tree to find matching data for the given PDM device,
+ * which can be used for initialization or configuration.
+ *
+ * @param pdmdev Pointer to the PDM device structure.
+ * @return Pointer to the match data if found; NULL otherwise.
+ */
+const void *pdm_device_get_match_data(struct pdm_device *pdmdev);
+
+/**
  * @brief Initializes the PDM device module.
  *
  * @return 0 on success, negative error code on failure.

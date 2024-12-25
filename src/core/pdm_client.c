@@ -373,6 +373,9 @@ struct pdm_client *devm_pdm_client_alloc(struct pdm_device *pdmdev, unsigned int
     devres->client = client;
     devres_add(&pdmdev->dev, devres);
 
+    pdmdev->client = client;
+    client->pdmdev = pdmdev;
+
     return client;
 }
 

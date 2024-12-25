@@ -23,7 +23,8 @@
  * which is a device that interacts with a PDM (Pulse Density Modulation) adapter.
  */
 struct pdm_client {
-    struct pdm_adapter *adapter;                /**< Pointer to the owning PDM adapter */
+    struct pdm_adapter *adapter;                /**< Pointer to the owning PDM Adapter */
+    struct pdm_device *pdmdev;                  /**< Pointer to the PDM Device */
     bool force_dts_id;                          /**< Flag indicating whether to force ID from Device Tree Source (DTS) */
     int index;                                  /**< Client ID allocated by the adapter */
     struct device dev;                          /**< Kernel device structure, holds device-related info */
@@ -51,51 +52,6 @@ struct pdm_client_devres {
  * @return Pointer to the corresponding pdm_client structure.
  */
 #define to_pdm_client_dev(d) container_of(d, struct pdm_client, dev)
-
-/**
- * @brief Checks if the device's 'compatible' property matches a given string.
- *
- * This function checks if the parent device of the PDM client has a 'compatible'
- * property that matches the specified compatibility string.
- *
- * @client: Pointer to the PDM client structure.
- * @compat: Compatibility string to match against.
- * @return: true if the 'compatible' property matches, false otherwise.
- */
-static inline bool pdm_client_is_compatible(struct pdm_client *client, const char *compat)
-{
-    if ((!client) || (!client->dev.parent) || (!client->dev.parent->parent)) {
-        return false;
-    }
-    return of_device_is_compatible(client->dev.parent->parent->of_node, compat);
-}
-
-/**
- * @brief Gets the private data associated with the device.
- *
- * This function retrieves the private data pointer that is stored in the device's
- * driver data field.
- *
- * @param client Pointer to the PDM Client structure.
- * @return Pointer to the private data.
- */
-static inline void *pdm_client_get_devdata(struct pdm_client *client)
-{
-    return dev_get_drvdata(&client->dev);
-}
-
-/**
- * @brief Sets the private data associated with the device.
- *
- * This function sets the private data pointer in the device's driver data field.
- *
- * @param client Pointer to the PDM Client structure.
- * @param data Pointer to the private data.
- */
-static inline void pdm_client_set_devdata(struct pdm_client *client, void *data)
-{
-    dev_set_drvdata(&client->dev, data);
-}
 
 /**
  * @brief Retrieves the device corresponding to a pdm_client and increases its reference count.
