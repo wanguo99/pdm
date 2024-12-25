@@ -18,38 +18,6 @@
 #define PDM_LED_NAME "pdm_led"
 
 /**
- * @struct pdm_led_gpio_data
- * @brief Data structure for GPIO-controlled LED devices.
- *
- * This structure holds the necessary data for controlling an LED via GPIO.
- */
-struct pdm_led_gpio_data {
-    unsigned int gpio_num;
-};
-
-/**
- * @struct pdm_led_pwm_data
- * @brief Data structure for PWM-controlled LED devices.
- *
- * This structure holds the necessary data for controlling an LED via PWM.
- */
-struct pdm_led_pwm_data {
-    struct pwm_device *pwm;
-};
-
-/**
-* @union pdm_led_hw_data
- * @brief Union to hold hardware-specific data for different types of LED controls.
- *
- * This union allows the same structure to accommodate different types of LED control
- * mechanisms (e.g., GPIO or PWM).
- */
-union pdm_led_hw_data {
-    struct pdm_led_gpio_data gpio;
-    struct pdm_led_pwm_data pwm;
-};
-
-/**
  * @struct pdm_led_match_data
  * @brief Match data structure for initializing specific types of LED devices.
  *
@@ -80,7 +48,6 @@ struct pdm_led_operations {
  * operation functions.
  */
 struct pdm_led_priv {
-    union pdm_led_hw_data hw_data;
     const struct pdm_led_operations *ops;  ///< Pointer to operation function callbacks
     const struct pdm_led_match_data *match_data;
 };

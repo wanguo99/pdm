@@ -1,52 +1,6 @@
 #ifndef _PDM_DEVICE_PRIV_H_
 #define _PDM_DEVICE_PRIV_H_
 
-/**
- * @struct pdm_device_gpio_data
- * @brief Data structure for GPIO-controlled PDM Devices.
- *
- * This structure holds the necessary data for controlling an LED via GPIO.
- */
-struct pdm_device_gpio_data {
-    unsigned int gpio_num;
-};
-
-/**
- * @struct pdm_device_pwm_data
- * @brief Data structure for PWM-controlled PDM Devices.
- *
- * This structure holds the necessary data for controlling an LED via PWM.
- */
-struct pdm_device_pwm_data {
-    struct pwm_device *pwm;
-};
-
-/**
-* @union pdm_device_hw_data
- * @brief Union to hold hardware-specific data for different types of LED controls.
- *
- * This union allows the same structure to accommodate different types of LED control
- * mechanisms (e.g., GPIO or PWM).
- */
-union pdm_device_hw_data {
-    struct pdm_device_gpio_data gpio;
-    struct pdm_device_pwm_data pwm;
-};
-
-
-/**
- * @struct pdm_device_priv
- * @brief PDM LED Device Private Data Structure
- *
- * This structure is used to store private data for a PDM Device, including pointers to
- * operation functions.
- */
-struct pdm_device_priv {
-    union pdm_device_hw_data hw_data;
-    const struct pdm_device_operations *ops;  ///< Pointer to operation function callbacks
-    const struct pdm_device_match_data *match_data;
-};
-
 
 /**
  * @struct pdm_device_match_data

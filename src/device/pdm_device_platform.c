@@ -1,7 +1,65 @@
 #include <linux/platform_device.h>
+#include <linux/of_gpio.h>
+#include <linux/gpio.h>
 
 #include "pdm.h"
 #include "pdm_device_priv.h"
+
+/**
+ * @brief Initializes GPIO settings for a PDM device.
+ *
+ * This function initializes the GPIO settings for the specified PDM device and sets up the operation functions.
+ *
+ * @param client Pointer to the PDM client structure.
+ * @return Returns 0 on success; negative error code on failure.
+ */
+static int pdm_device_gpio_setup(struct pdm_device *pdmdev)
+{
+    struct device_node *np;
+    struct pdm_device_priv *pdmdev_priv;
+    unsigned int gpio_num;
+    int status;
+
+    if (!pdmdev) {
+        OSA_ERROR("Invalid client\n");
+    }
+
+    pdmdev_priv = pdm_device_get_drvdata(pdmdev);
+    if (!pdmdev_priv) {
+        OSA_ERROR("Get PDM Device DrvData Failed\n");
+        return -ENOMEM;
+    }
+
+    np = pdm_device_get_of_node(pdmdev);
+    if (!np) {
+        OSA_ERROR("No DT node found\n");
+        return -EINVAL;
+    }
+
+    gpio_num = of_get_named_gpio(np, "gpio_num", 0);
+    if (!gpio_is_valid(gpio_num)) {
+        OSA_ERROR("Invalid GPIO specified in DT\n");
+        return gpio_num;
+    }
+
+    status = devm_gpio_request_one(pdmdev->dev.parent, gpio_num,
+                                    GPIOF_OUT_INIT_LOW, dev_name(&pdmdev->dev));
+    if (status) {
+        OSA_ERROR("Failed to request GPIO %d\n", gpio_num);
+        return status;
+    }
+
+    OSA_DEBUG("GPIO PDM Device Setup: %s\n", dev_name(&pdmdev->dev));
+    return 0;
+}
+
+/**
+ * @brief Match data structure for initializing GPIO type LED devices.
+ */
+static const struct pdm_device_match_data pdm_device_gpio_match_data = {
+    .setup = pdm_device_gpio_setup,
+    .cleanup = NULL,
+};
 
 /**
  * @brief Probes the PLATFORM device and initializes the PDM device.
@@ -104,7 +162,7 @@ MODULE_DEVICE_TABLE(platform, pdm_device_platform_ids);
  * Defines the supported DEVICE_TREE compatibility strings.
  */
 static const struct of_device_id pdm_device_platform_of_match[] = {
-    { .compatible = "led,pdm-device-gpio" },
+    { .compatible = "led,pdm-device-gpio", .data = &pdm_device_gpio_match_data },
     { .compatible = "led,pdm-device-pwm" },
     { }
 };
