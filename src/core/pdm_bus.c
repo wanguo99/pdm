@@ -1,7 +1,5 @@
 #include "pdm.h"
 
-static struct pdm_bus_private_data pdm_bus_priv_data;
-
 /**
  * @brief Matches a device based on its parent device.
  *
@@ -186,10 +184,6 @@ int pdm_bus_init(void)
         return status;
     }
 
-    memset(&pdm_bus_priv_data, 0, sizeof(struct pdm_bus_private_data));
-    mutex_init(&pdm_bus_priv_data.idr_mutex_lock);
-    idr_init(&pdm_bus_priv_data.device_idr);
-
     OSA_DEBUG("PDM bus initialized\n");
     return 0;
 }
@@ -206,9 +200,6 @@ int pdm_bus_init(void)
 void pdm_bus_exit(void)
 {
     bus_unregister(&pdm_bus_type);
-    mutex_lock(&pdm_bus_priv_data.idr_mutex_lock);
-    idr_destroy(&pdm_bus_priv_data.device_idr);
-    mutex_unlock(&pdm_bus_priv_data.idr_mutex_lock);
     OSA_DEBUG("PDM bus unregistered\n");
 }
 

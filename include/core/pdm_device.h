@@ -86,6 +86,17 @@ int pdm_device_register(struct pdm_device *pdmdev);
 void pdm_device_unregister(struct pdm_device *pdmdev);
 
 /**
+ * @brief Retrieves the device tree node for a PDM device's parent device.
+ *
+ * This function retrieves the device tree node associated with the parent device of the given PDM device.
+ * It can be used to access properties or subnodes defined in the device tree for the parent device.
+ *
+ * @param pdmdev Pointer to the PDM device structure.
+ * @return Pointer to the device_node structure if found; NULL otherwise.
+ */
+struct device_node *pdm_device_get_of_node(struct pdm_device *pdmdev);
+
+/**
  * @brief Retrieves match data for a PDM device from the device tree.
  *
  * This function looks up the device tree to find matching data for the given PDM device,

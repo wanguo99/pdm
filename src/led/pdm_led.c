@@ -8,7 +8,7 @@ static struct pdm_adapter *led_adapter = NULL;
 /**
  * @brief Match data structure for initializing GPIO type LED devices.
  */
-static const struct pdm_led_match_data pdm_led_gpio_setup_data = {
+static const struct pdm_led_match_data pdm_led_gpio_match_data = {
     .setup = pdm_led_gpio_setup,
     .cleanup = NULL,
 };
@@ -16,7 +16,7 @@ static const struct pdm_led_match_data pdm_led_gpio_setup_data = {
 /**
  * @brief Match data structure for initializing PWM type LED devices.
  */
-static const struct pdm_led_match_data pdm_led_pwm_setup_data = {
+static const struct pdm_led_match_data pdm_led_pwm_match_data = {
     .setup = NULL,
     .cleanup = NULL,
 };
@@ -228,8 +228,8 @@ static void pdm_led_device_remove(struct pdm_device *pdmdev)
  * Defines the supported device tree compatible properties.
  */
 static const struct of_device_id of_pdm_led_match[] = {
-    { .compatible = "led,pdm-device-gpio", .data = &pdm_led_gpio_setup_data},
-    { .compatible = "led,pdm-device-pwm", .data = &pdm_led_pwm_setup_data},
+    { .compatible = "led,pdm-device-gpio", .data = &pdm_led_gpio_match_data},
+    { .compatible = "led,pdm-device-pwm", .data = &pdm_led_pwm_match_data},
     {},
 };
 MODULE_DEVICE_TABLE(of, of_pdm_led_match);

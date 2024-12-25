@@ -14,30 +14,6 @@
 #include <linux/of_device.h>
 
 /**
- * @def PDM_BUS_DEVICE_IDR_START
- * @brief The starting value of device IDs on the PDM bus.
- */
-#define PDM_BUS_DEVICE_IDR_START (0)
-
-/**
- * @def PDM_BUS_DEVICE_IDR_END
- * @brief The ending value of device IDs on the PDM bus.
- */
-#define PDM_BUS_DEVICE_IDR_END   (1024)
-
-/**
- * @struct pdm_bus_private_data
- * @brief Private data structure for the PDM bus.
- *
- * Contains members used to manage internal states of the PDM bus, such as the
- * IDR for ID allocation and a mutex for synchronization.
- */
-struct pdm_bus_private_data {
-    struct idr device_idr;                     /**< IDR: Used for allocating unique IDs */
-    struct mutex idr_mutex_lock;               /**< Mutex: Protects the IDR from concurrent access */
-};
-
-/**
  * @struct pdm_device_id
  * @brief Device ID information for PDM devices.
  *

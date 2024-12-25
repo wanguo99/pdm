@@ -265,6 +265,23 @@ void pdm_device_unregister(struct pdm_device *pdmdev)
 }
 
 /**
+ * @brief Retrieves the device tree node for a PDM device's parent device.
+ *
+ * This function retrieves the device tree node associated with the parent device of the given PDM device.
+ * It can be used to access properties or subnodes defined in the device tree for the parent device.
+ *
+ * @param pdmdev Pointer to the PDM device structure.
+ * @return Pointer to the device_node structure if found; NULL otherwise.
+ */
+struct device_node *pdm_device_get_of_node(struct pdm_device *pdmdev)
+{
+    if (!pdmdev || !pdmdev->dev.parent) {
+        return NULL;
+    }
+    return dev_of_node(pdmdev->dev.parent);
+}
+
+/**
  * @brief Retrieves match data for a PDM device from the device tree.
  *
  * This function looks up the device tree to find matching data for the given PDM device,
@@ -276,10 +293,15 @@ void pdm_device_unregister(struct pdm_device *pdmdev)
 const void *pdm_device_get_match_data(struct pdm_device *pdmdev)
 {
 	const struct of_device_id *match;
-	match = of_match_device(pdmdev->dev.driver->of_match_table, pdmdev->dev.parent);
-	if (!match)
-		return NULL;
-	return match->data;
+    if (!pdmdev || !pdmdev->dev.driver || !pdmdev->dev.driver->of_match_table || !pdmdev->dev.parent) {
+        return NULL;
+    }
+
+    match = of_match_device(pdmdev->dev.driver->of_match_table, pdmdev->dev.parent);
+    if (!match) {
+        return NULL;
+    }
+    return match->data;
 }
 
 /**
