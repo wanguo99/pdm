@@ -35,6 +35,21 @@ struct pdm_device {
 #define dev_to_pdm_device(__dev) container_of(__dev, struct pdm_device, dev)
 
 /**
+ * @brief Setup a PDM device.
+ *
+ * @param pdmdev Pointer to the PDM device structure.
+ * @return 0 on success, negative error code on failure.
+ */
+int pdm_device_setup(struct pdm_device *pdmdev);
+
+/**
+ * @brief Cleanup a PDM device.
+ *
+ * @param pdmdev Pointer to the PDM device structure.
+ */
+void pdm_device_cleanup(struct pdm_device *pdmdev);
+
+/**
  * @brief pdm_device_get.
  *
  * @param pdmdev Pointer to the PDM device structure.
@@ -54,6 +69,32 @@ static inline void pdm_device_put(struct pdm_device *pdmdev)
 {
 	if (pdmdev)
 		put_device(&pdmdev->dev);
+}
+
+/**
+ * @brief Retrieves the driver data associated with the device.
+ *
+ * This function retrieves the driver data stored in the device structure.
+ *
+ * @param Pointer to the PDM Device structure.
+ * @return Pointer to the driver data stored in the device structure.
+ */
+static inline void *pdm_device_get_drvdata(struct pdm_device *pdmdev)
+{
+    return dev_get_drvdata(&pdmdev->dev);
+}
+
+/**
+ * @brief Sets the driver data associated with the device.
+ *
+ * This function sets the driver data in the device structure.
+ *
+ * @param Pointer to the PDM Device structure.
+ * @param data Pointer to the driver data to be set.
+ */
+static inline void pdm_device_set_drvdata(struct pdm_device *pdmdev, void *data)
+{
+    dev_set_drvdata(&pdmdev->dev, data);
 }
 
 /**

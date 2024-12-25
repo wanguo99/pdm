@@ -1,3 +1,6 @@
+#include <linux/gpio.h>
+#include <linux/of_gpio.h>
+
 #include "pdm.h"
 #include "pdm_device.h"
 #include "pdm_component.h"
@@ -170,6 +173,49 @@ void pdm_device_drivers_unregister(void)
     pdm_component_unregister(&pdm_device_driver_list);
 }
 
+/**
+ * @brief Setup a PDM device.
+ *
+ * @param pdmdev Pointer to the PDM device structure.
+ * @return 0 on success, negative error code on failure.
+ */
+int pdm_device_setup(struct pdm_device *pdmdev)
+{
+    const void *match_data;
+    struct pdm_device_priv *pdmdev_priv;
+    int status;
+
+    match_data = pdm_device_get_match_data(pdmdev);
+    if (!match_data) {
+        OSA_ERROR("Failed to get match data for device\n");
+        return -ENODEV;
+    }
+
+    pdmdev_priv = pdm_device_get_drvdata(pdmdev);
+    pdmdev_priv->match_data = match_data;
+    if (pdmdev_priv->match_data->setup) {
+        status = pdmdev_priv->match_data->setup(pdmdev);
+        if (status) {
+            OSA_ERROR("PDM Device Setup Failed, status=%d\n", status);
+            return status;
+        }
+    }
+
+    return status;
+}
+
+/**
+ * @brief Cleanup a PDM device.
+ *
+ * @param pdmdev Pointer to the PDM device structure.
+ */
+void pdm_device_cleanup(struct pdm_device *pdmdev)
+{
+    struct pdm_device_priv *pdmdev_priv = pdm_device_get_drvdata(pdmdev);
+    if (pdmdev_priv && pdmdev_priv->match_data && pdmdev_priv->match_data->cleanup) {
+        pdmdev_priv->match_data->cleanup(pdmdev);
+    }
+}
 
 /**
  * @brief Allocates a new PDM device structure.
