@@ -24,7 +24,7 @@
  * This structure holds the necessary data for controlling an LED via GPIO.
  */
 struct pdm_led_gpio_data {
-    int gpio;
+    unsigned int gpio;
 };
 
 /**

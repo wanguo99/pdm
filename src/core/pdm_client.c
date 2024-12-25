@@ -368,10 +368,12 @@ struct pdm_client *devm_pdm_client_alloc(struct pdm_device *pdmdev, unsigned int
     client->dev.parent = &pdmdev->dev;
     device_initialize(&client->dev);
 
-    pdm_client_set_drvdata(client, (void *)(client + client_size));
-
     devres->client = client;
     devres_add(&pdmdev->dev, devres);
+
+    if (data_size) {
+        client->priv_data = (void *)(client + client_size);
+    }
 
     pdmdev->client = client;
     client->pdmdev = pdmdev;

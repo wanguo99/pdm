@@ -32,7 +32,7 @@ static int pdm_led_set_state(struct pdm_client *client, struct pdm_led_ioctl_arg
     struct pdm_led_priv *led_priv;
     int status = 0;
 
-    led_priv = (struct pdm_led_priv *)pdm_client_get_drvdata(client);
+    led_priv = client->priv_data;
     if (!led_priv) {
         OSA_ERROR("Get PDM Client Device Data Failed\n");
         return -ENOMEM;
@@ -135,6 +135,42 @@ static ssize_t pdm_led_write(struct file *filp, const char __user *buf, size_t c
 }
 
 /**
+ * @brief Initializes the LED client using match data.
+ *
+ * @param client Pointer to the PDM client structure.
+ * @param pdmdev Pointer to the PDM device structure.
+ * @return Returns 0 on success; negative error code on failure.
+ */
+static int pdm_led_match_setup(struct pdm_client *client)
+{
+    struct pdm_led_priv *led_priv = client->priv_data;
+    const void *match_data;
+    int status;
+
+    if (!led_priv) {
+        OSA_ERROR("LED Client get private data is NULL\n");
+        return -ENOMEM;
+    }
+
+    match_data = pdm_device_get_match_data(client->pdmdev);
+    if (!match_data) {
+        OSA_ERROR("Failed to get match data for device\n");
+        return -ENODEV;
+    }
+
+    led_priv->match_data = match_data;
+    if (led_priv->match_data->setup) {
+        status = led_priv->match_data->setup(client);
+        if (status) {
+            OSA_ERROR("LED Client Setup Failed, status=%d\n", status);
+            return status;
+        }
+    }
+
+    return 0;
+}
+
+/**
  * @brief Probes the LED PDM device.
  *
  * This function is called when a PDM device is detected and adds the device to the main device.
@@ -145,7 +181,6 @@ static ssize_t pdm_led_write(struct file *filp, const char __user *buf, size_t c
 static int pdm_led_device_probe(struct pdm_device *pdmdev)
 {
     struct pdm_client *client;
-    struct pdm_led_priv *led_priv;
     int status;
 
     client = devm_pdm_client_alloc(pdmdev, sizeof(struct pdm_led_priv));
@@ -160,19 +195,10 @@ static int pdm_led_device_probe(struct pdm_device *pdmdev)
         return status;
     }
 
-    led_priv = pdm_client_get_drvdata(client);
-    if (!led_priv) {
-        OSA_ERROR("LED Client get private data Failed\n");
-        return -ENOMEM;
-    }
-
-    led_priv->match_data = pdm_device_get_match_data(pdmdev);
-    if (led_priv->match_data && led_priv->match_data->setup) {
-        status = led_priv->match_data->setup(client);
-        if (status) {
-            OSA_ERROR("LED Client Setup Failed, status=%d\n", status);
-            return status;
-        }
+    status = pdm_led_match_setup(client);
+    if (status) {
+        OSA_ERROR("LED Client Setup Failed, status=%d\n", status);
+        return status;
     }
 
     client->fops.write = pdm_led_write;
@@ -190,7 +216,7 @@ static int pdm_led_device_probe(struct pdm_device *pdmdev)
  */
 static void pdm_led_device_remove(struct pdm_device *pdmdev)
 {
-    struct pdm_led_priv *led_priv = pdm_client_get_drvdata(pdmdev->client);
+    struct pdm_led_priv *led_priv = pdmdev->client->priv_data;
     if (led_priv && led_priv->match_data && led_priv->match_data->cleanup) {
         led_priv->match_data->cleanup(pdmdev->client);
     }

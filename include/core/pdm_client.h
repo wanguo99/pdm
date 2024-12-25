@@ -31,6 +31,7 @@ struct pdm_client {
     struct cdev cdev;                           /**< Character device structure for device operations */
     struct file_operations fops;                /**< File operations structure, defining operations for this device */
     struct list_head entry;                     /**< List node for linking devices in a linked list */
+    void *priv_data;                            /**< Pointer to the private data */
 };
 
 /**
