@@ -31,7 +31,6 @@ struct pdm_client {
     struct cdev cdev;                           /**< Character device structure for device operations */
     struct file_operations fops;                /**< File operations structure, defining operations for this device */
     struct list_head entry;                     /**< List node for linking devices in a linked list */
-    void *priv_data;                            /**< Pointer to the private data */
 };
 
 /**
@@ -119,6 +118,18 @@ static inline void pdm_client_set_drvdata(struct pdm_client *client, void *data)
  * @return Pointer to the newly allocated pdm_client structure, or ERR_PTR on failure.
  */
 struct pdm_client *devm_pdm_client_alloc(struct pdm_device *pdmdev, unsigned int data_size);
+
+
+/**
+ * @brief Retrieves match data for a PDM device from the device tree.
+ *
+ * This function looks up the device tree to find matching data for the given PDM device,
+ * which can be used for initialization or configuration.
+ *
+ * @param pdmdev Pointer to the PDM device structure.
+ * @return Pointer to the match data if found; NULL otherwise.
+ */
+const void *pdm_client_get_match_data(struct pdm_client *client);
 
 /**
  * @brief Registers a PDM client with the associated PDM adapter.

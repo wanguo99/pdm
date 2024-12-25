@@ -63,7 +63,7 @@ int pdm_led_gpio_setup(struct pdm_client *client)
         OSA_ERROR("Invalid client\n");
     }
 
-    led_priv = client->priv_data;
+    led_priv = pdm_client_get_drvdata(client);
     if (!led_priv) {
         OSA_ERROR("Get PDM Client DevData Failed\n");
         return -ENOMEM;

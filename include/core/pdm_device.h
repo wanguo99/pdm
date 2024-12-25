@@ -148,7 +148,7 @@ static inline void pdm_device_set_drvdata(struct pdm_device *pdmdev, void *data)
  *
  * @return Pointer to the allocated PDM device structure, or NULL on failure.
  */
-struct pdm_device *pdm_device_alloc(struct device *dev);
+struct pdm_device *pdm_device_alloc(struct device *dev, unsigned int data_size);
 
 /**
  * @brief Frees a PDM device structure.

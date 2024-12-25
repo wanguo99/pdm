@@ -49,17 +49,11 @@ static int pdm_device_gpio_setup(struct pdm_device *pdmdev)
         return status;
     }
 
+    pdmdev_priv->hw_data.gpio.gpio_num = gpio_num;
+
     OSA_DEBUG("GPIO PDM Device Setup: %s\n", dev_name(&pdmdev->dev));
     return 0;
 }
-
-/**
- * @brief Match data structure for initializing GPIO type LED devices.
- */
-static const struct pdm_device_match_data pdm_device_gpio_match_data = {
-    .setup = pdm_device_gpio_setup,
-    .cleanup = NULL,
-};
 
 /**
  * @brief Probes the PLATFORM device and initializes the PDM device.
@@ -73,7 +67,7 @@ static int pdm_device_platform_probe(struct platform_device *pdev) {
     struct pdm_device *pdmdev;
     int status;
 
-    pdmdev = pdm_device_alloc(&pdev->dev);
+    pdmdev = pdm_device_alloc(&pdev->dev, sizeof(struct pdm_device_priv));
     if (IS_ERR(pdmdev)) {
         OSA_ERROR("Failed to allocate pdm_device\n");
         return PTR_ERR(pdmdev);
@@ -90,10 +84,11 @@ static int pdm_device_platform_probe(struct platform_device *pdev) {
         OSA_ERROR("Failed to setup pdm device, status=%d\n", status);
         goto err_pdmdev_unregister;
     }
+
     return 0;
 
 err_pdmdev_unregister:
-    pdm_device_register(pdmdev);
+    pdm_device_unregister(pdmdev);
 err_pdmdev_free:
     pdm_device_free(pdmdev);
     return status;
@@ -141,6 +136,15 @@ static void pdm_device_platform_remove(struct platform_device *pdev) {
     pdm_device_platform_real_remove(pdev);
 }
 #endif
+
+
+/**
+ * @brief Match data structure for initializing GPIO type LED devices.
+ */
+static const struct pdm_device_match_data pdm_device_gpio_match_data = {
+    .setup = pdm_device_gpio_setup,
+    .cleanup = NULL,
+};
 
 /**
  * @brief PLATFORM device ID table.

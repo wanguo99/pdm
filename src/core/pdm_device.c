@@ -222,16 +222,18 @@ void pdm_device_cleanup(struct pdm_device *pdmdev)
  *
  * @return Pointer to the allocated PDM device structure, or NULL on failure.
  */
-struct pdm_device *pdm_device_alloc(struct device *dev)
+struct pdm_device *pdm_device_alloc(struct device *dev, unsigned int data_size)
 {
     struct pdm_device *pdmdev;
+    unsigned int pdmdev_size = sizeof(struct pdm_device);
+    unsigned int total_size = ALIGN(pdmdev_size + data_size, 8);
+    unsigned int index = (unsigned int )atomic_inc_return(&pdm_device_no);
 
     if (!dev) {
-        OSA_ERROR("invalid device pointer\n");
-        return ERR_PTR(-ENODEV);
+        return ERR_PTR(-EINVAL);
     }
 
-    pdmdev = kzalloc(sizeof(*pdmdev), GFP_KERNEL);
+    pdmdev = kzalloc(total_size, GFP_KERNEL);
     if (!pdmdev) {
         OSA_ERROR("Failed to allocate memory for PDM device\n");
         return ERR_PTR(-ENOMEM);
@@ -242,8 +244,10 @@ struct pdm_device *pdm_device_alloc(struct device *dev)
     pdmdev->dev.type = &pdm_device_type;
     device_initialize(&pdmdev->dev);
 
-    dev_set_name(&pdmdev->dev, "pdmdev%lu",
-            (unsigned long)atomic_inc_return(&pdm_device_no));
+    dev_set_name(&pdmdev->dev, "pdmdev%u", index);
+    if (data_size) {
+        pdm_device_set_drvdata(pdmdev, (void *)(pdmdev + pdmdev_size));
+    }
 
     return pdmdev;
 }
@@ -338,16 +342,10 @@ struct device_node *pdm_device_get_of_node(struct pdm_device *pdmdev)
  */
 const void *pdm_device_get_match_data(struct pdm_device *pdmdev)
 {
-	const struct of_device_id *match;
-    if (!pdmdev || !pdmdev->dev.driver || !pdmdev->dev.driver->of_match_table || !pdmdev->dev.parent) {
+    if (!pdmdev || !pdmdev->dev.parent) {
         return NULL;
     }
-
-    match = of_match_device(pdmdev->dev.driver->of_match_table, pdmdev->dev.parent);
-    if (!match) {
-        return NULL;
-    }
-    return match->data;
+    return of_device_get_match_data(pdmdev->dev.parent);
 }
 
 /**

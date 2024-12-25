@@ -49,8 +49,6 @@ static int pdm_client_fops_default_open(struct inode *inode, struct file *filp)
     }
 
     filp->private_data = client;
-    OSA_INFO("fops_default_open for %s\n", dev_name(&client->dev));
-
     return 0;
 }
 
@@ -66,8 +64,6 @@ static int pdm_client_fops_default_open(struct inode *inode, struct file *filp)
  */
 static int pdm_client_fops_default_release(struct inode *inode, struct file *filp)
 {
-    struct pdm_client *client = filp->private_data;
-    OSA_INFO("fops_default_release for %s\n", dev_name(&client->dev));
     return 0;
 }
 
@@ -85,8 +81,6 @@ static int pdm_client_fops_default_release(struct inode *inode, struct file *fil
  */
 static ssize_t pdm_client_fops_default_read(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
 {
-    struct pdm_client *client = filp->private_data;
-    OSA_INFO("fops_default_read for %s\n", dev_name(&client->dev));
     return 0;
 }
 
@@ -104,8 +98,6 @@ static ssize_t pdm_client_fops_default_read(struct file *filp, char __user *buf,
  */
 static ssize_t pdm_client_fops_default_write(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
 {
-    struct pdm_client *client = filp->private_data;
-    OSA_INFO("fops_default_write for %s\n", dev_name(&client->dev));
     return count;
 }
 
@@ -371,16 +363,41 @@ struct pdm_client *devm_pdm_client_alloc(struct pdm_device *pdmdev, unsigned int
     devres->client = client;
     devres_add(&pdmdev->dev, devres);
 
-    if (data_size) {
-        client->priv_data = (void *)(client + client_size);
-    }
-
     pdmdev->client = client;
     client->pdmdev = pdmdev;
+    if (data_size) {
+        pdm_client_set_drvdata(client, (void *)(client + client_size));
+    }
 
     return client;
 }
 
+/**
+ * @brief Retrieves match data for a PDM device from the device tree.
+ *
+ * This function looks up the device tree to find matching data for the given PDM device,
+ * which can be used for initialization or configuration.
+ *
+ * @param pdmdev Pointer to the PDM device structure.
+ * @return Pointer to the match data if found; NULL otherwise.
+ */
+const void *pdm_client_get_match_data(struct pdm_client *client)
+{
+    const struct of_device_id *match;
+
+    if (!client || !client->pdmdev || !client->pdmdev->dev.driver) {
+        return NULL;
+    }
+    if (!client->pdmdev->dev.driver->of_match_table || !client->pdmdev->dev.parent) {
+        return NULL;
+    }
+
+    match = of_match_device(client->pdmdev->dev.driver->of_match_table, client->pdmdev->dev.parent);
+    if (!match) {
+        return NULL;
+    }
+    return match->data;
+}
 
 /**
  * @brief Initializes the PDM Client module.

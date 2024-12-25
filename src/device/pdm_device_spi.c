@@ -15,7 +15,7 @@ static int pdm_device_spi_probe(struct spi_device *spi) {
     struct pdm_device *pdmdev;
     int status;
 
-    pdmdev = pdm_device_alloc(&spi->dev);
+    pdmdev = pdm_device_alloc(&spi->dev, sizeof(struct pdm_device_priv));
     if (IS_ERR(pdmdev)) {
         OSA_ERROR("Failed to allocate pdm_device\n");
         return PTR_ERR(pdmdev);

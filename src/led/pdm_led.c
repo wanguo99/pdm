@@ -6,22 +6,6 @@
 static struct pdm_adapter *led_adapter = NULL;
 
 /**
- * @brief Match data structure for initializing GPIO type LED devices.
- */
-static const struct pdm_led_match_data pdm_led_gpio_match_data = {
-    .setup = pdm_led_gpio_setup,
-    .cleanup = NULL,
-};
-
-/**
- * @brief Match data structure for initializing PWM type LED devices.
- */
-static const struct pdm_led_match_data pdm_led_pwm_match_data = {
-    .setup = NULL,
-    .cleanup = NULL,
-};
-
-/**
  * @brief Sets the state of a specified PDM LED device.
  *
  * @param args Structure.
@@ -32,7 +16,7 @@ static int pdm_led_set_state(struct pdm_client *client, struct pdm_led_ioctl_arg
     struct pdm_led_priv *led_priv;
     int status = 0;
 
-    led_priv = client->priv_data;
+    led_priv = pdm_client_get_drvdata(client);
     if (!led_priv) {
         OSA_ERROR("Get PDM Client Device Data Failed\n");
         return -ENOMEM;
@@ -106,16 +90,12 @@ static ssize_t pdm_led_write(struct file *filp, const char __user *buf, size_t c
     ssize_t bytes_read;
 
     if (!client) {
-        OSA_ERROR("invalid argument\n");
         return -EINVAL;
     }
-
-    OSA_INFO("Called pdm_led_write\n");
 
     if (count > sizeof(kernel_buf) - 1) {
         count = sizeof(kernel_buf) - 1;
     }
-
     if ((bytes_read = copy_from_user(kernel_buf, buf, count)) != 0) {
         OSA_ERROR("Failed to copy data from user space: %zd\n", bytes_read);
         return -EFAULT;
@@ -143,16 +123,21 @@ static ssize_t pdm_led_write(struct file *filp, const char __user *buf, size_t c
  */
 static int pdm_led_match_setup(struct pdm_client *client)
 {
-    struct pdm_led_priv *led_priv = client->priv_data;
+    struct pdm_led_priv *led_priv;
     const void *match_data;
     int status;
 
+    if (!client) {
+        return -EINVAL;
+    }
+
+    led_priv = pdm_client_get_drvdata(client);
     if (!led_priv) {
         OSA_ERROR("LED Client get private data is NULL\n");
         return -ENOMEM;
     }
 
-    match_data = pdm_device_get_match_data(client->pdmdev);
+    match_data = pdm_client_get_match_data(client);
     if (!match_data) {
         OSA_ERROR("Failed to get match data for device\n");
         return -ENODEV;
@@ -216,11 +201,27 @@ static int pdm_led_device_probe(struct pdm_device *pdmdev)
  */
 static void pdm_led_device_remove(struct pdm_device *pdmdev)
 {
-    struct pdm_led_priv *led_priv = pdmdev->client->priv_data;
+    struct pdm_led_priv *led_priv = pdm_client_get_drvdata(pdmdev->client);
     if (led_priv && led_priv->match_data && led_priv->match_data->cleanup) {
         led_priv->match_data->cleanup(pdmdev->client);
     }
 }
+
+/**
+ * @brief Match data structure for initializing GPIO type LED devices.
+ */
+static const struct pdm_led_match_data pdm_led_gpio_match_data = {
+    .setup = pdm_led_gpio_setup,
+    .cleanup = NULL,
+};
+
+/**
+ * @brief Match data structure for initializing PWM type LED devices.
+ */
+static const struct pdm_led_match_data pdm_led_pwm_match_data = {
+    .setup = NULL,
+    .cleanup = NULL,
+};
 
 /**
  * @brief Device tree match table.
