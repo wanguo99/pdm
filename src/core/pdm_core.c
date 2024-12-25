@@ -6,20 +6,112 @@
 #include "pdm_component.h"
 
 /**
- * @brief DebugFS and ProcFS directory name.
- */
-#define PDM_DEBUG_FS_DIR_NAME    "pdm"         /**< Name of debugfs and procfs directories */
-
-static int pdm_bus_debug_fs_init(void);
-static void pdm_bus_debug_fs_exit(void);
-static int pdm_bus_proc_fs_init(void);
-static void pdm_bus_proc_fs_exit(void);
-
-/**
  * @struct pdm_core_component_list
  * @brief List to store all registered PDM Core components.
  */
 static struct list_head pdm_core_component_list;
+
+/**
+ * @brief Pointer to the PDM debug filesystem directory.
+ */
+static struct dentry *pdm_debugfs_dir;
+
+/**
+ * @brief Initializes the PDM debugging filesystem.
+ *
+ * This function creates the necessary directories in debugfs for PDM.
+ *
+ * @return 0 on success, negative error code on failure.
+ */
+static int pdm_bus_debug_fs_init(void)
+{
+    pdm_debugfs_dir = debugfs_create_dir(PDM_MODULE_NAME, NULL);
+    if (IS_ERR_OR_NULL(pdm_debugfs_dir)) {
+        OSA_WARN("Failed to register PDM debugfs, error %ld\n", PTR_ERR(pdm_debugfs_dir));
+        return PTR_ERR(pdm_debugfs_dir);
+    }
+
+    OSA_DEBUG("PDM debugfs registered\n");
+    return 0;
+}
+
+/**
+ * @brief Unregisters the PDM debugging filesystem.
+ *
+ * This function removes the directories created in debugfs for PDM.
+ */
+static void pdm_bus_debug_fs_exit(void)
+{
+    if (!IS_ERR_OR_NULL(pdm_debugfs_dir)) {
+        debugfs_remove_recursive(pdm_debugfs_dir);
+        OSA_DEBUG("PDM debugfs unregistered\n");
+    }
+}
+
+static struct proc_dir_entry *pdm_procfs_dir;
+
+/**
+ * @brief Initializes the PDM proc filesystem.
+ *
+ * This function creates the necessary directories in procfs for PDM.
+ *
+ * @return 0 on success, negative error code on failure.
+ */
+static int pdm_bus_proc_fs_init(void)
+{
+    pdm_procfs_dir = proc_mkdir(PDM_MODULE_NAME, NULL);
+    if (!pdm_procfs_dir) {
+        OSA_WARN("Failed to register PDM procfs\n");
+        return -ENOMEM;
+    }
+
+    OSA_DEBUG("PDM procfs registered\n");
+    return 0;
+}
+
+/**
+ * @brief Unregisters the PDM proc filesystem.
+ *
+ * This function removes the directories created in procfs for PDM.
+ */
+static void pdm_bus_proc_fs_exit(void)
+{
+    if (pdm_procfs_dir) {
+        remove_proc_entry(PDM_MODULE_NAME, NULL);
+        OSA_DEBUG("PDM procfs unregistered\n");
+    }
+}
+
+/**
+ * @brief Displays module information, including name, build time, and version.
+ *
+ * This function logs the module's name, build time, and version using the OSA_INFO macro.
+ * The information displayed includes:
+ * - Module name (from KBUILD_MODNAME)
+ * - Build time (from KBUILD_MODULE_BUILD_TIME)
+ * - Version (from KBUILD_MODULE_VERSION)
+ *
+ * This function does not modify any state or interact with the filesystem.
+ */
+static void pdm_show_module_init_info(void)
+{
+    OSA_print("\n");
+    OSA_INFO("\t========== Module Loading ==========\n");
+    OSA_INFO("\t| NAME   : %s\n", PDM_MODULE_NAME);
+    OSA_INFO("\t| BUILD  : %s\n", PDM_MODULE_BUILD_TIME);
+    OSA_INFO("\t| VERSION: %s\n", PDM_MODULE_VERSIONS);
+    OSA_INFO("\t------------------------------------\n");
+}
+
+static void pdm_show_module_exit_info(void)
+{
+    OSA_print("\n");
+    OSA_INFO("\t========== Module Removed ==========\n");
+    OSA_INFO("\t| NAME   : %s\n", PDM_MODULE_NAME);
+    OSA_INFO("\t| BUILD  : %s\n", PDM_MODULE_BUILD_TIME);
+    OSA_INFO("\t| VERSION: %s\n", PDM_MODULE_VERSIONS);
+    OSA_INFO("\t------------------------------------\n");
+}
 
 /**
  * @struct pdm_core_components
@@ -72,97 +164,6 @@ static struct pdm_component pdm_core_components[] = {
 };
 
 /**
- * @brief Pointer to the PDM debug filesystem directory.
- */
-static struct dentry *pdm_debugfs_dir;
-
-/**
- * @brief Initializes the PDM debugging filesystem.
- *
- * This function creates the necessary directories in debugfs for PDM.
- *
- * @return 0 on success, negative error code on failure.
- */
-static int pdm_bus_debug_fs_init(void)
-{
-    pdm_debugfs_dir = debugfs_create_dir(PDM_DEBUG_FS_DIR_NAME, NULL);
-    if (IS_ERR_OR_NULL(pdm_debugfs_dir)) {
-        OSA_WARN("Failed to register PDM debugfs, error %ld\n", PTR_ERR(pdm_debugfs_dir));
-        return PTR_ERR(pdm_debugfs_dir);
-    }
-
-    OSA_INFO("PDM debugfs registered\n");
-    return 0;
-}
-
-/**
- * @brief Unregisters the PDM debugging filesystem.
- *
- * This function removes the directories created in debugfs for PDM.
- */
-static void pdm_bus_debug_fs_exit(void)
-{
-    if (!IS_ERR_OR_NULL(pdm_debugfs_dir)) {
-        debugfs_remove_recursive(pdm_debugfs_dir);
-        OSA_INFO("PDM debugfs unregistered\n");
-    }
-}
-
-static struct proc_dir_entry *pdm_procfs_dir;
-
-/**
- * @brief Initializes the PDM proc filesystem.
- *
- * This function creates the necessary directories in procfs for PDM.
- *
- * @return 0 on success, negative error code on failure.
- */
-static int pdm_bus_proc_fs_init(void)
-{
-    pdm_procfs_dir = proc_mkdir(PDM_DEBUG_FS_DIR_NAME, NULL);
-    if (!pdm_procfs_dir) {
-        OSA_WARN("Failed to register PDM procfs\n");
-        return -ENOMEM;
-    }
-
-    OSA_INFO("PDM proc fs registered\n");
-    return 0;
-}
-
-/**
- * @brief Unregisters the PDM proc filesystem.
- *
- * This function removes the directories created in procfs for PDM.
- */
-static void pdm_bus_proc_fs_exit(void)
-{
-    if (pdm_procfs_dir) {
-        remove_proc_entry(PDM_DEBUG_FS_DIR_NAME, NULL);
-        OSA_INFO("PDM proc fs unregistered\n");
-    }
-}
-
-/**
- * @brief Displays module information, including name, build time, and version.
- *
- * This function logs the module's name, build time, and version using the OSA_INFO macro.
- * The information displayed includes:
- * - Module name (from KBUILD_MODNAME)
- * - Build time (from KBUILD_MODULE_BUILD_TIME)
- * - Version (from KBUILD_MODULE_VERSION)
- *
- * This function does not modify any state or interact with the filesystem.
- */
-static void pdm_show_module_info(void)
-{
-    OSA_INFO("----------------------------------\n");
-    OSA_INFO("| Name   : %s\n", PDM_MODULE_NAME);
-    OSA_INFO("| Build  : %s\n", PDM_MODULE_BUILD_TIME);
-    OSA_INFO("| Version: %s\n", PDM_MODULE_VERSIONS);
-    OSA_INFO("----------------------------------\n");
-}
-
-/**
  * @brief Initializes the PDM module.
  *
  * This function initializes the PDM module, including registering the bus, initializing main devices, and submodules.
@@ -178,19 +179,14 @@ static int __init pdm_init(void)
         .list = &pdm_core_component_list,
     };
 
-    OSA_print("\n");
-    OSA_INFO("===== PDM Init =====\n");
-
-    pdm_show_module_info();
-
+    pdm_show_module_init_info();
     INIT_LIST_HEAD(&pdm_core_component_list);
     status = pdm_component_register(&params);
     if (status < 0) {
-        OSA_ERROR("Failed to register PDM Core Component, error: %d.\n", status);
+        OSA_ERROR("Failed to register PDM Core Component, error: %d\n", status);
         return status;
     }
 
-    OSA_INFO("----- PDM Inited -----\n");
     return 0;
 }
 
@@ -201,10 +197,8 @@ static int __init pdm_init(void)
  */
 static void __exit pdm_exit(void)
 {
-    OSA_print("\n");
-    OSA_INFO("===== PDM Exit =====\n");
+    pdm_show_module_exit_info();
     pdm_component_unregister(&pdm_core_component_list);
-    OSA_INFO("----- PDM Exited -----\n");
 }
 
 module_init(pdm_init);

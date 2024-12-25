@@ -17,18 +17,17 @@ static int pdm_device_spi_probe(struct spi_device *spi) {
 
     pdmdev = pdm_device_alloc(&spi->dev);
     if (IS_ERR(pdmdev)) {
-        OSA_ERROR("Failed to allocate pdm_device.\n");
+        OSA_ERROR("Failed to allocate pdm_device\n");
         return PTR_ERR(pdmdev);
     }
 
     status = pdm_device_register(pdmdev);
     if (status) {
-        OSA_ERROR("Failed to register pdm device, status=%d.\n", status);
+        OSA_ERROR("Failed to register pdm device, status=%d\n", status);
         pdm_device_free(pdmdev);
         return status;
     }
 
-    OSA_DEBUG("PDM SPI Device Probed.\n");
     return 0;
 }
 
@@ -44,13 +43,12 @@ static int pdm_device_spi_real_remove(struct spi_device *spi) {
     struct pdm_device *pdmdev = pdm_bus_find_device_by_parent(&spi->dev);
 
     if (!pdmdev) {
-        OSA_ERROR("Failed to find pdm device from bus.\n");
+        OSA_ERROR("Failed to find pdm device from bus\n");
         return -ENODEV;
     }
 
     pdm_device_unregister(pdmdev);
     pdm_device_free(pdmdev);
-    OSA_DEBUG("PDM SPI Device Removed.\n");
     return 0;
 }
 
@@ -76,7 +74,7 @@ static int pdm_device_spi_remove(struct spi_device *spi) {
  */
 static void pdm_device_spi_remove(struct spi_device *spi) {
     if (pdm_device_spi_real_remove(spi)) {
-        OSA_ERROR("pdm_device_spi_real_remove failed.\n");
+        OSA_ERROR("pdm_device_spi_real_remove failed\n");
     }
 }
 #endif
@@ -114,15 +112,7 @@ static struct spi_driver pdm_device_spi_driver = {
  * @return Returns 0 on success; negative error code on failure.
  */
 int pdm_device_spi_driver_init(void) {
-    int status;
-
-    status = spi_register_driver(&pdm_device_spi_driver);
-    if (status) {
-        OSA_ERROR("Failed to register PDM Device SPI Driver, status=%d.\n", status);
-        return status;
-    }
-    OSA_DEBUG("PDM Device SPI Driver Initialized.\n");
-    return 0;
+    return spi_register_driver(&pdm_device_spi_driver);
 }
 
 /**
@@ -132,7 +122,6 @@ int pdm_device_spi_driver_init(void) {
  */
 void pdm_device_spi_driver_exit(void) {
     spi_unregister_driver(&pdm_device_spi_driver);
-    OSA_DEBUG("PDM Device SPI Driver Exited.\n");
 }
 
 MODULE_LICENSE("GPL");

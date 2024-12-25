@@ -27,7 +27,6 @@ struct pdm_client {
     bool force_dts_id;                          /**< Flag indicating whether to force ID from Device Tree Source (DTS) */
     int index;                                  /**< Client ID allocated by the adapter */
     struct device dev;                          /**< Kernel device structure, holds device-related info */
-	struct device_node *of_node;                /**< Pointer to the associated device tree node */
     struct cdev cdev;                           /**< Character device structure for device operations */
     struct file_operations fops;                /**< File operations structure, defining operations for this device */
     struct list_head entry;                     /**< List node for linking devices in a linked list */

@@ -72,7 +72,6 @@ void pdm_adapter_drvdata_set(struct pdm_adapter *adapter, void *data);
 static inline struct pdm_adapter *pdm_adapter_get(struct pdm_adapter *adapter)
 {
     if (!adapter || !get_device(&adapter->dev)) {
-        OSA_ERROR("Invalid input parameter or unable to get device reference (adapter: %p).\n", adapter);
         return NULL;
     }
 

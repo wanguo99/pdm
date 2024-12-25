@@ -44,8 +44,6 @@ int pdm_led_gpio_setup(struct pdm_client *client)
         OSA_ERROR("Invalid client\n");
     }
 
-    OSA_INFO("Initializing GPIO setup for device: %s\n", dev_name(&client->dev));
-
     led_priv = (struct pdm_led_priv *)pdm_client_get_devdata(client);
     if (!led_priv) {
         OSA_ERROR("Get PDM Client DevData Failed\n");
@@ -53,6 +51,8 @@ int pdm_led_gpio_setup(struct pdm_client *client)
     }
 
     led_priv->ops = &pdm_device_led_ops_gpio;
+
+    OSA_DEBUG("GPIO LED Setup: %s\n", dev_name(&client->dev));
 
     return 0;
 }

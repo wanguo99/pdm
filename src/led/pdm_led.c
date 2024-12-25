@@ -182,7 +182,6 @@ static int pdm_led_device_probe(struct pdm_device *pdmdev)
         return status;
     }
 
-    OSA_DEBUG("LED PDM Device Probed\n");
     return 0;
 }
 
@@ -240,7 +239,6 @@ int pdm_led_driver_init(void)
         goto err_adapter_unregister;
     }
 
-    OSA_INFO("LED PDM Adapter Driver Initialized\n");
     return 0;
 
 err_adapter_unregister:
@@ -257,7 +255,6 @@ void pdm_led_driver_exit(void)
 {
     pdm_bus_unregister_driver(&pdm_led_driver);
     pdm_adapter_unregister(led_adapter);
-    OSA_INFO("LED PDM Adapter Driver Exited\n");
 }
 
 MODULE_LICENSE("GPL");

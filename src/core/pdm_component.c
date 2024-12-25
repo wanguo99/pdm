@@ -21,10 +21,10 @@ static int pdm_component_register_single(struct pdm_component *driver, struct li
         status = driver->init();
         if (status) {
             if (driver->ignore_failures) {
-                OSA_WARN("Failed to register component <%s>, status = %d.\n", name, status);
+                OSA_WARN("Failed to register component <%s>, status = %d\n", name, status);
                 return 0;
             } else {
-                OSA_ERROR("Failed to register component <%s>, status = %d.\n", name, status);
+                OSA_ERROR("Failed to register component <%s>, status = %d\n", name, status);
                 return status;
             }
         }
@@ -64,7 +64,7 @@ void pdm_component_unregister(struct list_head *list)
     struct pdm_component *driver, *tmp;
 
     if (!list || list_empty(list)) {
-        OSA_ERROR("Invalid or uninitialized list pointer.\n");
+        OSA_ERROR("Invalid or uninitialized list pointer\n");
         return;
     }
 
@@ -89,7 +89,7 @@ int pdm_component_register(struct pdm_component_params *params)
     int i, status = 0;
 
     if (!params || !params->components || params->count <= 0 || !params->list) {
-        OSA_ERROR("Invalid input parameters.\n");
+        OSA_ERROR("Invalid input parameters\n");
         return -EINVAL;
     }
 

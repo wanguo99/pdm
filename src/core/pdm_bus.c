@@ -46,7 +46,6 @@ int pdm_bus_register_driver(struct module *owner, struct pdm_driver *driver)
     int status;
 
     if (!driver) {
-        OSA_WARN("Driver is NULL\n");
         return -EINVAL;
     }
 
@@ -57,8 +56,6 @@ int pdm_bus_register_driver(struct module *owner, struct pdm_driver *driver)
         OSA_ERROR("Failed to register driver [%s], error %d\n", driver->driver.name, status);
         return status;
     }
-
-    OSA_DEBUG("Driver [%s] registered\n", driver->driver.name);
     return 0;
 }
 
@@ -70,10 +67,8 @@ int pdm_bus_register_driver(struct module *owner, struct pdm_driver *driver)
 void pdm_bus_unregister_driver(struct pdm_driver *driver)
 {
     if (!driver) {
-        OSA_WARN("Driver is NULL\n");
         return;
     }
-
     driver_unregister(&driver->driver);
 }
 
@@ -91,7 +86,6 @@ static int pdm_bus_device_probe(struct device *dev)
     struct pdm_driver *pdmdrv;
 
     if (!dev) {
-        OSA_WARN("Device pointer is NULL\n");
         return -EINVAL;
     }
 
@@ -118,7 +112,6 @@ static void pdm_bus_device_remove(struct device *dev)
     struct pdm_driver *pdmdrv;
 
     if (!dev) {
-        OSA_WARN("Device pointer is NULL\n");
         return;
     }
 
@@ -144,7 +137,6 @@ static int pdm_bus_device_real_match(struct device *dev, const struct device_dri
     if (of_driver_match_device(dev->parent, drv)) {
         return 1;
     }
-
     return 0;
 }
 
@@ -193,13 +185,12 @@ int pdm_bus_init(void)
         OSA_ERROR("Failed to register PDM bus, error %d\n", status);
         return status;
     }
-    OSA_DEBUG("PDM bus registered\n");
 
     memset(&pdm_bus_priv_data, 0, sizeof(struct pdm_bus_private_data));
     mutex_init(&pdm_bus_priv_data.idr_mutex_lock);
     idr_init(&pdm_bus_priv_data.device_idr);
 
-    OSA_INFO("PDM bus initialized\n");
+    OSA_DEBUG("PDM bus initialized\n");
     return 0;
 }
 
@@ -215,12 +206,10 @@ int pdm_bus_init(void)
 void pdm_bus_exit(void)
 {
     bus_unregister(&pdm_bus_type);
-
     mutex_lock(&pdm_bus_priv_data.idr_mutex_lock);
     idr_destroy(&pdm_bus_priv_data.device_idr);
     mutex_unlock(&pdm_bus_priv_data.idr_mutex_lock);
-
-    OSA_INFO("PDM bus unregistered\n");
+    OSA_DEBUG("PDM bus unregistered\n");
 }
 
 MODULE_LICENSE("GPL");

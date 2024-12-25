@@ -40,11 +40,9 @@ int pdm_adapter_drivers_register(void)
     INIT_LIST_HEAD(&pdm_adapter_driver_list);
     status = pdm_component_register(&params);
     if (status < 0) {
-        OSA_ERROR("Failed to register PDM Adapter Drivers, error: %d.\n", status);
+        OSA_ERROR("Failed to register PDM Adapter Drivers, error: %d\n", status);
         return status;
     }
-
-    OSA_DEBUG("PDM Adapter Drivers Registered OK.\n");
     return 0;
 }
 
@@ -54,7 +52,6 @@ int pdm_adapter_drivers_register(void)
 void pdm_adapter_drivers_unregister(void)
 {
     pdm_component_unregister(&pdm_adapter_driver_list);
-    OSA_DEBUG("PDM Adapter Drivers Unregistered.\n");
 }
 
 /**
@@ -72,7 +69,7 @@ int pdm_adapter_id_alloc(struct pdm_adapter *adapter, struct pdm_client *client)
     if (!client || !adapter || !client->dev.parent
         || !client->dev.parent->parent
         || !client->dev.parent->parent->of_node) {
-        OSA_ERROR("Invalid input parameters.\n");
+        OSA_ERROR("Invalid input parameters\n");
         return -EINVAL;
     }
 
@@ -91,10 +88,10 @@ int pdm_adapter_id_alloc(struct pdm_adapter *adapter, struct pdm_client *client)
 
     if (id < 0) {
         if (id == -ENOSPC) {
-            OSA_ERROR("No available IDs in the range.\n");
+            OSA_ERROR("No available IDs in the range\n");
             return -EBUSY;
         } else {
-            OSA_ERROR("Failed to allocate ID: %d.\n", id);
+            OSA_ERROR("Failed to allocate ID: %d\n", id);
             return id;
         }
     }
@@ -112,7 +109,6 @@ int pdm_adapter_id_alloc(struct pdm_adapter *adapter, struct pdm_client *client)
 void pdm_adapter_id_free(struct pdm_adapter *adapter, struct pdm_client *client)
 {
     if (!adapter || !client) {
-        OSA_ERROR("Invalid input parameters.\n");
         return;
     }
 
@@ -201,8 +197,6 @@ static void pdm_adapter_dev_release(struct device *dev)
 {
     struct pdm_adapter *adapter = dev_to_pdm_adapter(dev);
     WARN(!list_empty(&adapter->client_list), "Client list is not empty!");
-
-    OSA_DEBUG("PDM Adapter Released: %s\n", dev_name(dev));
     kfree(adapter);
 }
 
@@ -214,12 +208,7 @@ static void pdm_adapter_dev_release(struct device *dev)
  */
 void *pdm_adapter_drvdata_get(struct pdm_adapter *adapter)
 {
-    if (!adapter) {
-        OSA_ERROR("Invalid input parameter (adapter: %p).\n", adapter);
-        return NULL;
-    }
-
-    return dev_get_drvdata(&adapter->dev);
+    return adapter ? dev_get_drvdata(&adapter->dev) : NULL;
 }
 
 /**
@@ -230,12 +219,9 @@ void *pdm_adapter_drvdata_get(struct pdm_adapter *adapter)
  */
 void pdm_adapter_drvdata_set(struct pdm_adapter *adapter, void *data)
 {
-    if (!adapter) {
-        OSA_ERROR("Invalid input parameter (adapter: %p).\n", adapter);
-        return;
+    if (adapter) {
+        dev_set_drvdata(&adapter->dev, data);
     }
-
-    dev_set_drvdata(&adapter->dev, data);
 }
 
 static int pdm_adapter_is_exist(const char *name)
@@ -265,19 +251,19 @@ int pdm_adapter_register(struct pdm_adapter *adapter, const char *name)
     int status;
 
     if (!adapter || !name) {
-        OSA_ERROR("Invalid input parameters (adapter: %p, name: %s).\n", adapter, name);
+        OSA_ERROR("Invalid input parameters (adapter: %p, name: %s)\n", adapter, name);
         return -EINVAL;
     }
 
     if (pdm_adapter_is_exist(name)) {
-        OSA_ERROR("Adapter already exists: %s.\n", name);
+        OSA_ERROR("Adapter already exists: %s\n", name);
         return -EEXIST;
     }
 
     dev_set_name(&adapter->dev, "%s", name);
     status = device_add(&adapter->dev);
     if (status) {
-        OSA_ERROR("Failed to add device: %s, error: %d.\n", dev_name(&adapter->dev), status);
+        OSA_ERROR("Failed to add device: %s, error: %d\n", dev_name(&adapter->dev), status);
         goto err_device_put;
     }
 
@@ -288,8 +274,7 @@ int pdm_adapter_register(struct pdm_adapter *adapter, const char *name)
     list_add_tail(&adapter->entry, &pdm_adapter_list);
     mutex_unlock(&pdm_adapter_list_mutex_lock);
 
-    OSA_DEBUG("PDM Adapter %s Registered\n", name);
-
+    OSA_DEBUG("PDM Adapter Registered: %s\n", dev_name(&adapter->dev));
     return 0;
 
 err_device_put:
@@ -305,15 +290,15 @@ err_device_put:
 void pdm_adapter_unregister(struct pdm_adapter *adapter)
 {
     if (!adapter) {
-        OSA_ERROR("Invalid input parameters (adapter: %p).\n", adapter);
+        OSA_ERROR("Invalid input parameters (adapter: %p)\n", adapter);
         return;
     }
     if (!list_empty(&adapter->client_list)) {
-        OSA_ERROR("Client list is not empty.\n");
+        OSA_ERROR("Client list is not empty\n");
         return;
     }
 
-    OSA_INFO("PDM Adapter unregistered: %s.\n", dev_name(&adapter->dev));
+    OSA_DEBUG("PDM Adapter Unregistered: %s\n", dev_name(&adapter->dev));
 
     mutex_lock(&adapter->ida_mutex_lock);
     ida_destroy(&adapter->client_ida);
@@ -339,7 +324,7 @@ struct pdm_adapter *pdm_adapter_alloc(unsigned int data_size)
 
     adapter = kzalloc(sizeof(struct pdm_adapter) + data_size, GFP_KERNEL);
     if (!adapter) {
-        OSA_ERROR("Failed to allocate memory for pdm_adapter.\n");
+        OSA_ERROR("Failed to allocate memory for pdm_adapter\n");
         return NULL;
     }
     pdm_adapter_drvdata_set(adapter, (void *)adapter + sizeof(struct pdm_adapter));
@@ -366,19 +351,16 @@ int pdm_adapter_init(void)
 
     status = class_register(&pdm_adapter_class);
     if (status < 0) {
-        OSA_ERROR("Failed to register PDM Adapter Class, error: %d.\n", status);
+        OSA_ERROR("Failed to register PDM Adapter Class, error: %d\n", status);
         return status;
     }
-    OSA_DEBUG("PDM Adapter Class registered.\n");
 
     status = pdm_adapter_drivers_register();
     if (status < 0) {
-        OSA_ERROR("Failed to register PDM Adapter Drivers, error: %d.\n", status);
+        OSA_ERROR("Failed to register PDM Adapter Drivers, error: %d\n", status);
         class_unregister(&pdm_adapter_class);
         return status;
     }
-
-    OSA_INFO("Initialize PDM Adapter OK.\n");
     return 0;
 }
 
@@ -389,7 +371,6 @@ void pdm_adapter_exit(void)
 {
     pdm_adapter_drivers_unregister();
     class_unregister(&pdm_adapter_class);
-    OSA_INFO("PDM Adapter unregistered.\n");
 }
 
 MODULE_LICENSE("GPL");

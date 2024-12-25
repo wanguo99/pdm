@@ -121,8 +121,6 @@ ATTRIBUTE_GROUPS(pdm_device);
 static void pdm_device_release(struct device *dev)
 {
     struct pdm_device *pdmdev = dev_to_pdm_device(dev);
-
-    OSA_DEBUG("PDM Device Released: %s\n", dev_name(dev));
     kfree(pdmdev);
 }
 
@@ -155,11 +153,10 @@ int pdm_device_drivers_register(void)
     INIT_LIST_HEAD(&pdm_device_driver_list);
     status = pdm_component_register(&params);
     if (status < 0) {
-        OSA_ERROR("Failed to register PDM Device Drivers, error: %d.\n", status);
+        OSA_ERROR("Failed to register PDM Device Drivers, error: %d\n", status);
         return status;
     }
 
-    OSA_DEBUG("PDM Device Drivers initialized successfully.\n");
     return 0;
 }
 
@@ -171,7 +168,6 @@ int pdm_device_drivers_register(void)
 void pdm_device_drivers_unregister(void)
 {
     pdm_component_unregister(&pdm_device_driver_list);
-    OSA_DEBUG("PDM Device Drivers exited successfully.\n");
 }
 
 
@@ -185,13 +181,13 @@ struct pdm_device *pdm_device_alloc(struct device *dev)
     struct pdm_device *pdmdev;
 
     if (!dev) {
-        OSA_ERROR("invalid device pointer.\n");
+        OSA_ERROR("invalid device pointer\n");
         return ERR_PTR(-ENODEV);
     }
 
     pdmdev = kzalloc(sizeof(*pdmdev), GFP_KERNEL);
     if (!pdmdev) {
-        OSA_ERROR("Failed to allocate memory for PDM device.\n");
+        OSA_ERROR("Failed to allocate memory for PDM device\n");
         return ERR_PTR(-ENOMEM);
     }
 
@@ -247,7 +243,6 @@ int pdm_device_register(struct pdm_device *pdmdev)
         goto err_free_id;
     }
 
-    OSA_DEBUG("Device %s registered successfully.\n", dev_name(&pdmdev->dev));
     return 0;
 
 err_free_id:
@@ -264,13 +259,9 @@ err_free_id:
  */
 void pdm_device_unregister(struct pdm_device *pdmdev)
 {
-    if (!pdmdev) {
-        OSA_ERROR("Invalid input parameters (pdmdev: %p).\n", pdmdev);
-        return;
+    if (pdmdev) {
+        device_unregister(&pdmdev->dev);
     }
-
-    OSA_DEBUG("Unregistering device %s.\n", dev_name(&pdmdev->dev));
-    device_unregister(&pdmdev->dev);
 }
 
 /**
@@ -290,7 +281,6 @@ int pdm_device_init(void)
         return status;
     }
 
-    OSA_INFO("PDM Device module initialized successfully.\n");
     return 0;
 }
 
@@ -302,7 +292,6 @@ int pdm_device_init(void)
 void pdm_device_exit(void)
 {
     pdm_device_drivers_unregister();
-    OSA_INFO("PDM Device module exited successfully.\n");
 }
 
 MODULE_LICENSE("GPL");
