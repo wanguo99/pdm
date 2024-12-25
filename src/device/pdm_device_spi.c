@@ -24,11 +24,21 @@ static int pdm_device_spi_probe(struct spi_device *spi) {
     status = pdm_device_register(pdmdev);
     if (status) {
         OSA_ERROR("Failed to register pdm device, status=%d\n", status);
-        pdm_device_free(pdmdev);
-        return status;
+        goto err_pdmdev_free;
     }
 
+    status = pdm_device_setup(pdmdev);
+    if (status) {
+        OSA_ERROR("Failed to setup pdm device, status=%d\n", status);
+        goto err_pdmdev_unregister;
+    }
     return 0;
+
+err_pdmdev_unregister:
+    pdm_device_register(pdmdev);
+err_pdmdev_free:
+    pdm_device_free(pdmdev);
+    return status;
 }
 
 /**
@@ -41,14 +51,11 @@ static int pdm_device_spi_probe(struct spi_device *spi) {
  */
 static int pdm_device_spi_real_remove(struct spi_device *spi) {
     struct pdm_device *pdmdev = pdm_bus_find_device_by_parent(&spi->dev);
-
-    if (!pdmdev) {
-        OSA_ERROR("Failed to find pdm device from bus\n");
-        return -ENODEV;
+    if (pdmdev) {
+        pdm_device_cleanup(pdmdev);
+        pdm_device_unregister(pdmdev);
+        pdm_device_free(pdmdev);
     }
-
-    pdm_device_unregister(pdmdev);
-    pdm_device_free(pdmdev);
     return 0;
 }
 

@@ -37,11 +37,21 @@ static int pdm_device_i2c_real_probe(struct i2c_client *client, const struct i2c
     status = pdm_device_register(pdmdev);
     if (status) {
         OSA_ERROR("Failed to register pdm device, status=%d\n", status);
-        pdm_device_free(pdmdev);
-        return status;
+        goto err_pdmdev_free;
     }
 
+    status = pdm_device_setup(pdmdev);
+    if (status) {
+        OSA_ERROR("Failed to setup pdm device, status=%d\n", status);
+        goto err_pdmdev_unregister;
+    }
     return 0;
+
+err_pdmdev_unregister:
+    pdm_device_register(pdmdev);
+err_pdmdev_free:
+    pdm_device_free(pdmdev);
+    return status;
 }
 
 /**
@@ -52,17 +62,14 @@ static int pdm_device_i2c_real_probe(struct i2c_client *client, const struct i2c
  * @param client Pointer to the I2C client structure.
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_device_i2c_real_remove(struct i2c_client *client) {
+static void pdm_device_i2c_real_remove(struct i2c_client *client)
+{
     struct pdm_device *pdmdev = pdm_bus_find_device_by_parent(&client->dev);
-
-    if (!pdmdev) {
-        OSA_ERROR("Failed to find pdm device from bus\n");
-        return -ENODEV;
+    if (pdmdev) {
+        pdm_device_cleanup(pdmdev);
+        pdm_device_unregister(pdmdev);
+        pdm_device_free(pdmdev);
     }
-
-    pdm_device_unregister(pdmdev);
-    pdm_device_free(pdmdev);
-    return 0;
 }
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
@@ -102,7 +109,8 @@ static int pdm_device_i2c_probe(struct i2c_client *client) {
  * @return Returns 0 on success; negative error code on failure.
  */
 static int pdm_device_i2c_remove(struct i2c_client *client) {
-    return pdm_device_i2c_real_remove(client);
+    pdm_device_i2c_real_remove(client);
+    return 0;
 }
 #else
 /**
@@ -113,12 +121,7 @@ static int pdm_device_i2c_remove(struct i2c_client *client) {
  * @param client Pointer to the I2C client structure.
  */
 static void pdm_device_i2c_remove(struct i2c_client *client) {
-    int status;
-
-    status = pdm_device_i2c_real_remove(client);
-    if (status) {
-        OSA_ERROR("pdm_device_i2c_real_remove failed\n");
-    }
+    pdm_device_i2c_real_remove(client);
 }
 #endif
 
