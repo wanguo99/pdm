@@ -32,8 +32,8 @@ static int pdm_led_gpio_set_state(struct pdm_client *client, int state)
         OSA_ERROR("Get PDM Device drvdata Failed\n");
         return -ENOMEM;
     }
+    gpiod_set_value(pdmdev_priv->hw_data.gpio.gpiod, state);
 
-    gpio_set_value(pdmdev_priv->hw_data.gpio.gpio_num, state);
     OSA_INFO("GPIO PDM Led: Set %s state to %d\n", dev_name(&client->dev), state);
     return 0;
 }

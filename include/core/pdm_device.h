@@ -31,7 +31,7 @@ struct pdm_device {
  * This structure holds the necessary data for controlling an LED via GPIO.
  */
 struct pdm_device_gpio_data {
-    unsigned int gpio_num;
+    struct gpio_desc *gpiod;
 };
 
 /**

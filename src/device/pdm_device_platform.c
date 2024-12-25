@@ -1,6 +1,6 @@
 #include <linux/platform_device.h>
+#include <linux/gpio/consumer.h>
 #include <linux/of_gpio.h>
-#include <linux/gpio.h>
 
 #include "pdm.h"
 #include "pdm_device_priv.h"
@@ -15,13 +15,16 @@
  */
 static int pdm_device_gpio_setup(struct pdm_device *pdmdev)
 {
-    struct device_node *np;
     struct pdm_device_priv *pdmdev_priv;
-    unsigned int gpio_num;
+    struct device_node *np;
+    struct gpio_desc *gpiod;
+    const char *default_state;
+    bool is_active_low;
     int status;
 
     if (!pdmdev) {
         OSA_ERROR("Invalid client\n");
+        return -EINVAL;
     }
 
     pdmdev_priv = pdm_device_get_drvdata(pdmdev);
@@ -36,23 +39,45 @@ static int pdm_device_gpio_setup(struct pdm_device *pdmdev)
         return -EINVAL;
     }
 
-    gpio_num = of_get_named_gpio(np, "gpio_num", 0);
-    if (!gpio_is_valid(gpio_num)) {
-        OSA_ERROR("Invalid GPIO specified in DT\n");
-        return gpio_num;
-    }
-
-    status = devm_gpio_request_one(pdmdev->dev.parent, gpio_num,
-                                    GPIOF_OUT_INIT_LOW, dev_name(&pdmdev->dev));
+    status = of_property_read_string(np, "default-state", &default_state);
     if (status) {
-        OSA_ERROR("Failed to request GPIO %d\n", gpio_num);
-        return status;
+        OSA_INFO("No default-state property found, using defaults as off\n");
+        default_state = "off";
+    }
+    OSA_INFO("default_state: %s", default_state);
+    pdmdev->dev.parent = &pdev->dev;
+    gpiod = gpiod_get(pdmdev->dev.parent, "gpio_num", GPIOD_OUT_LOW);
+    if (IS_ERR(gpiod)) {
+        OSA_ERROR("Failed to get GPIO\n");
+        return PTR_ERR(gpiod);
     }
 
-    pdmdev_priv->hw_data.gpio.gpio_num = gpio_num;
+    is_active_low = gpiod_is_active_low(gpiod);
+    if (!strcmp(default_state, "on")) {
+        gpiod_set_value_cansleep(gpiod, is_active_low ? 0 : 1);
+    } else if (!strcmp(default_state, "off")) {
+        gpiod_set_value_cansleep(gpiod, is_active_low ? 1 : 0);
+    } else {
+        OSA_INFO("Unknown default-state: %s, using off\n", default_state);
+        gpiod_set_value_cansleep(gpiod, is_active_low ? 1 : 0);
+    }
 
+    pdmdev_priv->hw_data.gpio.gpiod = gpiod;
     OSA_DEBUG("GPIO PDM Device Setup: %s\n", dev_name(&pdmdev->dev));
+
     return 0;
+}
+
+static void pdm_device_gpio_cleanup(struct pdm_device *pdmdev)
+{
+    struct pdm_device_priv *pdmdev_priv;
+
+    if (pdmdev) {
+        pdmdev_priv = pdm_device_get_drvdata(pdmdev);
+        if ((pdmdev_priv) && (!IS_ERR_OR_NULL(pdmdev_priv->hw_data.gpio.gpiod))) {
+            gpiod_put(pdmdev_priv->hw_data.gpio.gpiod);
+        }
+    }
 }
 
 /**
@@ -143,7 +168,7 @@ static void pdm_device_platform_remove(struct platform_device *pdev) {
  */
 static const struct pdm_device_match_data pdm_device_gpio_match_data = {
     .setup = pdm_device_gpio_setup,
-    .cleanup = NULL,
+    .cleanup = pdm_device_gpio_cleanup,
 };
 
 /**
