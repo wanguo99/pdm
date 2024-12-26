@@ -512,8 +512,8 @@ static const struct pdm_led_match_data pdm_led_pwm_match_data = {
  * Defines the supported device tree compatible properties.
  */
 static const struct of_device_id of_pdm_led_match[] = {
-    { .compatible = "led,pdm-device-gpio", .data = &pdm_led_gpio_match_data},
-    { .compatible = "led,pdm-device-pwm", .data = &pdm_led_pwm_match_data},
+    { .compatible = "pdm,led-gpio",     .data = &pdm_led_gpio_match_data},
+    { .compatible = "pdm,led-pwm",      .data = &pdm_led_pwm_match_data},
     {},
 };
 MODULE_DEVICE_TABLE(of, of_pdm_led_match);

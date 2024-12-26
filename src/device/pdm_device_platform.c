@@ -233,27 +233,13 @@ static const struct pdm_device_match_data pdm_device_pwm_match_data = {
 };
 
 /**
- * @brief PLATFORM device ID table.
- *
- * Defines the supported PLATFORM device IDs.
- */
-static const struct platform_device_id pdm_device_platform_ids[] = {
-    { .name = "pdm-device-platform" },
-    { .name = "pdm-device-gpio" },
-    { .name = "pdm-device-pwm" },
-    { .name = "pdm-device-tty" },
-    { }
-};
-MODULE_DEVICE_TABLE(platform, pdm_device_platform_ids);
-
-/**
  * @brief DEVICE_TREE match table.
  *
  * Defines the supported DEVICE_TREE compatibility strings.
  */
 static const struct of_device_id pdm_device_platform_of_match[] = {
-    { .compatible = "led,pdm-device-gpio", .data = &pdm_device_gpio_match_data },
-    { .compatible = "led,pdm-device-pwm", .data = &pdm_device_pwm_match_data },
+    { .compatible = "pdm,device-gpio",  .data = &pdm_device_gpio_match_data },
+    { .compatible = "pdm,device-pwm",   .data = &pdm_device_pwm_match_data },
     { }
 };
 MODULE_DEVICE_TABLE(of, pdm_device_platform_of_match);
@@ -270,7 +256,6 @@ static struct platform_driver pdm_device_platform_driver = {
         .name = "pdm-device-platform",
         .of_match_table = pdm_device_platform_of_match,
     },
-    .id_table = pdm_device_platform_ids,
 };
 
 /**
