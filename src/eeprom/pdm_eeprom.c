@@ -6,94 +6,13 @@
 static struct pdm_adapter *eeprom_adapter = NULL;
 
 /**
- * @brief Sets the brightness of a specified PDM EEPROM device.
- *
- * @param client Pointer to the PDM client structure.
- * @param brightness Brightness level (0-255).
- * @return Returns 0 on success; negative error code on failure.
- */
-static int pdm_eeprom_set_brightness(struct pdm_client *client, int brightness)
-{
-    struct pdm_eeprom_priv *eeprom_priv;
-    int status = 0;
-
-    if (!client) {
-        OSA_ERROR("Invalid client\n");
-        return -EINVAL;
-    }
-
-    if (brightness < 0 || brightness > 255) {
-        OSA_ERROR("Invalid brightness: %d\n", brightness);
-        return -EINVAL;
-    }
-
-    eeprom_priv = pdm_client_get_private_data(client);
-    if (!eeprom_priv) {
-        OSA_ERROR("Get PDM Client Device Data Failed\n");
-        return -ENOMEM;
-    }
-
-    if (!eeprom_priv->ops || !eeprom_priv->ops->set_brightness) {
-        OSA_ERROR("set_brightness not supported\n");
-        return -ENOTSUPP;
-    }
-
-    status = eeprom_priv->ops->set_brightness(client, brightness);
-    if (status) {
-        OSA_ERROR("PDM Led set_brightness failed, status: %d\n", status);
-        return status;
-    }
-
-    return 0;
-}
-
-/**
- * @brief Gets the current brightness of a specified PDM EEPROM device.
- *
- * @param client Pointer to the PDM client structure.
- * @param brightness Pointer to store the current brightness.
- * @return Returns 0 on success; negative error code on failure.
- */
-static int pdm_eeprom_get_brightness(struct pdm_client *client, int *brightness)
-{
-    struct pdm_eeprom_priv *eeprom_priv;
-    int status = 0;
-
-    if (!client || !brightness) {
-        OSA_ERROR("Invalid argument\n");
-        return -EINVAL;
-    }
-
-    eeprom_priv = pdm_client_get_private_data(client);
-    if (!eeprom_priv) {
-        OSA_ERROR("Get PDM Client Device Data Failed\n");
-        return -ENOMEM;
-    }
-
-    if (!eeprom_priv->ops || !eeprom_priv->ops->get_brightness) {
-        OSA_ERROR("get_brightness not supported\n");
-        return -ENOTSUPP;
-    }
-
-    status = eeprom_priv->ops->get_brightness(client, brightness);
-    if (status) {
-        OSA_ERROR("PDM Led get_brightness failed, status: %d\n", status);
-        return status;
-    }
-
-    OSA_INFO("Current brightness is %d\n", *brightness);
-
-    return 0;
-}
-
-/**
  * @brief Sets the state of a specified PDM EEPROM device.
  *
  * @param client Pointer to the PDM client structure.
  * @param state State value (0 or 1).
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_eeprom_set_state(struct pdm_client *client, int state)
+static int pdm_eeprom_read_reg(struct pdm_client *client, unsigned char addr, unsigned char *value)
 {
     struct pdm_eeprom_priv *eeprom_priv;
     int status = 0;
@@ -109,14 +28,14 @@ static int pdm_eeprom_set_state(struct pdm_client *client, int state)
         return -ENOMEM;
     }
 
-    if (!eeprom_priv->ops || !eeprom_priv->ops->set_state) {
-        OSA_ERROR("set_state not supported\n");
+    if (!eeprom_priv->ops || !eeprom_priv->ops->read_reg) {
+        OSA_ERROR("read_reg not supported\n");
         return -ENOTSUPP;
     }
 
-    status = eeprom_priv->ops->set_state(client, state);
+    status = eeprom_priv->ops->read_reg(client, addr, value);
     if (status) {
-        OSA_ERROR("PDM Led set_state failed, status: %d\n", status);
+        OSA_ERROR("PDM EEPROM read_reg failed, status: %d\n", status);
         return status;
     }
 
@@ -130,12 +49,12 @@ static int pdm_eeprom_set_state(struct pdm_client *client, int state)
  * @param state Pointer to store the current state.
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_eeprom_get_state(struct pdm_client *client, int *state)
+static int pdm_eeprom_write_reg(struct pdm_client *client, unsigned char addr, unsigned char value)
 {
     struct pdm_eeprom_priv *eeprom_priv;
     int status = 0;
 
-    if (!client || !state) {
+    if (!client) {
         OSA_ERROR("Invalid argument\n");
         return -EINVAL;
     }
@@ -146,18 +65,16 @@ static int pdm_eeprom_get_state(struct pdm_client *client, int *state)
         return -ENOMEM;
     }
 
-    if (!eeprom_priv->ops || !eeprom_priv->ops->get_state) {
-        OSA_ERROR("get_state not supported\n");
+    if (!eeprom_priv->ops || !eeprom_priv->ops->write_reg) {
+        OSA_ERROR("write_reg not supported\n");
         return -ENOTSUPP;
     }
 
-    status = eeprom_priv->ops->get_state(client, state);
+    status = eeprom_priv->ops->write_reg(client, addr, value);
     if (status) {
-        OSA_ERROR("PDM Led get_state failed, status: %d\n", status);
+        OSA_ERROR("PDM EEPROM write_reg failed, status: %d\n", status);
         return status;
     }
-
-    OSA_INFO("Current state is %d\n", *state);
 
     return 0;
 }
@@ -181,58 +98,6 @@ static long pdm_eeprom_ioctl(struct file *filp, unsigned int cmd, unsigned long 
     }
 
     switch (cmd) {
-        case PDM_EEPROM_CMD_SET_STATE:
-        {
-            int state;
-            if (copy_from_user(&state, (void __user *)arg, sizeof(state))) {
-                OSA_ERROR("Failed to copy data from user space\n");
-                return -EFAULT;
-            }
-            OSA_INFO("PDM_EEPROM: Set %s's state to %d\n", dev_name(&client->dev), state);
-            status = pdm_eeprom_set_state(client, state);
-            break;
-        }
-        case PDM_EEPROM_CMD_GET_STATE:
-        {
-            int state;
-            status = pdm_eeprom_get_state(client, &state);
-            if (status) {
-                OSA_ERROR("Failed to get EEPROM state, status: %d\n", status);
-                return status;
-            }
-            OSA_INFO("PDM_EEPROM: Current state is %d\n", state);
-            if (copy_to_user((void __user *)arg, &state, sizeof(state))) {
-                OSA_ERROR("Failed to copy data to user space\n");
-                return -EFAULT;
-            }
-            break;
-        }
-        case PDM_EEPROM_CMD_SET_BRIGHTNESS:
-        {
-            int brightness;
-            if (copy_from_user(&brightness, (void __user *)arg, sizeof(brightness))) {
-                OSA_ERROR("Failed to copy data from user space\n");
-                return -EFAULT;
-            }
-            OSA_INFO("PDM_EEPROM: Set %s's brightness to %d\n", dev_name(&client->dev), brightness);
-            status = pdm_eeprom_set_brightness(client, brightness);
-            break;
-        }
-        case PDM_EEPROM_CMD_GET_BRIGHTNESS:
-        {
-            int brightness;
-            status = pdm_eeprom_get_brightness(client, &brightness);
-            if (status) {
-                OSA_ERROR("Failed to get EEPROM brightness, status: %d\n", status);
-                return status;
-            }
-            OSA_INFO("PDM_EEPROM: Current brightness is %d\n", brightness);
-            if (copy_to_user((void __user *)arg, &brightness, sizeof(brightness))) {
-                OSA_ERROR("Failed to copy data to user space\n");
-                return -EFAULT;
-            }
-            break;
-        }
         default:
         {
             OSA_ERROR("Unknown ioctl command\n");
@@ -295,8 +160,10 @@ static ssize_t pdm_eeprom_write(struct file *filp, const char __user *buf, size_
     struct pdm_client *client = filp->private_data;
     char kernel_buf[64];
     ssize_t bytes_read;
+    char buffer[32];
+    unsigned char addr = 0x0;
+    unsigned char value = 0x0;
     int cmd;
-    int param;
 
     if (!client || count >= sizeof(kernel_buf)) {
         OSA_ERROR("Invalid client or input too long.\n");
@@ -316,23 +183,20 @@ static ssize_t pdm_eeprom_write(struct file *filp, const char __user *buf, size_
 
     switch (cmd)
     {
-        case PDM_EEPROM_CMD_SET_STATE:
-        case PDM_EEPROM_CMD_SET_BRIGHTNESS:
+        case PDM_EEPROM_CMD_WRITE_REG:
         {
-            if (sscanf(kernel_buf, "%d %d", &cmd, &param) != 2) {
+            if (sscanf(kernel_buf, "%d 0x%hhx 0x%hhx", &cmd, &addr, &value) != 3) {
                 OSA_ERROR("Command %d requires one parameter.\n", cmd);
                 return -EINVAL;
             }
             break;
         }
-        case PDM_EEPROM_CMD_GET_STATE:
-        case PDM_EEPROM_CMD_GET_BRIGHTNESS:
+        case PDM_EEPROM_CMD_READ_REG:
         {
-            if (sscanf(kernel_buf, "%d", &cmd) != 1) {
+            if (sscanf(kernel_buf, "%d 0x%hhx", &cmd, &addr) != 2) {
                 OSA_ERROR("Command %d should not have parameters.\n", cmd);
                 return -EINVAL;
             }
-            param = 0;
             break;
         }
         default:
@@ -344,47 +208,21 @@ static ssize_t pdm_eeprom_write(struct file *filp, const char __user *buf, size_
 
     switch (cmd)
     {
-        case PDM_EEPROM_CMD_SET_STATE:
+        case PDM_EEPROM_CMD_WRITE_REG:
         {
-            if (param != 0 && param != 1) {
-                OSA_ERROR("Invalid state: %d\n", param);
-                return -EINVAL;
-            }
-            if (pdm_eeprom_set_state(client, param)) {
+            if (pdm_eeprom_write_reg(client, addr, value)) {
                 OSA_ERROR("pdm_eeprom_set_state failed\n");
                 return -EINVAL;
             }
             break;
         }
-        case PDM_EEPROM_CMD_GET_STATE:
+        case PDM_EEPROM_CMD_READ_REG:
         {
-            int state;
-            if (pdm_eeprom_get_state(client, &state)) {
+            if (pdm_eeprom_read_reg(client, addr, &value)) {
                 OSA_ERROR("pdm_eeprom_get_state failed\n");
                 return -EINVAL;
             }
-            char buffer[32];
-            snprintf(buffer, sizeof(buffer), "%d\n", state);
-            bytes_read = simple_read_from_buffer((void __user *)buf, strlen(buffer), ppos, buffer, strlen(buffer));
-            return bytes_read;
-        }
-        case PDM_EEPROM_CMD_SET_BRIGHTNESS:
-        {
-            if (pdm_eeprom_set_brightness(client, param)) {
-                OSA_ERROR("pdm_eeprom_set_brightness failed\n");
-                return -EINVAL;
-            }
-            break;
-        }
-        case PDM_EEPROM_CMD_GET_BRIGHTNESS:
-        {
-            int brightness;
-            if (pdm_eeprom_get_brightness(client, &brightness)) {
-                OSA_ERROR("pdm_eeprom_get_brightness failed\n");
-                return -EINVAL;
-            }
-            char buffer[32];
-            snprintf(buffer, sizeof(buffer), "%d\n", brightness);
+            snprintf(buffer, sizeof(buffer), "%d\n", value);
             bytes_read = simple_read_from_buffer((void __user *)buf, strlen(buffer), ppos, buffer, strlen(buffer));
             return bytes_read;
         }

@@ -19,10 +19,8 @@
 
 enum pdm_eeprom_command {
     PDM_EEPROM_CMD_NULL            = 0x0,
-    PDM_EEPROM_CMD_SET_STATE       = 0x1,
-    PDM_EEPROM_CMD_GET_STATE       = 0x2,
-    PDM_EEPROM_CMD_SET_BRIGHTNESS  = 0x3,
-    PDM_EEPROM_CMD_GET_BRIGHTNESS  = 0x4,
+    PDM_EEPROM_CMD_READ_REG        = 0x1,
+    PDM_EEPROM_CMD_WRITE_REG       = 0x2,
     PDM_EEPROM_CMD_INVALID         = 0xFF
 };
 
@@ -46,10 +44,8 @@ struct pdm_eeprom_match_data {
  * the EEPROM state (on/off).
  */
 struct pdm_eeprom_operations {
-    int (*set_state)(struct pdm_client *client, int state);
-    int (*get_state)(struct pdm_client *client, int *state);
-    int (*set_brightness)(struct pdm_client *client, int brightness);
-    int (*get_brightness)(struct pdm_client *client, int *brightness);
+    int (*read_reg)(struct pdm_client *client, unsigned char addr, unsigned char *value);
+    int (*write_reg)(struct pdm_client *client, unsigned char addr, unsigned char value);
 };
 
 /**
