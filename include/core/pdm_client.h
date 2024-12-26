@@ -31,6 +31,7 @@ struct pdm_client {
     struct cdev cdev;                           /**< Character device structure for device operations */
     struct file_operations fops;                /**< File operations structure, defining operations for this device */
     struct list_head entry;                     /**< List node for linking devices in a linked list */
+    void *priv_data;                            /**< PDM Client private data. */
 };
 
 /**
@@ -89,9 +90,13 @@ static inline void pdm_client_put_device(struct pdm_client *client)
  * @param client Pointer to the PDM Client structure.
  * @return Pointer to the driver data stored in the device structure.
  */
-static inline void *pdm_client_get_drvdata(struct pdm_client *client)
+static inline void *pdm_client_get_private_data(struct pdm_client *client)
 {
-    return dev_get_drvdata(&client->dev);
+    if (!client) {
+        return NULL;
+    }
+    return client->priv_data;
+
 }
 
 /**
@@ -102,9 +107,9 @@ static inline void *pdm_client_get_drvdata(struct pdm_client *client)
  * @param client Pointer to the PDM Client structure.
  * @param data Pointer to the driver data to be set.
  */
-static inline void pdm_client_set_drvdata(struct pdm_client *client, void *data)
+static inline void pdm_client_set_private_data(struct pdm_client *client, void *data)
 {
-    dev_set_drvdata(&client->dev, data);
+    client->priv_data = data;
 }
 
 /**

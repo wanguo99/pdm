@@ -16,7 +16,7 @@ static int pdm_led_set_state(struct pdm_client *client, struct pdm_led_ioctl_arg
     struct pdm_led_priv *led_priv;
     int status = 0;
 
-    led_priv = pdm_client_get_drvdata(client);
+    led_priv = pdm_client_get_private_data(client);
     if (!led_priv) {
         OSA_ERROR("Get PDM Client Device Data Failed\n");
         return -ENOMEM;
@@ -88,6 +88,7 @@ static ssize_t pdm_led_write(struct file *filp, const char __user *buf, size_t c
     struct pdm_led_ioctl_args args;
     char kernel_buf[5];
     ssize_t bytes_read;
+    int state;
 
     if (!client) {
         return -EINVAL;
@@ -101,11 +102,15 @@ static ssize_t pdm_led_write(struct file *filp, const char __user *buf, size_t c
         return -EFAULT;
     }
 
-    if (sscanf(kernel_buf, "%d", &args.state) != 1) {
+    if (sscanf(kernel_buf, "%d", &state) != 1) {
         OSA_ERROR("Invalid data: %s\n", kernel_buf);
         return -EINVAL;
     }
-
+    if (state != 0 && state != 1) {
+        OSA_ERROR("Invalid state: %d\n", state);
+        return -EINVAL;
+    }
+    args.state = state;
     if (pdm_led_set_state(client, &args)) {
         OSA_ERROR("pdm_led_set_state failed\n");
         return -EINVAL;
@@ -131,7 +136,7 @@ static int pdm_led_match_setup(struct pdm_client *client)
         return -EINVAL;
     }
 
-    led_priv = pdm_client_get_drvdata(client);
+    led_priv = pdm_client_get_private_data(client);
     if (!led_priv) {
         OSA_ERROR("LED Client get private data is NULL\n");
         return -ENOMEM;
@@ -201,9 +206,8 @@ static int pdm_led_device_probe(struct pdm_device *pdmdev)
  */
 static void pdm_led_device_remove(struct pdm_device *pdmdev)
 {
-    struct pdm_led_priv *led_priv = pdm_client_get_drvdata(pdmdev->client);
-    if (led_priv && led_priv->match_data && led_priv->match_data->cleanup) {
-        led_priv->match_data->cleanup(pdmdev->client);
+    if (pdmdev && pdmdev->client) {
+        pdm_led_match_setup(pdmdev->client);
     }
 }
 

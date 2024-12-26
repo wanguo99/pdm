@@ -17,14 +17,13 @@ static int pdm_device_gpio_setup(struct pdm_device *pdmdev)
 {
     struct pdm_device_priv *pdmdev_priv;
     struct device_node *np;
-    unsigned int gpio_num;
     struct gpio_desc *gpiod;
     const char *default_state;
     bool is_active_low;
     int status;
 
     if (!pdmdev) {
-        OSA_ERROR("Invalid client\n");
+        OSA_ERROR("Invalid pdmdev\n");
         return -EINVAL;
     }
 
@@ -45,66 +44,39 @@ static int pdm_device_gpio_setup(struct pdm_device *pdmdev)
         OSA_INFO("No default-state property found, using defaults as off\n");
         default_state = "off";
     }
-    OSA_INFO("default_state: %s", default_state);
 
-    gpio_num = of_get_named_gpio(np, "gpio", 0);
-    if (!gpio_is_valid(gpio_num)) {
-        OSA_ERROR("Invalid GPIO specified in DT\n");
-        return -EINVAL;
-    }
-    OSA_INFO("gpio_num: %d", gpio_num);
-
-    status = gpio_request_one(gpio_num, GPIOF_OUT_INIT_LOW, dev_name(&pdmdev->dev));
-    if (status) {
-        OSA_ERROR("Failed to request GPIO %d\n", gpio_num);
-        return status;
-    }
-
-    gpiod = gpio_to_desc(gpio_num);
-    if (!gpiod) {
+    gpiod = gpiod_get_index(pdmdev->dev.parent, NULL, 0, GPIOD_OUT_LOW);
+    if (IS_ERR(gpiod)) {
         OSA_ERROR("Failed to get GPIO\n");
-        gpio_free(gpio_num);
-        return -EFAULT;
+        return PTR_ERR(gpiod);
     }
 
     is_active_low = gpiod_is_active_low(gpiod);
     if (!strcmp(default_state, "on")) {
-        gpiod_set_value_cansleep(gpiod, is_active_low ? 0 : 1);
-    } else if (!strcmp(default_state, "off")) {
         gpiod_set_value_cansleep(gpiod, is_active_low ? 1 : 0);
+    } else if (!strcmp(default_state, "off")) {
+        gpiod_set_value_cansleep(gpiod, is_active_low ? 0 : 1);
     } else {
         OSA_INFO("Unknown default-state: %s, using off\n", default_state);
-        gpiod_set_value_cansleep(gpiod, is_active_low ? 1 : 0);
+        gpiod_set_value_cansleep(gpiod, is_active_low ? 0 : 1);
     }
 
     pdmdev_priv->hw_data.gpio.gpiod = gpiod;
-    OSA_DEBUG("GPIO PDM Device Setup: %s\n", dev_name(&pdmdev->dev));
-
     return 0;
 }
 
 static void pdm_device_gpio_cleanup(struct pdm_device *pdmdev)
 {
     struct pdm_device_priv *pdmdev_priv;
-    struct gpio_desc *gpiod;
-    unsigned int gpio_num;
 
     if (!pdmdev) {
         return;
     }
 
     pdmdev_priv = pdm_device_get_private_data(pdmdev);
-    if (!pdmdev_priv || IS_ERR_OR_NULL(pdmdev_priv->hw_data.gpio.gpiod)) {
-        return;
+    if (pdmdev_priv && !IS_ERR_OR_NULL(pdmdev_priv->hw_data.gpio.gpiod)) {
+        gpiod_put(pdmdev_priv->hw_data.gpio.gpiod);
     }
-
-    gpiod = pdmdev_priv->hw_data.gpio.gpiod;
-    gpio_num = desc_to_gpio(gpiod);
-    gpiod_put(gpiod);
-    gpio_free(gpio_num);
-    pdmdev_priv->hw_data.gpio.gpiod = NULL;
-
-    OSA_DEBUG("GPIO PDM Device Cleanup: %s\n", dev_name(&pdmdev->dev));
 }
 
 /**

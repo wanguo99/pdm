@@ -37,7 +37,7 @@ struct pdm_led_match_data {
  * the LED state (on/off).
  */
 struct pdm_led_operations {
-    int (*set_state)(struct pdm_client *client, int state);  ///< Function to set the LED state
+    int (*set_state)(struct pdm_client *client, bool state);  ///< Function to set the LED state
 };
 
 /**

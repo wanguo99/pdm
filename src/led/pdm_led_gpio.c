@@ -13,17 +13,14 @@
  * @param state LED state (0 for off, 1 for on).
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_led_gpio_set_state(struct pdm_client *client, int state)
+static int pdm_led_gpio_set_state(struct pdm_client *client, bool state)
 {
     struct pdm_device_priv *pdmdev_priv;
+    struct gpio_desc *gpiod;
+    bool is_active_low;
 
     if (!client || !client->pdmdev) {
         OSA_ERROR("Invalid client\n");
-        return -EINVAL;
-    }
-
-    if (state != 0 && state != 1) {
-        OSA_ERROR("Invalid state: %d\n", state);
         return -EINVAL;
     }
 
@@ -32,7 +29,14 @@ static int pdm_led_gpio_set_state(struct pdm_client *client, int state)
         OSA_ERROR("Get PDM Device drvdata Failed\n");
         return -ENOMEM;
     }
-    gpiod_set_value(pdmdev_priv->hw_data.gpio.gpiod, state);
+
+    gpiod = pdmdev_priv->hw_data.gpio.gpiod;
+    is_active_low = gpiod_is_active_low(gpiod);
+    if (is_active_low) {
+        gpiod_set_value_cansleep(gpiod, !!state);
+    } else {
+        gpiod_set_value_cansleep(gpiod, !state);
+    }
 
     OSA_INFO("GPIO PDM Led: Set %s state to %d\n", dev_name(&client->dev), state);
     return 0;
@@ -63,7 +67,7 @@ int pdm_led_gpio_setup(struct pdm_client *client)
         OSA_ERROR("Invalid client\n");
     }
 
-    led_priv = pdm_client_get_drvdata(client);
+    led_priv = pdm_client_get_private_data(client);
     if (!led_priv) {
         OSA_ERROR("Get PDM Client DevData Failed\n");
         return -ENOMEM;

@@ -366,7 +366,7 @@ struct pdm_client *devm_pdm_client_alloc(struct pdm_device *pdmdev, unsigned int
     pdmdev->client = client;
     client->pdmdev = pdmdev;
     if (data_size) {
-        pdm_client_set_drvdata(client, (void *)(client + client_size));
+        pdm_client_set_private_data(client, (void *)(client + client_size));
     }
 
     return client;
