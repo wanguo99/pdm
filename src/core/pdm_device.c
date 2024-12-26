@@ -123,8 +123,7 @@ ATTRIBUTE_GROUPS(pdm_device);
  */
 static void pdm_device_release(struct device *dev)
 {
-    struct pdm_device *pdmdev = dev_to_pdm_device(dev);
-    kfree(pdmdev);
+    kfree(dev_to_pdm_device(dev));
 }
 
 /**
@@ -290,14 +289,10 @@ int pdm_device_register(struct pdm_device *pdmdev)
     status = device_add(&pdmdev->dev);
     if (status) {
         OSA_ERROR("Failed to add device %s, error: %d\n", dev_name(&pdmdev->dev), status);
-        goto err_free_id;
+        return status;
     }
 
     return 0;
-
-err_free_id:
-    pdm_device_put(pdmdev);
-    return status;
 }
 
 /**
@@ -310,7 +305,7 @@ err_free_id:
 void pdm_device_unregister(struct pdm_device *pdmdev)
 {
     if (pdmdev) {
-        device_unregister(&pdmdev->dev);
+        device_del(&pdmdev->dev);
     }
 }
 
