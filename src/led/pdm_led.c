@@ -181,7 +181,8 @@ static long pdm_led_ioctl(struct file *filp, unsigned int cmd, unsigned long arg
     }
 
     switch (cmd) {
-        case PDM_LED_SET_STATE: {
+        case PDM_LED_SET_STATE:
+        {
             int state;
             if (copy_from_user(&state, (void __user *)arg, sizeof(state))) {
                 OSA_ERROR("Failed to copy data from user space\n");
@@ -206,7 +207,8 @@ static long pdm_led_ioctl(struct file *filp, unsigned int cmd, unsigned long arg
             }
             break;
         }
-        case PDM_LED_SET_BRIGHTNESS: {
+        case PDM_LED_SET_BRIGHTNESS:
+        {
             int brightness;
             if (copy_from_user(&brightness, (void __user *)arg, sizeof(brightness))) {
                 OSA_ERROR("Failed to copy data from user space\n");
@@ -216,7 +218,8 @@ static long pdm_led_ioctl(struct file *filp, unsigned int cmd, unsigned long arg
             status = pdm_led_set_brightness(client, brightness);
             break;
         }
-        case PDM_LED_GET_BRIGHTNESS: {
+        case PDM_LED_GET_BRIGHTNESS:
+        {
             int brightness;
             status = pdm_led_get_brightness(client, &brightness);
             if (status) {
@@ -230,7 +233,8 @@ static long pdm_led_ioctl(struct file *filp, unsigned int cmd, unsigned long arg
             }
             break;
         }
-        default: {
+        default:
+        {
             OSA_ERROR("Unknown ioctl command\n");
             return -ENOTTY;
         }
@@ -310,7 +314,8 @@ static ssize_t pdm_led_write(struct file *filp, const char __user *buf, size_t c
         return -EINVAL;
     }
 
-    switch (cmd) {
+    switch (cmd)
+    {
         case PDM_LED_CMD_SET_STATE:
         case PDM_LED_CMD_SET_BRIGHTNESS:
         {
@@ -330,14 +335,17 @@ static ssize_t pdm_led_write(struct file *filp, const char __user *buf, size_t c
             param = 0;
             break;
         }
-        default: {
+        default:
+        {
             OSA_ERROR("Unknown command: %d\n", cmd);
             return -EINVAL;
         }
     }
 
-    switch (cmd) {
-        case PDM_LED_CMD_SET_STATE: {
+    switch (cmd)
+    {
+        case PDM_LED_CMD_SET_STATE:
+        {
             if (param != 0 && param != 1) {
                 OSA_ERROR("Invalid state: %d\n", param);
                 return -EINVAL;
@@ -348,7 +356,8 @@ static ssize_t pdm_led_write(struct file *filp, const char __user *buf, size_t c
             }
             break;
         }
-        case PDM_LED_CMD_GET_STATE: {
+        case PDM_LED_CMD_GET_STATE:
+        {
             int state;
             if (pdm_led_get_state(client, &state)) {
                 OSA_ERROR("pdm_led_get_state failed\n");
@@ -359,14 +368,16 @@ static ssize_t pdm_led_write(struct file *filp, const char __user *buf, size_t c
             bytes_read = simple_read_from_buffer((void __user *)buf, strlen(buffer), ppos, buffer, strlen(buffer));
             return bytes_read;
         }
-        case PDM_LED_CMD_SET_BRIGHTNESS: {
+        case PDM_LED_CMD_SET_BRIGHTNESS:
+        {
             if (pdm_led_set_brightness(client, param)) {
                 OSA_ERROR("pdm_led_set_brightness failed\n");
                 return -EINVAL;
             }
             break;
         }
-        case PDM_LED_CMD_GET_BRIGHTNESS: {
+        case PDM_LED_CMD_GET_BRIGHTNESS:
+        {
             int brightness;
             if (pdm_led_get_brightness(client, &brightness)) {
                 OSA_ERROR("pdm_led_get_brightness failed\n");
@@ -377,7 +388,8 @@ static ssize_t pdm_led_write(struct file *filp, const char __user *buf, size_t c
             bytes_read = simple_read_from_buffer((void __user *)buf, strlen(buffer), ppos, buffer, strlen(buffer));
             return bytes_read;
         }
-        default: {
+        default:
+        {
             OSA_ERROR("Unknown command: %d\n", cmd);
             return -EINVAL;
         }
