@@ -158,9 +158,16 @@ static int __pdm_client_device_register(struct pdm_client *client)
         return -EINVAL;
     }
 
-    if (client->index >= PDM_CLIENT_MINORS) {
-        OSA_ERROR("Out of pdm_client minors (%d)\n", client->index);
+    if (client->pdmdev->index >= PDM_CLIENT_MINORS) {
+        OSA_ERROR("Out of pdm_client minors (%d)\n", client->pdmdev->index);
         return -ENODEV;
+    }
+
+    client->dev.devt = MKDEV(pdm_client_major, client->pdmdev->index);
+    status = dev_set_name(&client->dev, "%s.%d", dev_name(&client->adapter->dev), client->index);
+    if (status) {
+        OSA_ERROR("Failed to set client name, error:%d\n", status);
+        return status;
     }
 
     client->fops.open = pdm_client_fops_default_open;
@@ -170,13 +177,6 @@ static int __pdm_client_device_register(struct pdm_client *client)
     client->fops.unlocked_ioctl = pdm_client_fops_default_ioctl;
     client->fops.compat_ioctl = pdm_client_fops_default_compat_ioctl;
     cdev_init(&client->cdev, &client->fops);
-
-    client->dev.devt = MKDEV(pdm_client_major, client->index);
-    status = dev_set_name(&client->dev, "%s.%d", dev_name(&client->adapter->dev), client->index);
-    if (status) {
-        OSA_ERROR("Failed to set client name, error:%d\n", status);
-        return status;
-    }
 
     status = cdev_device_add(&client->cdev, &client->dev);
     if (status < 0) {

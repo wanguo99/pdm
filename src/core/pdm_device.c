@@ -246,7 +246,6 @@ struct pdm_device *pdm_device_alloc(struct device *dev, unsigned int data_size)
     struct pdm_device *pdmdev;
     unsigned int pdmdev_size = sizeof(struct pdm_device);
     unsigned int total_size = ALIGN(pdmdev_size + data_size, 8);
-    unsigned int index = (unsigned int )atomic_inc_return(&pdm_device_no);
 
     if (!dev) {
         return ERR_PTR(-EINVAL);
@@ -263,7 +262,8 @@ struct pdm_device *pdm_device_alloc(struct device *dev, unsigned int data_size)
     pdmdev->dev.type = &pdm_device_type;
     device_initialize(&pdmdev->dev);
 
-    dev_set_name(&pdmdev->dev, "pdmdev%u", index);
+    pdmdev->index = (unsigned int )atomic_inc_return(&pdm_device_no);
+    dev_set_name(&pdmdev->dev, "pdmdev%u", pdmdev->index);
     if (data_size) {
         pdm_device_set_private_data(pdmdev, (void *)(pdmdev + pdmdev_size));
     }

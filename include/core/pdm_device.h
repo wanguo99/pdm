@@ -19,6 +19,7 @@
  * device structure, and client handle.
  */
 struct pdm_device {
+    unsigned int index;         /**< Device index. */
     struct device dev;          /**< Device structure. */
     struct pdm_client *client;  /**< PDM Client handle. */
     void *priv_data;            /**< PDM Device private data. */
