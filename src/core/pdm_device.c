@@ -186,8 +186,8 @@ int pdm_device_setup(struct pdm_device *pdmdev)
 
     match_data = pdm_device_get_match_data(pdmdev);
     if (!match_data) {
-        OSA_ERROR("Failed to get match data for device: %s\n", dev_name(&pdmdev->dev));
-        return -ENODEV;
+        OSA_DEBUG("Failed to get match data for device: %s\n", dev_name(&pdmdev->dev));
+        return 0;
     }
 
     pdmdev_priv = pdm_device_get_private_data(pdmdev);
@@ -302,7 +302,7 @@ int pdm_device_register(struct pdm_device *pdmdev)
         return -EINVAL;
 
     if (pdm_bus_find_device_by_parent(pdmdev->dev.parent)) {
-        OSA_ERROR("Device with parent %s already exists\n", dev_name(pdmdev->dev.parent));
+        OSA_ERROR("Device with parent %s already exists: %s\n", dev_name(pdmdev->dev.parent), dev_name(&pdmdev->dev));
         return -EEXIST;
     }
 

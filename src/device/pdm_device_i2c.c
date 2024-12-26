@@ -48,7 +48,7 @@ static int pdm_device_i2c_real_probe(struct i2c_client *client, const struct i2c
     return 0;
 
 err_pdmdev_unregister:
-    pdm_device_register(pdmdev);
+    pdm_device_unregister(pdmdev);
 err_pdmdev_free:
     pdm_device_free(pdmdev);
     return status;

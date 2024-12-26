@@ -35,7 +35,7 @@ static int pdm_device_spi_probe(struct spi_device *spi) {
     return 0;
 
 err_pdmdev_unregister:
-    pdm_device_register(pdmdev);
+    pdm_device_unregister(pdmdev);
 err_pdmdev_free:
     pdm_device_free(pdmdev);
     return status;
