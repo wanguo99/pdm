@@ -17,6 +17,15 @@
  */
 #define PDM_LED_NAME "pdm_led"
 
+enum pdm_led_command {
+    PDM_LED_CMD_NULL            = 0x0,
+    PDM_LED_CMD_SET_STATE       = 0x1,
+    PDM_LED_CMD_GET_STATE       = 0x2,
+    PDM_LED_CMD_SET_BRIGHTNESS  = 0x3,
+    PDM_LED_CMD_GET_BRIGHTNESS  = 0x4,
+    PDM_LED_CMD_INVALID         = 0xFF
+};
+
 /**
  * @struct pdm_led_match_data
  * @brief Match data structure for initializing specific types of LED devices.
@@ -37,7 +46,10 @@ struct pdm_led_match_data {
  * the LED state (on/off).
  */
 struct pdm_led_operations {
-    int (*set_state)(struct pdm_client *client, bool state);  ///< Function to set the LED state
+    int (*set_state)(struct pdm_client *client, int state);
+    int (*get_state)(struct pdm_client *client, int *state);
+    int (*set_brightness)(struct pdm_client *client, int brightness);
+    int (*get_brightness)(struct pdm_client *client, int *brightness);
 };
 
 /**
@@ -50,6 +62,7 @@ struct pdm_led_operations {
 struct pdm_led_priv {
     const struct pdm_led_operations *ops;  ///< Pointer to operation function callbacks
     const struct pdm_led_match_data *match_data;
+    void *private_data;
 };
 
 /**

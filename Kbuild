@@ -20,4 +20,5 @@ $(MODULE_NAME)-objs += src/device/pdm_device_i2c.o \
 	src/device/pdm_device_spi.o
 
 $(MODULE_NAME)-objs += src/led/pdm_led.o \
-	src/led/pdm_led_gpio.o
+	src/led/pdm_led_gpio.o \
+	src/led/pdm_led_pwm.o

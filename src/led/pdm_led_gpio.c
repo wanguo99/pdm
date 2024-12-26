@@ -13,7 +13,7 @@
  * @param state LED state (0 for off, 1 for on).
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_led_gpio_set_state(struct pdm_client *client, bool state)
+static int pdm_led_gpio_set_state(struct pdm_client *client, int state)
 {
     struct pdm_device_priv *pdmdev_priv;
     struct gpio_desc *gpiod;

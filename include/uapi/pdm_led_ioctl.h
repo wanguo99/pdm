@@ -6,14 +6,15 @@
 
 /* IOCTL commands */
 
-#define PDM_LED_IOC_MAGIC		'l'
+#define PDM_LED_IOC_MAGIC       'l'
 
 
 struct pdm_led_ioctl_args {
-    bool state;
+    int state;
+    int brightness;
 };
 
-#define PDM_LED_SET_STATE		_IOW(PDM_LED_IOC_MAGIC, 0, struct pdm_led_ioctl_args *)
+#define PDM_LED_SET_STATE       _IOW(PDM_LED_IOC_MAGIC, 0, struct pdm_led_ioctl_args *)
 
 
 #endif /* _PDM_LED_IOCTL_H_ */

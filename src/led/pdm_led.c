@@ -6,15 +6,21 @@
 static struct pdm_adapter *led_adapter = NULL;
 
 /**
- * @brief Sets the state of a specified PDM LED device.
+ * @brief Sets the brightness of a specified PDM LED device.
  *
- * @param args Structure.
+ * @param client Pointer to the PDM client structure.
+ * @param brightness Brightness level (0-255).
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_led_set_state(struct pdm_client *client, struct pdm_led_ioctl_args *args)
+static int pdm_led_set_brightness(struct pdm_client *client, int brightness)
 {
     struct pdm_led_priv *led_priv;
     int status = 0;
+
+    if (!client) {
+        OSA_ERROR("Invalid client\n");
+        return -EINVAL;
+    }
 
     led_priv = pdm_client_get_private_data(client);
     if (!led_priv) {
@@ -22,11 +28,131 @@ static int pdm_led_set_state(struct pdm_client *client, struct pdm_led_ioctl_arg
         return -ENOMEM;
     }
 
-    status = led_priv->ops->set_state(client, args->state);
+    if (!led_priv->ops || !led_priv->ops->set_brightness) {
+        OSA_ERROR("set_brightness not supported\n");
+        return -ENOTSUPP;
+    }
+
+    status = led_priv->ops->set_brightness(client, brightness);
+    if (status) {
+        OSA_ERROR("PDM Led set_brightness failed, status: %d\n", status);
+        return status;
+    }
+
+    return 0;
+}
+
+/**
+ * @brief Gets the current brightness of a specified PDM LED device.
+ *
+ * @param client Pointer to the PDM client structure.
+ * @param brightness Pointer to store the current brightness.
+ * @return Returns 0 on success; negative error code on failure.
+ */
+static int pdm_led_get_brightness(struct pdm_client *client, int *brightness)
+{
+    struct pdm_led_priv *led_priv;
+    int status = 0;
+
+    if (!client || !brightness) {
+        OSA_ERROR("Invalid argument\n");
+        return -EINVAL;
+    }
+
+    led_priv = pdm_client_get_private_data(client);
+    if (!led_priv) {
+        OSA_ERROR("Get PDM Client Device Data Failed\n");
+        return -ENOMEM;
+    }
+
+    if (!led_priv->ops || !led_priv->ops->get_brightness) {
+        OSA_ERROR("get_brightness not supported\n");
+        return -ENOTSUPP;
+    }
+
+    status = led_priv->ops->get_brightness(client, brightness);
+    if (status) {
+        OSA_ERROR("PDM Led get_brightness failed, status: %d\n", status);
+        return status;
+    }
+
+    OSA_INFO("Current brightness is %d\n", *brightness);
+
+    return 0;
+}
+
+/**
+ * @brief Sets the state of a specified PDM LED device.
+ *
+ * @param client Pointer to the PDM client structure.
+ * @param state State value (0 or 1).
+ * @return Returns 0 on success; negative error code on failure.
+ */
+static int pdm_led_set_state(struct pdm_client *client, int state)
+{
+    struct pdm_led_priv *led_priv;
+    int status = 0;
+
+    if (!client) {
+        OSA_ERROR("Invalid client\n");
+        return -EINVAL;
+    }
+
+    led_priv = pdm_client_get_private_data(client);
+    if (!led_priv) {
+        OSA_ERROR("Get PDM Client Device Data Failed\n");
+        return -ENOMEM;
+    }
+
+    if (!led_priv->ops || !led_priv->ops->set_state) {
+        OSA_ERROR("set_state not supported\n");
+        return -ENOTSUPP;
+    }
+
+    status = led_priv->ops->set_state(client, state);
     if (status) {
         OSA_ERROR("PDM Led set_state failed, status: %d\n", status);
         return status;
     }
+
+    return 0;
+}
+
+/**
+ * @brief Gets the current state of a specified PDM LED device.
+ *
+ * @param client Pointer to the PDM client structure.
+ * @param state Pointer to store the current state.
+ * @return Returns 0 on success; negative error code on failure.
+ */
+static int pdm_led_get_state(struct pdm_client *client, int *state)
+{
+    struct pdm_led_priv *led_priv;
+    int status = 0;
+
+    if (!client || !state) {
+        OSA_ERROR("Invalid argument\n");
+        return -EINVAL;
+    }
+
+    led_priv = pdm_client_get_private_data(client);
+    if (!led_priv) {
+        OSA_ERROR("Get PDM Client Device Data Failed\n");
+        return -ENOMEM;
+    }
+
+    if (!led_priv->ops || !led_priv->ops->get_state) {
+        OSA_ERROR("get_state not supported\n");
+        return -ENOTSUPP;
+    }
+
+    status = led_priv->ops->get_state(client, state);
+    if (status) {
+        OSA_ERROR("PDM Led get_state failed, status: %d\n", status);
+        return status;
+    }
+
+    OSA_INFO("Current state is %d\n", *state);
 
     return 0;
 }
@@ -46,7 +172,7 @@ static long pdm_led_ioctl(struct file *filp, unsigned int cmd, unsigned long arg
     int status = 0;
 
     if (!client) {
-        OSA_ERROR("invalid argument\n");
+        OSA_ERROR("Invalid client\n");
         return -EINVAL;
     }
 
@@ -56,13 +182,15 @@ static long pdm_led_ioctl(struct file *filp, unsigned int cmd, unsigned long arg
     switch (cmd) {
         case PDM_LED_SET_STATE: {
             if (copy_from_user(&args, (void __user *)arg, sizeof(args))) {
+                OSA_ERROR("Failed to copy data from user space\n");
                 return -EFAULT;
             }
             OSA_INFO("PDM_LED: Set %s's state to %d\n", dev_name(&client->dev), args.state);
-            status = pdm_led_set_state(client, &args);
+            status = pdm_led_set_state(client, args.state);
             break;
         }
         default:
+            OSA_ERROR("Unknown ioctl command\n");
             return -ENOTTY;
     }
 
@@ -74,46 +202,145 @@ static long pdm_led_ioctl(struct file *filp, unsigned int cmd, unsigned long arg
 }
 
 /**
- * @brief Handles write operations from user space.
+ * @brief Reads information about available commands or LED state/brightness.
  *
- * @param filp File descriptor.
- * @param buf User space buffer.
- * @param count Buffer size.
- * @param ppos File offset.
- * @return Number of bytes written, or negative error code on failure.
+ * @param filp File pointer.
+ * @param buf User buffer to write data into.
+ * @param count Number of bytes to read.
+ * @param ppos Offset in the file.
+ * @return Returns number of bytes read or negative error code on failure.
+ */
+static ssize_t pdm_led_read(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
+{
+    const char help_info[] =
+        "Available commands:\n"
+        " > 1 <0|1>    - Set LED state\n"
+        " > 2          - Get current LED state\n"
+        " > 3 <0-255>  - Set LED brightness\n"
+        " > 4          - Get current LED brightness\n";
+    size_t len = strlen(help_info);
+
+    if (*ppos >= len)
+        return 0;
+
+    // 使用min_t宏指定类型为size_t
+    size_t remaining = min_t(size_t, count, len - *ppos);
+
+    if (copy_to_user(buf, help_info + *ppos, remaining))
+        return -EFAULT;
+
+    *ppos += remaining;
+    return remaining;
+}
+
+/**
+ * @brief Writes commands to change LED state or brightness.
+ *
+ * @param filp File pointer.
+ * @param buf User buffer containing command data.
+ * @param count Number of bytes to write.
+ * @param ppos Offset in the file.
+ * @return Returns number of bytes written or negative error code on failure.
  */
 static ssize_t pdm_led_write(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
 {
     struct pdm_client *client = filp->private_data;
-    struct pdm_led_ioctl_args args;
-    char kernel_buf[5];
+    char kernel_buf[64];
     ssize_t bytes_read;
-    int state;
+    int cmd;
+    int param;
 
-    if (!client) {
+    if (!client || count >= sizeof(kernel_buf)) {
+        OSA_ERROR("Invalid client or input too long.\n");
         return -EINVAL;
     }
 
-    if (count > sizeof(kernel_buf) - 1) {
-        count = sizeof(kernel_buf) - 1;
-    }
     if ((bytes_read = copy_from_user(kernel_buf, buf, count)) != 0) {
         OSA_ERROR("Failed to copy data from user space: %zd\n", bytes_read);
         return -EFAULT;
     }
 
-    if (sscanf(kernel_buf, "%d", &state) != 1) {
-        OSA_ERROR("Invalid data: %s\n", kernel_buf);
+    kernel_buf[count] = '\0';
+    if (sscanf(kernel_buf, "%d", &cmd) != 1) {
+        OSA_ERROR("Invalid command format: %s\n", kernel_buf);
         return -EINVAL;
     }
-    if (state != 0 && state != 1) {
-        OSA_ERROR("Invalid state: %d\n", state);
-        return -EINVAL;
+
+    switch (cmd) {
+        case PDM_LED_CMD_SET_STATE:
+        case PDM_LED_CMD_SET_BRIGHTNESS:
+            if (sscanf(kernel_buf, "%d %d", &cmd, &param) != 2) {
+                OSA_ERROR("Command %d requires one parameter.\n", cmd);
+                return -EINVAL;
+            }
+            break;
+        case PDM_LED_CMD_GET_STATE:
+        case PDM_LED_CMD_GET_BRIGHTNESS:
+            if (sscanf(kernel_buf, "%d", &cmd) != 1) {
+                OSA_ERROR("Command %d should not have parameters.\n", cmd);
+                return -EINVAL;
+            }
+            param = 0;
+            break;
+        default:
+            OSA_ERROR("Unknown command: %d\n", cmd);
+            return -EINVAL;
     }
-    args.state = state;
-    if (pdm_led_set_state(client, &args)) {
-        OSA_ERROR("pdm_led_set_state failed\n");
-        return -EINVAL;
+
+    switch (cmd) {
+        case PDM_LED_CMD_SET_STATE:
+        {
+            if (param != 0 && param != 1) {
+                OSA_ERROR("Invalid state: %d\n", param);
+                return -EINVAL;
+            }
+            if (pdm_led_set_state(client, param)) {
+                OSA_ERROR("pdm_led_set_state failed\n");
+                return -EINVAL;
+            }
+            break;
+        }
+        case PDM_LED_CMD_GET_STATE:
+        {
+            int state;
+            if (pdm_led_get_state(client, &state)) {
+                OSA_ERROR("pdm_led_get_state failed\n");
+                return -EINVAL;
+            }
+            char buffer[32];
+            snprintf(buffer, sizeof(buffer), "%d\n", state);
+            bytes_read = simple_read_from_buffer((void __user *)buf, strlen(buffer), ppos, buffer, strlen(buffer));
+            return bytes_read;
+        }
+        case PDM_LED_CMD_SET_BRIGHTNESS:
+        {
+            if (param < 0 || param > 255) {
+                OSA_ERROR("Invalid brightness: %d\n", param);
+                return -EINVAL;
+            }
+            if (pdm_led_set_brightness(client, param)) {
+                OSA_ERROR("pdm_led_set_brightness failed\n");
+                return -EINVAL;
+            }
+            break;
+        }
+        case PDM_LED_CMD_GET_BRIGHTNESS:
+        {
+            int brightness;
+            if (pdm_led_get_brightness(client, &brightness)) {
+                OSA_ERROR("pdm_led_get_brightness failed\n");
+                return -EINVAL;
+            }
+            char buffer[32];
+            snprintf(buffer, sizeof(buffer), "%d\n", brightness);
+            bytes_read = simple_read_from_buffer((void __user *)buf, strlen(buffer), ppos, buffer, strlen(buffer));
+            return bytes_read;
+        }
+        default:
+        {
+            OSA_ERROR("Unknown command: %d\n", cmd);
+            return -EINVAL;
+        }
     }
 
     return count;
@@ -123,7 +350,6 @@ static ssize_t pdm_led_write(struct file *filp, const char __user *buf, size_t c
  * @brief Initializes the LED client using match data.
  *
  * @param client Pointer to the PDM client structure.
- * @param pdmdev Pointer to the PDM device structure.
  * @return Returns 0 on success; negative error code on failure.
  */
 static int pdm_led_match_setup(struct pdm_client *client)
@@ -191,6 +417,7 @@ static int pdm_led_device_probe(struct pdm_device *pdmdev)
         return status;
     }
 
+    client->fops.read = pdm_led_read;
     client->fops.write = pdm_led_write;
     client->fops.unlocked_ioctl = pdm_led_ioctl;
 
@@ -223,7 +450,7 @@ static const struct pdm_led_match_data pdm_led_gpio_match_data = {
  * @brief Match data structure for initializing PWM type LED devices.
  */
 static const struct pdm_led_match_data pdm_led_pwm_match_data = {
-    .setup = NULL,
+    .setup = pdm_led_pwm_setup,
     .cleanup = NULL,
 };
 
