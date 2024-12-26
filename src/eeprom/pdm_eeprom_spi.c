@@ -1,5 +1,4 @@
-#include <linux/of_gpio.h>
-#include <linux/gpio.h>
+#include <linux/spi/spi.h>
 
 #include "pdm.h"
 #include "pdm_eeprom_priv.h"

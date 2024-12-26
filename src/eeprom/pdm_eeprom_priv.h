@@ -81,24 +81,4 @@ int pdm_eeprom_spi_setup(struct pdm_client *client);
  */
 int pdm_eeprom_spi_cleanup(struct pdm_client *client);
 
-/**
- * @brief Initializes PWM settings for a PDM EEPROM device.
- *
- * This function initializes the PWM settings for the specified PDM EEPROM device and sets up the operation functions.
- *
- * @param client Pointer to the PDM client structure.
- * @return Returns 0 on success; negative error code on failure.
- */
-int pdm_eeprom_pwm_setup(struct pdm_client *client);
-
-/**
- * @brief Cleans up PWM settings for a PDM EEPROM device.
- *
- * This function cleans up resources associated with PWM-controlled EEPROM devices.
- *
- * @param client Pointer to the PDM client structure representing the EEPROM device.
- * @return Returns 0 on success; negative error code on failure.
- */
-int pdm_eeprom_pwm_cleanup(struct pdm_client *client);
-
 #endif /* _PDM_EEPROM_PRIV_H_ */
