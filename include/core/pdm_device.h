@@ -42,7 +42,7 @@ struct pdm_device_gpio_data {
  * This structure holds the necessary data for controlling an LED via PWM.
  */
 struct pdm_device_pwm_data {
-    struct pwm_device *pwm;
+    struct pwm_device *pwmdev;
 };
 
 /**

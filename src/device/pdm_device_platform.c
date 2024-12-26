@@ -1,6 +1,7 @@
 #include <linux/platform_device.h>
 #include <linux/gpio/consumer.h>
 #include <linux/of_gpio.h>
+#include <linux/pwm.h>
 
 #include "pdm.h"
 #include "pdm_device_priv.h"
@@ -76,6 +77,62 @@ static void pdm_device_gpio_cleanup(struct pdm_device *pdmdev)
     pdmdev_priv = pdm_device_get_private_data(pdmdev);
     if (pdmdev_priv && !IS_ERR_OR_NULL(pdmdev_priv->hw_data.gpio.gpiod)) {
         gpiod_put(pdmdev_priv->hw_data.gpio.gpiod);
+    }
+}
+
+static int pdm_device_pwm_setup(struct pdm_device *pdmdev)
+{
+    struct pdm_device_priv *pdmdev_priv;
+    struct device_node *np;
+    unsigned int default_level;
+    struct pwm_device *pwmdev;
+    int status;
+
+    if (!pdmdev) {
+        OSA_ERROR("Invalid pdmdev\n");
+        return -EINVAL;
+    }
+
+    pdmdev_priv = pdm_device_get_private_data(pdmdev);
+    if (!pdmdev_priv) {
+        OSA_ERROR("Get PDM Device DrvData Failed\n");
+        return -ENOMEM;
+    }
+
+    np = pdm_device_get_of_node(pdmdev);
+    if (!np) {
+        OSA_ERROR("No DT node found\n");
+        return -EINVAL;
+    }
+
+    status = of_property_read_u32(np, "default-level", &default_level);
+    if (status) {
+        OSA_INFO("No default-state property found, using defaults as off\n");
+        default_level = 0;
+    }
+
+    pwmdev = pwm_get(pdmdev->dev.parent, NULL);
+    if (IS_ERR(pwmdev)) {
+        OSA_ERROR("Failed to get PWM\n");
+        return PTR_ERR(pwmdev);
+    }
+
+    pdmdev_priv->hw_data.pwm.pwmdev = pwmdev;
+    return 0;
+
+}
+
+static void pdm_device_pwm_cleanup(struct pdm_device *pdmdev)
+{
+    struct pdm_device_priv *pdmdev_priv;
+
+    if (!pdmdev) {
+        return;
+    }
+
+    pdmdev_priv = pdm_device_get_private_data(pdmdev);
+    if (pdmdev_priv && !IS_ERR_OR_NULL(pdmdev_priv->hw_data.pwm.pwmdev)) {
+        pwm_put(pdmdev_priv->hw_data.pwm.pwmdev);
     }
 }
 
@@ -163,11 +220,16 @@ static void pdm_device_platform_remove(struct platform_device *pdev) {
 
 
 /**
- * @brief Match data structure for initializing GPIO type LED devices.
+ * @brief Match data structure for initializing GPIO type devices.
  */
 static const struct pdm_device_match_data pdm_device_gpio_match_data = {
     .setup = pdm_device_gpio_setup,
     .cleanup = pdm_device_gpio_cleanup,
+};
+
+static const struct pdm_device_match_data pdm_device_pwm_match_data = {
+    .setup = pdm_device_pwm_setup,
+    .cleanup = pdm_device_pwm_cleanup,
 };
 
 /**
@@ -191,7 +253,7 @@ MODULE_DEVICE_TABLE(platform, pdm_device_platform_ids);
  */
 static const struct of_device_id pdm_device_platform_of_match[] = {
     { .compatible = "led,pdm-device-gpio", .data = &pdm_device_gpio_match_data },
-    { .compatible = "led,pdm-device-pwm" },
+    { .compatible = "led,pdm-device-pwm", .data = &pdm_device_pwm_match_data },
     { }
 };
 MODULE_DEVICE_TABLE(of, pdm_device_platform_of_match);
