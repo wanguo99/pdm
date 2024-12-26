@@ -28,7 +28,7 @@ static int pdm_device_gpio_setup(struct pdm_device *pdmdev)
         return -EINVAL;
     }
 
-    pdmdev_priv = pdm_device_get_drvdata(pdmdev);
+    pdmdev_priv = pdm_device_get_private_data(pdmdev);
     if (!pdmdev_priv) {
         OSA_ERROR("Get PDM Device DrvData Failed\n");
         return -ENOMEM;
@@ -93,7 +93,7 @@ static void pdm_device_gpio_cleanup(struct pdm_device *pdmdev)
         return;
     }
 
-    pdmdev_priv = pdm_device_get_drvdata(pdmdev);
+    pdmdev_priv = pdm_device_get_private_data(pdmdev);
     if (!pdmdev_priv || IS_ERR_OR_NULL(pdmdev_priv->hw_data.gpio.gpiod)) {
         return;
     }

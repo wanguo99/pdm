@@ -126,7 +126,7 @@ static inline void pdm_device_put(struct pdm_device *pdmdev)
  * @param Pointer to the PDM Device structure.
  * @return Pointer to the driver data stored in the device structure.
  */
-static inline void *pdm_device_get_drvdata(struct pdm_device *pdmdev)
+static inline void *pdm_device_get_private_data(struct pdm_device *pdmdev)
 {
     if (!pdmdev) {
         return NULL;
@@ -142,7 +142,7 @@ static inline void *pdm_device_get_drvdata(struct pdm_device *pdmdev)
  * @param Pointer to the PDM Device structure.
  * @param data Pointer to the driver data to be set.
  */
-static inline void pdm_device_set_drvdata(struct pdm_device *pdmdev, void *data)
+static inline void pdm_device_set_private_data(struct pdm_device *pdmdev, void *data)
 {
     pdmdev->priv_data = data;
 }

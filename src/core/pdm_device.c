@@ -190,7 +190,7 @@ int pdm_device_setup(struct pdm_device *pdmdev)
         return -ENODEV;
     }
 
-    pdmdev_priv = pdm_device_get_drvdata(pdmdev);
+    pdmdev_priv = pdm_device_get_private_data(pdmdev);
     if (!pdmdev_priv) {
         OSA_ERROR("Failed to get drvdata for device\n");
         return -ENOMEM;
@@ -224,7 +224,7 @@ void pdm_device_cleanup(struct pdm_device *pdmdev)
         return;
     }
 
-    pdmdev_priv = pdm_device_get_drvdata(pdmdev);
+    pdmdev_priv = pdm_device_get_private_data(pdmdev);
     if (!pdmdev_priv) {
         OSA_ERROR("Failed to get drvdata for device\n");
         return;
@@ -265,7 +265,7 @@ struct pdm_device *pdm_device_alloc(struct device *dev, unsigned int data_size)
 
     dev_set_name(&pdmdev->dev, "pdmdev%u", index);
     if (data_size) {
-        pdm_device_set_drvdata(pdmdev, (void *)(pdmdev + pdmdev_size));
+        pdm_device_set_private_data(pdmdev, (void *)(pdmdev + pdmdev_size));
     }
 
     return pdmdev;

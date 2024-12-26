@@ -27,7 +27,7 @@ static int pdm_led_gpio_set_state(struct pdm_client *client, int state)
         return -EINVAL;
     }
 
-    pdmdev_priv = pdm_device_get_drvdata(client->pdmdev);
+    pdmdev_priv = pdm_device_get_private_data(client->pdmdev);
     if (!pdmdev_priv) {
         OSA_ERROR("Get PDM Device drvdata Failed\n");
         return -ENOMEM;
