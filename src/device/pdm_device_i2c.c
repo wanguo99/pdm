@@ -142,7 +142,7 @@ MODULE_DEVICE_TABLE(i2c, pdm_device_i2c_id);
  * Defines the supported DEVICE_TREE compatibility strings.
  */
 static const struct of_device_id pdm_device_i2c_of_match[] = {
-    { .compatible = "pdm-device-i2c" },
+    { .compatible = "pdm,device-i2c" },
     { }
 };
 MODULE_DEVICE_TABLE(of, pdm_device_i2c_of_match);
@@ -153,14 +153,14 @@ MODULE_DEVICE_TABLE(of, pdm_device_i2c_of_match);
  * Defines the basic information and operation functions of the I2C driver.
  */
 static struct i2c_driver pdm_device_i2c_driver = {
+    .probe = pdm_device_i2c_probe,
+    .remove = pdm_device_i2c_remove,
+    .id_table = pdm_device_i2c_id,
     .driver = {
         .name = "pdm-device-i2c",
         .owner = THIS_MODULE,
         .of_match_table = pdm_device_i2c_of_match,
     },
-    .probe = pdm_device_i2c_probe,
-    .remove = pdm_device_i2c_remove,
-    .id_table = pdm_device_i2c_id,
 };
 
 /**

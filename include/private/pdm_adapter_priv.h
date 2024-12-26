@@ -33,4 +33,20 @@ int pdm_led_driver_init(void);
  */
 void pdm_led_driver_exit(void);
 
+/**
+ * @brief Initializes the EEPROM PDM adapter driver.
+ *
+ * Allocates and registers the adapter and driver.
+ *
+ * @return Returns 0 on success; negative error code on failure.
+ */
+int pdm_eeprom_driver_init(void);
+
+/**
+ * @brief Exits the EEPROM PDM adapter driver.
+ *
+ * Unregisters the driver and adapter, releasing related resources.
+ */
+void pdm_eeprom_driver_exit(void);
+
 #endif /* _PDM_ADAPTER_PRIV_H_ */

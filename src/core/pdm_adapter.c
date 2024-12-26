@@ -18,6 +18,13 @@ static struct pdm_component pdm_adapter_drivers[] = {
         .init = pdm_led_driver_init,
         .exit = pdm_led_driver_exit,
     },
+    {
+        .name = "EEPROM Adapter",
+        .enable = true,
+        .ignore_failures = true,
+        .init = pdm_eeprom_driver_init,
+        .exit = pdm_eeprom_driver_exit,
+    },
     { }
 };
 

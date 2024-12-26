@@ -92,10 +92,21 @@ static void pdm_device_spi_remove(struct spi_device *spi) {
  * Defines the supported SPI device IDs.
  */
 static const struct spi_device_id pdm_device_spi_ids[] = {
-    { .name = "pdm-device-spi" },
+    { .name = "pdm,device-spi" },
     { }
 };
 MODULE_DEVICE_TABLE(spi, pdm_device_spi_ids);
+
+/**
+ * @brief DEVICE_TREE match table.
+ *
+ * Defines the supported DEVICE_TREE compatibility strings.
+ */
+static const struct of_device_id pdm_device_spi_of_match[] = {
+    { .compatible = "pdm,device-spi" },
+    { }
+};
+MODULE_DEVICE_TABLE(of, pdm_device_spi_of_match);
 
 /**
  * @brief SPI driver structure.
@@ -105,10 +116,11 @@ MODULE_DEVICE_TABLE(spi, pdm_device_spi_ids);
 static struct spi_driver pdm_device_spi_driver = {
     .probe = pdm_device_spi_probe,
     .remove = pdm_device_spi_remove,
+    .id_table = pdm_device_spi_ids,
     .driver = {
         .name = "pdm-device-spi",
+        .of_match_table = pdm_device_spi_of_match,
     },
-    .id_table = pdm_device_spi_ids,
 };
 
 /**
