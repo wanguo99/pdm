@@ -21,6 +21,7 @@
 struct pdm_device {
     struct device dev;          /**< Device structure. */
     struct pdm_client *client;  /**< PDM Client handle. */
+    void *priv_data;            /**< PDM Device private data. */
 };
 
 
@@ -127,7 +128,10 @@ static inline void pdm_device_put(struct pdm_device *pdmdev)
  */
 static inline void *pdm_device_get_drvdata(struct pdm_device *pdmdev)
 {
-    return dev_get_drvdata(&pdmdev->dev);
+    if (!pdmdev) {
+        return NULL;
+    }
+    return pdmdev->priv_data;
 }
 
 /**
@@ -140,7 +144,7 @@ static inline void *pdm_device_get_drvdata(struct pdm_device *pdmdev)
  */
 static inline void pdm_device_set_drvdata(struct pdm_device *pdmdev, void *data)
 {
-    dev_set_drvdata(&pdmdev->dev, data);
+    pdmdev->priv_data = data;
 }
 
 /**
