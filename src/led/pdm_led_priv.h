@@ -49,47 +49,18 @@ struct pdm_led_operations {
  */
 struct pdm_led_priv {
     const struct pdm_led_operations *ops;  ///< Pointer to operation function callbacks
-    const struct pdm_led_match_data *match_data;
 };
 
 /**
- * @brief Initializes GPIO settings for a PDM LED device.
- *
- * This function initializes the GPIO settings for the specified PDM LED device and sets up the operation functions.
- *
- * @param client Pointer to the PDM client structure representing the LED device.
- * @return Returns 0 on success; negative error code on failure.
+ * @brief Match data structure for initializing GPIO type LED devices.
  */
-int pdm_led_gpio_setup(struct pdm_client *client);
+extern const struct pdm_client_match_data pdm_led_gpio_match_data;
 
 /**
- * @brief Cleans up GPIO settings for a PDM LED device.
- *
- * This function cleans up resources associated with GPIO-controlled LED devices.
- *
- * @param client Pointer to the PDM client structure representing the LED device.
- * @return Returns 0 on success; negative error code on failure.
+ * @brief Match data structure for initializing PWM type LED devices.
  */
-void pdm_led_gpio_cleanup(struct pdm_client *client);
+extern const struct pdm_client_match_data pdm_led_pwm_match_data;
 
-/**
- * @brief Initializes PWM settings for a PDM LED device.
- *
- * This function initializes the PWM settings for the specified PDM LED device and sets up the operation functions.
- *
- * @param client Pointer to the PDM client structure.
- * @return Returns 0 on success; negative error code on failure.
- */
-int pdm_led_pwm_setup(struct pdm_client *client);
 
-/**
- * @brief Cleans up PWM settings for a PDM LED device.
- *
- * This function cleans up resources associated with PWM-controlled LED devices.
- *
- * @param client Pointer to the PDM client structure representing the LED device.
- * @return Returns 0 on success; negative error code on failure.
- */
-void pdm_led_pwm_cleanup(struct pdm_client *client);
 
 #endif /* _PDM_LED_PRIV_H_ */

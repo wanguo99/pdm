@@ -41,9 +41,14 @@ static const struct pdm_led_operations pdm_device_led_ops_pwm = {
  * @param client Pointer to the PDM client structure.
  * @return Returns 0 on success; negative error code on failure.
  */
-int pdm_led_pwm_setup(struct pdm_client *client)
+static int pdm_led_pwm_setup(struct pdm_client *client)
 {
     struct pdm_led_priv *led_priv;
+    struct device_node *np;
+    unsigned int default_level;
+    struct pwm_device *pwmdev;
+    int status;
+
     if (!client) {
         OSA_ERROR("Invalid client\n");
     }
@@ -56,31 +61,7 @@ int pdm_led_pwm_setup(struct pdm_client *client)
 
     led_priv->ops = &pdm_device_led_ops_pwm;
 
-    OSA_DEBUG("PWM LED Setup: %s\n", dev_name(&client->dev));
-    return 0;
-}
-
-#if 0
-static int pdm_device_pwm_setup(struct pdm_device *pdmdev)
-{
-    struct pdm_device_priv *pdmdev_priv;
-    struct device_node *np;
-    unsigned int default_level;
-    struct pwm_device *pwmdev;
-    int status;
-
-    if (!pdmdev) {
-        OSA_ERROR("Invalid pdmdev\n");
-        return -EINVAL;
-    }
-
-    pdmdev_priv = pdm_device_get_private_data(pdmdev);
-    if (!pdmdev_priv) {
-        OSA_ERROR("Get PDM Device DrvData Failed\n");
-        return -ENOMEM;
-    }
-
-    np = pdm_device_get_of_node(pdmdev);
+    np = pdm_client_get_of_node(client);
     if (!np) {
         OSA_ERROR("No DT node found\n");
         return -EINVAL;
@@ -92,28 +73,31 @@ static int pdm_device_pwm_setup(struct pdm_device *pdmdev)
         default_level = 0;
     }
 
-    pwmdev = pwm_get(pdmdev->dev.parent, NULL);
+    pwmdev = pwm_get(client->pdmdev->dev.parent, NULL);
     if (IS_ERR(pwmdev)) {
         OSA_ERROR("Failed to get PWM\n");
         return PTR_ERR(pwmdev);
     }
 
-    pdmdev_priv->hardware.pwm.pwmdev = pwmdev;
+    client->hardware.pwm.pwmdev = pwmdev;
+
+    OSA_DEBUG("PWM LED Setup: %s\n", dev_name(&client->dev));
+
     return 0;
 
 }
 
-static void pdm_device_pwm_cleanup(struct pdm_device *pdmdev)
+static void pdm_led_pwm_cleanup(struct pdm_client *client)
 {
-    struct pdm_device_priv *pdmdev_priv;
-
-    if (!pdmdev) {
-        return;
-    }
-
-    pdmdev_priv = pdm_device_get_private_data(pdmdev);
-    if (pdmdev_priv && !IS_ERR_OR_NULL(pdmdev_priv->hardware.pwm.pwmdev)) {
-        pwm_put(pdmdev_priv->hardware.pwm.pwmdev);
+    if (client && !IS_ERR_OR_NULL(client->hardware.pwm.pwmdev)) {
+        pwm_put(client->hardware.pwm.pwmdev);
     }
 }
-#endif
+
+/**
+ * @brief Match data structure for initializing PWM type LED devices.
+ */
+const struct pdm_client_match_data pdm_led_pwm_match_data = {
+    .setup = pdm_led_pwm_setup,
+    .cleanup = pdm_led_pwm_cleanup,
+};

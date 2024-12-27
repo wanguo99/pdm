@@ -41,7 +41,7 @@ static int pdm_led_gpio_set_state(struct pdm_client *client, int state)
  *
  * This structure defines the operation functions for a PDM LED device using GPIO.
  */
-static const struct pdm_led_operations pdm_device_led_ops_gpio = {
+static const struct pdm_led_operations pdm_led_ops_gpio = {
     .set_state = pdm_led_gpio_set_state,
 };
 
@@ -53,7 +53,7 @@ static const struct pdm_led_operations pdm_device_led_ops_gpio = {
  * @param client Pointer to the PDM client structure.
  * @return Returns 0 on success; negative error code on failure.
  */
-int pdm_led_gpio_setup(struct pdm_client *client)
+static int pdm_led_gpio_setup(struct pdm_client *client)
 {
     struct pdm_led_priv *led_priv;
     struct device_node *np;
@@ -72,7 +72,7 @@ int pdm_led_gpio_setup(struct pdm_client *client)
         return -ENOMEM;
     }
 
-    led_priv->ops = &pdm_device_led_ops_gpio;
+    led_priv->ops = &pdm_led_ops_gpio;
 
     np = pdm_client_get_of_node(client);
     if (!np) {
@@ -109,10 +109,20 @@ int pdm_led_gpio_setup(struct pdm_client *client)
     return 0;
 }
 
-void pdm_led_gpio_cleanup(struct pdm_client *client)
+static void pdm_led_gpio_cleanup(struct pdm_client *client)
 {
     if (client && !IS_ERR_OR_NULL(client->hardware.gpio.gpiod)) {
+        OSA_DEBUG("GPIO LED Cleanup: %s\n", dev_name(&client->dev));
         gpiod_put(client->hardware.gpio.gpiod);
     }
 }
+
+
+/**
+ * @brief Match data structure for initializing GPIO type LED devices.
+ */
+const struct pdm_client_match_data pdm_led_gpio_match_data = {
+    .setup = pdm_led_gpio_setup,
+    .cleanup = pdm_led_gpio_cleanup,
+};
 

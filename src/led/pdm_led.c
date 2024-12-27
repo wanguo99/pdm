@@ -451,22 +451,6 @@ static void pdm_led_device_remove(struct pdm_device *pdmdev)
 }
 
 /**
- * @brief Match data structure for initializing GPIO type LED devices.
- */
-static const struct pdm_client_match_data pdm_led_gpio_match_data = {
-    .setup = pdm_led_gpio_setup,
-    .cleanup = NULL,
-};
-
-/**
- * @brief Match data structure for initializing PWM type LED devices.
- */
-static const struct pdm_client_match_data pdm_led_pwm_match_data = {
-    .setup = pdm_led_pwm_setup,
-    .cleanup = NULL,
-};
-
-/**
  * @brief Device tree match table.
  *
  * Defines the supported device tree compatible properties.
