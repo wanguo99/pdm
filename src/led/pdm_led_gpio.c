@@ -103,9 +103,7 @@ static int pdm_led_gpio_setup(struct pdm_client *client)
     }
 
     client->hardware.gpio.gpiod = gpiod;
-
     OSA_DEBUG("GPIO LED Setup: %s\n", dev_name(&client->dev));
-
     return 0;
 }
 

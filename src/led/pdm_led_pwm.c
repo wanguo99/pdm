@@ -80,9 +80,7 @@ static int pdm_led_pwm_setup(struct pdm_client *client)
     }
 
     client->hardware.pwm.pwmdev = pwmdev;
-
     OSA_DEBUG("PWM LED Setup: %s\n", dev_name(&client->dev));
-
     return 0;
 
 }

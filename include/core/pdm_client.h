@@ -89,16 +89,16 @@ union pdm_client_hardware {
  * which is a device that interacts with a PDM (Pulse Density Modulation) adapter.
  */
 struct pdm_client {
+    int index;                                  /**< Client ID allocated by the adapter */
+    bool force_dts_id;                          /**< Flag indicating whether to force ID from Device Tree Source (DTS) */
     struct pdm_adapter *adapter;                /**< Pointer to the owning PDM Adapter */
     struct pdm_device *pdmdev;                  /**< Pointer to the PDM Device */
-    bool force_dts_id;                          /**< Flag indicating whether to force ID from Device Tree Source (DTS) */
-    int index;                                  /**< Client ID allocated by the adapter */
     struct device dev;                          /**< Kernel device structure, holds device-related info */
     struct cdev cdev;                           /**< Character device structure for device operations */
     struct file_operations fops;                /**< File operations structure, defining operations for this device */
     struct list_head entry;                     /**< List node for linking devices in a linked list */
-    struct regmap *map;
-    union pdm_client_hardware hardware;
+    struct regmap *map;                         /**< PDM Client regmap handle. */
+    union pdm_client_hardware hardware;         /**< PDM Client hardware information. */
     void *priv_data;                            /**< PDM Client private data. */
 };
 
