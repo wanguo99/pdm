@@ -399,46 +399,6 @@ static ssize_t pdm_led_write(struct file *filp, const char __user *buf, size_t c
 }
 
 /**
- * @brief Initializes the LED client using match data.
- *
- * @param client Pointer to the PDM client structure.
- * @return Returns 0 on success; negative error code on failure.
- */
-static int pdm_led_match_setup(struct pdm_client *client)
-{
-    struct pdm_led_priv *led_priv;
-    const void *match_data;
-    int status;
-
-    if (!client) {
-        return -EINVAL;
-    }
-
-    led_priv = pdm_client_get_private_data(client);
-    if (!led_priv) {
-        OSA_ERROR("LED Client get private data is NULL\n");
-        return -ENOMEM;
-    }
-
-    match_data = pdm_client_get_match_data(client);
-    if (!match_data) {
-        OSA_ERROR("Failed to get match data for device\n");
-        return -ENODEV;
-    }
-
-    led_priv->match_data = match_data;
-    if (led_priv->match_data->setup) {
-        status = led_priv->match_data->setup(client);
-        if (status) {
-            OSA_ERROR("LED Client Setup Failed, status=%d\n", status);
-            return status;
-        }
-    }
-
-    return 0;
-}
-
-/**
  * @brief Probes the LED PDM device.
  *
  * This function is called when a PDM device is detected and adds the device to the main device.
@@ -463,7 +423,7 @@ static int pdm_led_device_probe(struct pdm_device *pdmdev)
         return status;
     }
 
-    status = pdm_led_match_setup(client);
+    status = pdm_client_setup(client);
     if (status) {
         OSA_ERROR("LED Client Setup Failed, status=%d\n", status);
         return status;
@@ -486,14 +446,14 @@ static int pdm_led_device_probe(struct pdm_device *pdmdev)
 static void pdm_led_device_remove(struct pdm_device *pdmdev)
 {
     if (pdmdev && pdmdev->client) {
-        pdm_led_match_setup(pdmdev->client);
+        pdm_client_cleanup(pdmdev->client);
     }
 }
 
 /**
  * @brief Match data structure for initializing GPIO type LED devices.
  */
-static const struct pdm_led_match_data pdm_led_gpio_match_data = {
+static const struct pdm_client_match_data pdm_led_gpio_match_data = {
     .setup = pdm_led_gpio_setup,
     .cleanup = NULL,
 };
@@ -501,7 +461,7 @@ static const struct pdm_led_match_data pdm_led_gpio_match_data = {
 /**
  * @brief Match data structure for initializing PWM type LED devices.
  */
-static const struct pdm_led_match_data pdm_led_pwm_match_data = {
+static const struct pdm_client_match_data pdm_led_pwm_match_data = {
     .setup = pdm_led_pwm_setup,
     .cleanup = NULL,
 };

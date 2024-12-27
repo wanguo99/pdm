@@ -27,18 +27,6 @@ enum pdm_led_command {
 };
 
 /**
- * @struct pdm_led_match_data
- * @brief Match data structure for initializing specific types of LED devices.
- *
- * This structure contains setup and cleanup function pointers for initializing
- * and cleaning up specific types of LED devices.
- */
-struct pdm_led_match_data {
-    int (*setup)(struct pdm_client *client);
-    void (*cleanup)(struct pdm_client *client);
-};
-
-/**
  * @struct pdm_led_operations
  * @brief PDM LED Device Operations Structure
  *
@@ -62,7 +50,6 @@ struct pdm_led_operations {
 struct pdm_led_priv {
     const struct pdm_led_operations *ops;  ///< Pointer to operation function callbacks
     const struct pdm_led_match_data *match_data;
-    void *private_data;
 };
 
 /**
@@ -83,7 +70,7 @@ int pdm_led_gpio_setup(struct pdm_client *client);
  * @param client Pointer to the PDM client structure representing the LED device.
  * @return Returns 0 on success; negative error code on failure.
  */
-int pdm_led_gpio_cleanup(struct pdm_client *client);
+void pdm_led_gpio_cleanup(struct pdm_client *client);
 
 /**
  * @brief Initializes PWM settings for a PDM LED device.
@@ -103,6 +90,6 @@ int pdm_led_pwm_setup(struct pdm_client *client);
  * @param client Pointer to the PDM client structure representing the LED device.
  * @return Returns 0 on success; negative error code on failure.
  */
-int pdm_led_pwm_cleanup(struct pdm_client *client);
+void pdm_led_pwm_cleanup(struct pdm_client *client);
 
 #endif /* _PDM_LED_PRIV_H_ */

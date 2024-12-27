@@ -400,6 +400,71 @@ const void *pdm_client_get_match_data(struct pdm_client *client)
 }
 
 /**
+ * @brief Retrieves the device tree node for a PDM device's parent device.
+ *
+ * This function retrieves the device tree node associated with the parent device of the given PDM device.
+ * It can be used to access properties or subnodes defined in the device tree for the parent device.
+ *
+ * @param pdmdev Pointer to the PDM device structure.
+ * @return Pointer to the device_node structure if found; NULL otherwise.
+ */
+struct device_node *pdm_client_get_of_node(struct pdm_client *client)
+{
+    if (!client || !client->pdmdev || !client->pdmdev->dev.parent) {
+        return NULL;
+    }
+    return dev_of_node(client->pdmdev->dev.parent);
+}
+
+/**
+ * @brief Setup a PDM device.
+ *
+ * @param pdmdev Pointer to the PDM device structure.
+ * @return 0 on success, negative error code on failure.
+ */
+int pdm_client_setup(struct pdm_client *client)
+{
+    const struct pdm_client_match_data *match_data;
+    int status;
+
+    match_data = pdm_client_get_match_data(client);
+    if (!match_data) {
+        OSA_DEBUG("Failed to get match data for device: %s\n", dev_name(&client->dev));
+        return 0;
+    }
+
+    if (match_data->setup) {
+        status = match_data->setup(client);
+        if (status) {
+            OSA_ERROR("PDM Device Setup Failed, status=%d\n", status);
+            return status;
+        }
+    }
+
+    return status;
+}
+
+/**
+ * @brief Cleanup a PDM device.
+ *
+ * @param pdmdev Pointer to the PDM device structure.
+ */
+void pdm_client_cleanup(struct pdm_client *client)
+{
+    const struct pdm_client_match_data *match_data;
+
+    match_data = pdm_client_get_match_data(client);
+    if (!match_data) {
+        OSA_ERROR("Failed to get match data for device\n");
+        return;
+    }
+
+    if (match_data->cleanup) {
+        match_data->cleanup(client);
+    }
+}
+
+/**
  * @brief Initializes the PDM Client module.
  *
  * This function initializes the PDM Client module by registering necessary drivers and setting initial states.

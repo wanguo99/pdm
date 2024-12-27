@@ -14,17 +14,9 @@
  */
 static int pdm_led_pwm_set_state(struct pdm_client *client, int state)
 {
-    struct pdm_device_priv *pdmdev_priv;
-
     if (!client || !client->pdmdev) {
         OSA_ERROR("Invalid client\n");
         return -EINVAL;
-    }
-
-    pdmdev_priv = pdm_device_get_private_data(client->pdmdev);
-    if (!pdmdev_priv) {
-        OSA_ERROR("Get PDM Device drvdata Failed\n");
-        return -ENOMEM;
     }
 
     OSA_INFO("PWM PDM Led: Set %s state to %d\n", dev_name(&client->dev), state);
@@ -67,3 +59,61 @@ int pdm_led_pwm_setup(struct pdm_client *client)
     OSA_DEBUG("PWM LED Setup: %s\n", dev_name(&client->dev));
     return 0;
 }
+
+#if 0
+static int pdm_device_pwm_setup(struct pdm_device *pdmdev)
+{
+    struct pdm_device_priv *pdmdev_priv;
+    struct device_node *np;
+    unsigned int default_level;
+    struct pwm_device *pwmdev;
+    int status;
+
+    if (!pdmdev) {
+        OSA_ERROR("Invalid pdmdev\n");
+        return -EINVAL;
+    }
+
+    pdmdev_priv = pdm_device_get_private_data(pdmdev);
+    if (!pdmdev_priv) {
+        OSA_ERROR("Get PDM Device DrvData Failed\n");
+        return -ENOMEM;
+    }
+
+    np = pdm_device_get_of_node(pdmdev);
+    if (!np) {
+        OSA_ERROR("No DT node found\n");
+        return -EINVAL;
+    }
+
+    status = of_property_read_u32(np, "default-level", &default_level);
+    if (status) {
+        OSA_INFO("No default-state property found, using defaults as off\n");
+        default_level = 0;
+    }
+
+    pwmdev = pwm_get(pdmdev->dev.parent, NULL);
+    if (IS_ERR(pwmdev)) {
+        OSA_ERROR("Failed to get PWM\n");
+        return PTR_ERR(pwmdev);
+    }
+
+    pdmdev_priv->hardware.pwm.pwmdev = pwmdev;
+    return 0;
+
+}
+
+static void pdm_device_pwm_cleanup(struct pdm_device *pdmdev)
+{
+    struct pdm_device_priv *pdmdev_priv;
+
+    if (!pdmdev) {
+        return;
+    }
+
+    pdmdev_priv = pdm_device_get_private_data(pdmdev);
+    if (pdmdev_priv && !IS_ERR_OR_NULL(pdmdev_priv->hardware.pwm.pwmdev)) {
+        pwm_put(pdmdev_priv->hardware.pwm.pwmdev);
+    }
+}
+#endif

@@ -15,7 +15,6 @@
  */
 static int pdm_led_gpio_set_state(struct pdm_client *client, int state)
 {
-    struct pdm_device_priv *pdmdev_priv;
     struct gpio_desc *gpiod;
     bool is_active_low;
 
@@ -24,13 +23,7 @@ static int pdm_led_gpio_set_state(struct pdm_client *client, int state)
         return -EINVAL;
     }
 
-    pdmdev_priv = pdm_device_get_private_data(client->pdmdev);
-    if (!pdmdev_priv) {
-        OSA_ERROR("Get PDM Device drvdata Failed\n");
-        return -ENOMEM;
-    }
-
-    gpiod = pdmdev_priv->hardware.gpio.gpiod;
+    gpiod = client->hardware.gpio.gpiod;
     is_active_low = gpiod_is_active_low(gpiod);
     if (is_active_low) {
         gpiod_set_value_cansleep(gpiod, !!state);
@@ -63,6 +56,12 @@ static const struct pdm_led_operations pdm_device_led_ops_gpio = {
 int pdm_led_gpio_setup(struct pdm_client *client)
 {
     struct pdm_led_priv *led_priv;
+    struct device_node *np;
+    struct gpio_desc *gpiod;
+    const char *default_state;
+    bool is_active_low;
+    int status;
+
     if (!client) {
         OSA_ERROR("Invalid client\n");
     }
@@ -75,6 +74,45 @@ int pdm_led_gpio_setup(struct pdm_client *client)
 
     led_priv->ops = &pdm_device_led_ops_gpio;
 
+    np = pdm_client_get_of_node(client);
+    if (!np) {
+        OSA_ERROR("No DT node found\n");
+        return -EINVAL;
+    }
+
+    status = of_property_read_string(np, "default-state", &default_state);
+    if (status) {
+        OSA_INFO("No default-state property found, using defaults as off\n");
+        default_state = "off";
+    }
+
+    gpiod = gpiod_get_index(client->pdmdev->dev.parent, NULL, 0, GPIOD_OUT_LOW);
+    if (IS_ERR(gpiod)) {
+        OSA_ERROR("Failed to get GPIO\n");
+        return PTR_ERR(gpiod);
+    }
+
+    is_active_low = gpiod_is_active_low(gpiod);
+    if (!strcmp(default_state, "on")) {
+        gpiod_set_value_cansleep(gpiod, is_active_low ? 1 : 0);
+    } else if (!strcmp(default_state, "off")) {
+        gpiod_set_value_cansleep(gpiod, is_active_low ? 0 : 1);
+    } else {
+        OSA_INFO("Unknown default-state: %s, using off\n", default_state);
+        gpiod_set_value_cansleep(gpiod, is_active_low ? 0 : 1);
+    }
+
+    client->hardware.gpio.gpiod = gpiod;
+
     OSA_DEBUG("GPIO LED Setup: %s\n", dev_name(&client->dev));
+
     return 0;
 }
+
+void pdm_led_gpio_cleanup(struct pdm_client *client)
+{
+    if (client && !IS_ERR_OR_NULL(client->hardware.gpio.gpiod)) {
+        gpiod_put(client->hardware.gpio.gpiod);
+    }
+}
+

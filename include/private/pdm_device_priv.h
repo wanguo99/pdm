@@ -1,19 +1,6 @@
 #ifndef _PDM_DEVICE_PRIV_H_
 #define _PDM_DEVICE_PRIV_H_
 
-
-/**
- * @struct pdm_device_match_data
- * @brief Match data structure for initializing specific types of PDM Devices.
- *
- * This structure contains setup and cleanup function pointers for initializing
- * and cleaning up specific types of PDM Devices.
- */
-struct pdm_device_match_data {
-    int (*setup)(struct pdm_device *client);
-    void (*cleanup)(struct pdm_device *client);
-};
-
 /**
  * @brief Initializes the PDM device drivers.
  *

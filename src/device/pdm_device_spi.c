@@ -15,7 +15,7 @@ static int pdm_device_spi_probe(struct spi_device *spi) {
     struct pdm_device *pdmdev;
     int status;
 
-    pdmdev = pdm_device_alloc(&spi->dev, sizeof(struct pdm_device_priv));
+    pdmdev = pdm_device_alloc(&spi->dev);
     if (IS_ERR(pdmdev)) {
         OSA_ERROR("Failed to allocate pdm_device\n");
         return PTR_ERR(pdmdev);
@@ -27,15 +27,8 @@ static int pdm_device_spi_probe(struct spi_device *spi) {
         goto err_pdmdev_free;
     }
 
-    status = pdm_device_setup(pdmdev);
-    if (status) {
-        OSA_ERROR("Failed to setup pdm device, status=%d\n", status);
-        goto err_pdmdev_unregister;
-    }
     return 0;
 
-err_pdmdev_unregister:
-    pdm_device_unregister(pdmdev);
 err_pdmdev_free:
     pdm_device_free(pdmdev);
     return status;
@@ -52,7 +45,6 @@ err_pdmdev_free:
 static int pdm_device_spi_real_remove(struct spi_device *spi) {
     struct pdm_device *pdmdev = pdm_bus_find_device_by_parent(&spi->dev);
     if (pdmdev) {
-        pdm_device_cleanup(pdmdev);
         pdm_device_unregister(pdmdev);
         pdm_device_free(pdmdev);
     }
@@ -97,40 +89,13 @@ static const struct spi_device_id pdm_device_spi_ids[] = {
 };
 MODULE_DEVICE_TABLE(spi, pdm_device_spi_ids);
 
-
-/**
- * @brief Initializes GPIO settings for a PDM device.
- *
- * This function initializes the GPIO settings for the specified PDM device and sets up the operation functions.
- *
- * @param client Pointer to the PDM client structure.
- * @return Returns 0 on success; negative error code on failure.
- */
-static int pdm_device_spi_setup(struct pdm_device *pdmdev)
-{
-    return 0;
-}
-
-static void pdm_device_spi_cleanup(struct pdm_device *pdmdev)
-{
-    return;
-}
-
-/**
- * @brief Match data structure for initializing GPIO type devices.
- */
-static const struct pdm_device_match_data pdm_device_spi_match_data = {
-    .setup = pdm_device_spi_setup,
-    .cleanup = pdm_device_spi_cleanup,
-};
-
 /**
  * @brief DEVICE_TREE match table.
  *
  * Defines the supported DEVICE_TREE compatibility strings.
  */
 static const struct of_device_id pdm_device_spi_of_match[] = {
-    { .compatible = "pdm,device-spi",   .data = &pdm_device_spi_match_data },
+    { .compatible = "pdm,device-spi" },
     { }
 };
 MODULE_DEVICE_TABLE(of, pdm_device_spi_of_match);

@@ -173,85 +173,19 @@ void pdm_device_drivers_unregister(void)
 }
 
 /**
- * @brief Setup a PDM device.
- *
- * @param pdmdev Pointer to the PDM device structure.
- * @return 0 on success, negative error code on failure.
- */
-int pdm_device_setup(struct pdm_device *pdmdev)
-{
-    const void *match_data;
-    struct pdm_device_priv *pdmdev_priv;
-    int status;
-
-    match_data = pdm_device_get_match_data(pdmdev);
-    if (!match_data) {
-        OSA_DEBUG("Failed to get match data for device: %s\n", dev_name(&pdmdev->dev));
-        return 0;
-    }
-
-    pdmdev_priv = pdm_device_get_private_data(pdmdev);
-    if (!pdmdev_priv) {
-        OSA_ERROR("Failed to get drvdata for device: %s\n", dev_name(&pdmdev->dev));
-        return -ENOMEM;
-    }
-
-    pdmdev_priv->match_data = match_data;
-    if (pdmdev_priv->match_data->setup) {
-        status = pdmdev_priv->match_data->setup(pdmdev);
-        if (status) {
-            OSA_ERROR("PDM Device Setup Failed, status=%d\n", status);
-            return status;
-        }
-    }
-
-    return status;
-}
-
-/**
- * @brief Cleanup a PDM device.
- *
- * @param pdmdev Pointer to the PDM device structure.
- */
-void pdm_device_cleanup(struct pdm_device *pdmdev)
-{
-    const void *match_data;
-    struct pdm_device_priv *pdmdev_priv;
-
-    match_data = pdm_device_get_match_data(pdmdev);
-    if (!match_data) {
-        OSA_ERROR("Failed to get match data for device\n");
-        return;
-    }
-
-    pdmdev_priv = pdm_device_get_private_data(pdmdev);
-    if (!pdmdev_priv) {
-        OSA_ERROR("Failed to get drvdata for device\n");
-        return;
-    }
-
-    pdmdev_priv->match_data = match_data;
-    if (pdmdev_priv->match_data->cleanup) {
-        pdmdev_priv->match_data->cleanup(pdmdev);
-    }
-}
-
-/**
  * @brief Allocates a new PDM device structure.
  *
  * @return Pointer to the allocated PDM device structure, or NULL on failure.
  */
-struct pdm_device *pdm_device_alloc(struct device *dev, unsigned int data_size)
+struct pdm_device *pdm_device_alloc(struct device *dev)
 {
     struct pdm_device *pdmdev;
-    unsigned int pdmdev_size = sizeof(struct pdm_device);
-    unsigned int total_size = ALIGN(pdmdev_size + data_size, 8);
 
     if (!dev) {
         return ERR_PTR(-EINVAL);
     }
 
-    pdmdev = kzalloc(total_size, GFP_KERNEL);
+    pdmdev = kzalloc(ALIGN(sizeof(struct pdm_device), 8), GFP_KERNEL);
     if (!pdmdev) {
         OSA_ERROR("Failed to allocate memory for PDM device\n");
         return ERR_PTR(-ENOMEM);
@@ -264,9 +198,6 @@ struct pdm_device *pdm_device_alloc(struct device *dev, unsigned int data_size)
 
     pdmdev->index = (unsigned int )atomic_inc_return(&pdm_device_no);
     dev_set_name(&pdmdev->dev, "pdmdev%u", pdmdev->index);
-    if (data_size) {
-        pdm_device_set_private_data(pdmdev, (void *)(pdmdev + pdmdev_size));
-    }
 
     return pdmdev;
 }
@@ -327,40 +258,6 @@ void pdm_device_unregister(struct pdm_device *pdmdev)
     if (pdmdev) {
         device_del(&pdmdev->dev);
     }
-}
-
-/**
- * @brief Retrieves the device tree node for a PDM device's parent device.
- *
- * This function retrieves the device tree node associated with the parent device of the given PDM device.
- * It can be used to access properties or subnodes defined in the device tree for the parent device.
- *
- * @param pdmdev Pointer to the PDM device structure.
- * @return Pointer to the device_node structure if found; NULL otherwise.
- */
-struct device_node *pdm_device_get_of_node(struct pdm_device *pdmdev)
-{
-    if (!pdmdev || !pdmdev->dev.parent) {
-        return NULL;
-    }
-    return dev_of_node(pdmdev->dev.parent);
-}
-
-/**
- * @brief Retrieves match data for a PDM device from the device tree.
- *
- * This function looks up the device tree to find matching data for the given PDM device,
- * which can be used for initialization or configuration.
- *
- * @param pdmdev Pointer to the PDM device structure.
- * @return Pointer to the match data if found; NULL otherwise.
- */
-const void *pdm_device_get_match_data(struct pdm_device *pdmdev)
-{
-    if (!pdmdev || !pdmdev->dev.parent) {
-        return NULL;
-    }
-    return of_device_get_match_data(pdmdev->dev.parent);
 }
 
 /**
