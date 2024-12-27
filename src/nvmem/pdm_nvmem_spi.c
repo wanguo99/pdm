@@ -5,15 +5,32 @@
 #include "pdm_nvmem_priv.h"
 
 
-static int pdm_nvmem_spi_read_reg(struct pdm_client *client, unsigned char addr, unsigned char *value)
+static int pdm_nvmem_regmap_spi_read_reg(struct pdm_client *client, unsigned int offset, void *val, size_t bytes)
 {
-    OSA_INFO("SPI PDM NVMEM Read: %s [0x%x]\n", dev_name(&client->dev), addr);
+	struct spi_transfer t[2];
+	struct spi_message  m;
+	unsigned char cmd = PDM_NVMEM_CMD_READ_REG;
+	char *buf = val;
+	int status;
+
+    spi_message_init(&m);
+    memset(t, 0, sizeof(t));
+
+    t[0].tx_buf = &cmd;
+    t[0].len = 1;
+    spi_message_add_tail(&t[0], &m);
+
+    t[1].rx_buf = buf;
+    t[1].len = 1;
+    spi_message_add_tail(&t[1], &m);
+
+    status = spi_sync(client->hardware.spi.spidev, &m);
+
     return 0;
 }
 
-static int pdm_nvmem_spi_write_reg(struct pdm_client *client, unsigned char addr, unsigned char value)
+static int pdm_nvmem_regmap_spi_write_reg(struct pdm_client *client, unsigned int offset, void *val, size_t bytes)
 {
-    OSA_INFO("SPI PDM NVMEM Write %s [0x%x] to 0x%x\n", dev_name(&client->dev), addr, value);
     return 0;
 }
 
@@ -23,15 +40,23 @@ static int pdm_nvmem_spi_write_reg(struct pdm_client *client, unsigned char addr
  *
  * This structure defines the operation functions for a PDM NVMEM device using SPI.
  */
-static const struct pdm_nvmem_operations pdm_device_nvmem_ops_spi = {
-    .read_reg = pdm_nvmem_spi_read_reg,
-    .write_reg = pdm_nvmem_spi_write_reg,
+static const struct pdm_nvmem_operations pdm_nvmem_ops_regmap_spi = {
+    .read_reg = pdm_nvmem_regmap_spi_read_reg,
+    .write_reg = pdm_nvmem_regmap_spi_write_reg,
 };
 
 static int pdm_nvmem_regmap_spi_init(struct pdm_client *client)
 {
+    struct pdm_nvmem_priv *nvmem_priv;
     struct regmap_config regmap_config;
     struct regmap *regmap;
+
+    nvmem_priv = pdm_client_get_private_data(client);
+    if (!nvmem_priv) {
+        OSA_ERROR("Get PDM Client DevData Failed\n");
+        return -ENOMEM;
+    }
+    nvmem_priv->ops = &pdm_nvmem_ops_regmap_spi;
 
     memset(&regmap_config, 0, sizeof(regmap_config));
     regmap_config.val_bits = 8;
@@ -56,20 +81,12 @@ static int pdm_nvmem_regmap_spi_init(struct pdm_client *client)
  */
 int pdm_nvmem_spi_setup(struct pdm_client *client)
 {
-    struct pdm_nvmem_priv *nvmem_priv;
     struct device_node *np;
     int status;
 
     if (!client) {
         OSA_ERROR("Invalid client\n");
     }
-
-    nvmem_priv = pdm_client_get_private_data(client);
-    if (!nvmem_priv) {
-        OSA_ERROR("Get PDM Client DevData Failed\n");
-        return -ENOMEM;
-    }
-    nvmem_priv->ops = &pdm_device_nvmem_ops_spi;
 
     np = pdm_client_get_of_node(client);
     if (!np) {

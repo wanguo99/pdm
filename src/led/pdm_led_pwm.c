@@ -36,7 +36,7 @@ static int pdm_led_pwm_get_brightness(struct pdm_client *client, int *brightness
  *
  * This structure defines the operation functions for a PDM LED device using PWM.
  */
-static const struct pdm_led_operations pdm_device_led_ops_pwm = {
+static const struct pdm_led_operations pdm_led_ops_pwm = {
     .set_brightness = pdm_led_pwm_set_brightness,
     .get_brightness = pdm_led_pwm_get_brightness,
 };
@@ -67,7 +67,7 @@ static int pdm_led_pwm_setup(struct pdm_client *client)
         OSA_ERROR("Get PDM Client DevData Failed\n");
         return -ENOMEM;
     }
-    led_priv->ops = &pdm_device_led_ops_pwm;
+    led_priv->ops = &pdm_led_ops_pwm;
 
     np = pdm_client_get_of_node(client);
     if (!np) {

@@ -12,7 +12,7 @@ static struct pdm_adapter *nvmem_adapter = NULL;
  * @param state State value (0 or 1).
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_nvmem_read_reg(struct pdm_client *client, unsigned char addr, unsigned char *value)
+static int pdm_nvmem_read_reg(struct pdm_client *client, unsigned int offset, void *val, size_t bytes)
 {
     struct pdm_nvmem_priv *nvmem_priv;
     int status = 0;
@@ -33,7 +33,7 @@ static int pdm_nvmem_read_reg(struct pdm_client *client, unsigned char addr, uns
         return -ENOTSUPP;
     }
 
-    status = nvmem_priv->ops->read_reg(client, addr, value);
+    status = nvmem_priv->ops->read_reg(client, offset, val, bytes);
     if (status) {
         OSA_ERROR("PDM NVMEM read_reg failed, status: %d\n", status);
         return status;
@@ -49,7 +49,7 @@ static int pdm_nvmem_read_reg(struct pdm_client *client, unsigned char addr, uns
  * @param state Pointer to store the current state.
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_nvmem_write_reg(struct pdm_client *client, unsigned char addr, unsigned char value)
+static int pdm_nvmem_write_reg(struct pdm_client *client, unsigned int offset, void *val, size_t bytes)
 {
     struct pdm_nvmem_priv *nvmem_priv;
     int status = 0;
@@ -70,7 +70,7 @@ static int pdm_nvmem_write_reg(struct pdm_client *client, unsigned char addr, un
         return -ENOTSUPP;
     }
 
-    status = nvmem_priv->ops->write_reg(client, addr, value);
+    status = nvmem_priv->ops->write_reg(client, offset, val, bytes);
     if (status) {
         OSA_ERROR("PDM NVMEM write_reg failed, status: %d\n", status);
         return status;
@@ -161,7 +161,7 @@ static ssize_t pdm_nvmem_write(struct file *filp, const char __user *buf, size_t
     char kernel_buf[64];
     ssize_t bytes_read;
     char buffer[32];
-    unsigned char addr = 0x0;
+    unsigned int offset = 0;
     unsigned char value = 0x0;
     int cmd;
 
@@ -185,7 +185,7 @@ static ssize_t pdm_nvmem_write(struct file *filp, const char __user *buf, size_t
     {
         case PDM_NVMEM_CMD_WRITE_REG:
         {
-            if (sscanf(kernel_buf, "%d 0x%hhx 0x%hhx", &cmd, &addr, &value) != 3) {
+            if (sscanf(kernel_buf, "%d 0x%x 0x%hhx", &cmd, &offset, &value) != 3) {
                 OSA_ERROR("Command %d requires one parameter.\n", cmd);
                 return -EINVAL;
             }
@@ -193,7 +193,7 @@ static ssize_t pdm_nvmem_write(struct file *filp, const char __user *buf, size_t
         }
         case PDM_NVMEM_CMD_READ_REG:
         {
-            if (sscanf(kernel_buf, "%d 0x%hhx", &cmd, &addr) != 2) {
+            if (sscanf(kernel_buf, "%d 0x%x", &cmd, &offset) != 2) {
                 OSA_ERROR("Command %d should not have parameters.\n", cmd);
                 return -EINVAL;
             }
@@ -210,7 +210,7 @@ static ssize_t pdm_nvmem_write(struct file *filp, const char __user *buf, size_t
     {
         case PDM_NVMEM_CMD_WRITE_REG:
         {
-            if (pdm_nvmem_write_reg(client, addr, value)) {
+            if (pdm_nvmem_write_reg(client, offset, &value, 1)) {
                 OSA_ERROR("pdm_nvmem_set_state failed\n");
                 return -EINVAL;
             }
@@ -218,7 +218,7 @@ static ssize_t pdm_nvmem_write(struct file *filp, const char __user *buf, size_t
         }
         case PDM_NVMEM_CMD_READ_REG:
         {
-            if (pdm_nvmem_read_reg(client, addr, &value)) {
+            if (pdm_nvmem_read_reg(client, offset, &value, 1)) {
                 OSA_ERROR("pdm_nvmem_get_state failed\n");
                 return -EINVAL;
             }

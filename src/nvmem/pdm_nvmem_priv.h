@@ -44,8 +44,8 @@ struct pdm_nvmem_match_data {
  * the NVMEM state (on/off).
  */
 struct pdm_nvmem_operations {
-    int (*read_reg)(struct pdm_client *client, unsigned char addr, unsigned char *value);
-    int (*write_reg)(struct pdm_client *client, unsigned char addr, unsigned char value);
+    int (*read_reg)(struct pdm_client *client, unsigned int offset, void *val, size_t bytes);
+    int (*write_reg)(struct pdm_client *client, unsigned int offset, void *val, size_t bytes);
 };
 
 /**
