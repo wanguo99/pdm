@@ -24,7 +24,8 @@ struct i2c_device_id {
  * @param id Pointer to the I2C device ID structure.
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_device_i2c_real_probe(struct i2c_client *client, const struct i2c_device_id *id) {
+static int pdm_device_i2c_real_probe(struct i2c_client *client, const struct i2c_device_id *id)
+{
     struct pdm_device *pdmdev;
     int status;
 
@@ -74,7 +75,8 @@ static void pdm_device_i2c_real_remove(struct i2c_client *client)
  * @param id Pointer to the I2C device ID structure.
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_device_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id) {
+static int pdm_device_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id)
+{
     return pdm_device_i2c_real_probe(client, id);
 }
 #else
@@ -86,7 +88,8 @@ static int pdm_device_i2c_probe(struct i2c_client *client, const struct i2c_devi
  * @param client Pointer to the I2C client structure.
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_device_i2c_probe(struct i2c_client *client) {
+static int pdm_device_i2c_probe(struct i2c_client *client)
+{
     return pdm_device_i2c_real_probe(client, NULL);
 }
 #endif
@@ -100,7 +103,8 @@ static int pdm_device_i2c_probe(struct i2c_client *client) {
  * @param client Pointer to the I2C client structure.
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_device_i2c_remove(struct i2c_client *client) {
+static int pdm_device_i2c_remove(struct i2c_client *client)
+{
     pdm_device_i2c_real_remove(client);
     return 0;
 }
@@ -112,7 +116,8 @@ static int pdm_device_i2c_remove(struct i2c_client *client) {
  *
  * @param client Pointer to the I2C client structure.
  */
-static void pdm_device_i2c_remove(struct i2c_client *client) {
+static void pdm_device_i2c_remove(struct i2c_client *client)
+{
     pdm_device_i2c_real_remove(client);
 }
 #endif
@@ -162,7 +167,8 @@ static struct i2c_driver pdm_device_i2c_driver = {
  *
  * @return Returns 0 on success; negative error code on failure.
  */
-int pdm_device_i2c_driver_init(void) {
+int pdm_device_i2c_driver_init(void)
+{
     return i2c_add_driver(&pdm_device_i2c_driver);
 }
 
@@ -171,7 +177,8 @@ int pdm_device_i2c_driver_init(void) {
  *
  * Unregisters the I2C driver from the system.
  */
-void pdm_device_i2c_driver_exit(void) {
+void pdm_device_i2c_driver_exit(void)
+{
     i2c_del_driver(&pdm_device_i2c_driver);
 }
 

@@ -187,9 +187,9 @@ struct pdm_device *pdm_device_alloc(struct device *dev)
     }
 
     index = ida_alloc(&pdm_device_ida, GFP_KERNEL);
-	if (index < 0) {
-		return ERR_PTR(index);
-	}
+    if (index < 0) {
+        return ERR_PTR(index);
+    }
 
     pdmdev = kzalloc(ALIGN(sizeof(struct pdm_device), 8), GFP_KERNEL);
     if (!pdmdev) {
@@ -237,8 +237,9 @@ int pdm_device_register(struct pdm_device *pdmdev)
 {
     int status;
 
-    if (pdm_device_verify(pdmdev))
+    if (pdm_device_verify(pdmdev)) {
         return -EINVAL;
+    }
 
     if (pdm_bus_find_device_by_parent(pdmdev->dev.parent)) {
         OSA_ERROR("Device with parent %s already exists: %s\n", dev_name(pdmdev->dev.parent), dev_name(&pdmdev->dev));

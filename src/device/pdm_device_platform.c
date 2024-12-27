@@ -14,7 +14,8 @@
  * @param pdev Pointer to the PLATFORM device structure.
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_device_platform_probe(struct platform_device *pdev) {
+static int pdm_device_platform_probe(struct platform_device *pdev)
+{
     struct pdm_device *pdmdev;
     int status;
 
@@ -45,7 +46,8 @@ err_pdmdev_free:
  * @param pdev Pointer to the PLATFORM device structure.
  * @return Returns 0 on success; negative error code on failure.
  */
-static void pdm_device_platform_real_remove(struct platform_device *pdev) {
+static void pdm_device_platform_real_remove(struct platform_device *pdev)
+{
     struct pdm_device *pdmdev = pdm_bus_find_device_by_parent(&pdev->dev);
     if (pdmdev) {
         pdm_device_unregister(pdmdev);
@@ -62,7 +64,8 @@ static void pdm_device_platform_real_remove(struct platform_device *pdev) {
  * @param pdev Pointer to the PLATFORM device structure.
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_device_platform_remove(struct platform_device *pdev) {
+static int pdm_device_platform_remove(struct platform_device *pdev)
+{
     pdm_device_platform_real_remove(pdev);
     return 0;
 }
@@ -74,7 +77,8 @@ static int pdm_device_platform_remove(struct platform_device *pdev) {
  *
  * @param pdev Pointer to the PLATFORM device structure.
  */
-static void pdm_device_platform_remove(struct platform_device *pdev) {
+static void pdm_device_platform_remove(struct platform_device *pdev)
+{
     pdm_device_platform_real_remove(pdev);
 }
 #endif
@@ -112,7 +116,8 @@ static struct platform_driver pdm_device_platform_driver = {
  *
  * @return Returns 0 on success; negative error code on failure.
  */
-int pdm_device_platform_driver_init(void) {
+int pdm_device_platform_driver_init(void)
+{
     return platform_driver_register(&pdm_device_platform_driver);
 }
 
@@ -121,7 +126,8 @@ int pdm_device_platform_driver_init(void) {
  *
  * Unregisters the PLATFORM driver from the system.
  */
-void pdm_device_platform_driver_exit(void) {
+void pdm_device_platform_driver_exit(void)
+{
     platform_driver_unregister(&pdm_device_platform_driver);
 }
 

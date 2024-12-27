@@ -43,7 +43,7 @@ struct pdm_device {
  */
 static inline struct pdm_device *pdm_device_get(struct pdm_device *pdmdev)
 {
-	return (pdmdev && get_device(&pdmdev->dev)) ? pdmdev : NULL;
+    return (pdmdev && get_device(&pdmdev->dev)) ? pdmdev : NULL;
 }
 
 /**
@@ -53,8 +53,9 @@ static inline struct pdm_device *pdm_device_get(struct pdm_device *pdmdev)
  */
 static inline void pdm_device_put(struct pdm_device *pdmdev)
 {
-	if (pdmdev)
-		put_device(&pdmdev->dev);
+    if (pdmdev) {
+        put_device(&pdmdev->dev);
+    }
 }
 
 /**

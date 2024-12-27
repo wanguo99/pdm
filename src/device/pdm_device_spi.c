@@ -11,7 +11,8 @@
  * @param spi Pointer to the SPI device structure.
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_device_spi_probe(struct spi_device *spi) {
+static int pdm_device_spi_probe(struct spi_device *spi)
+{
     struct pdm_device *pdmdev;
     int status;
 
@@ -42,7 +43,8 @@ err_pdmdev_free:
  * @param spi Pointer to the SPI device structure.
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_device_spi_real_remove(struct spi_device *spi) {
+static int pdm_device_spi_real_remove(struct spi_device *spi)
+{
     struct pdm_device *pdmdev = pdm_bus_find_device_by_parent(&spi->dev);
     if (pdmdev) {
         pdm_device_unregister(pdmdev);
@@ -60,7 +62,8 @@ static int pdm_device_spi_real_remove(struct spi_device *spi) {
  * @param spi Pointer to the SPI device structure.
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_device_spi_remove(struct spi_device *spi) {
+static int pdm_device_spi_remove(struct spi_device *spi)
+{
     return pdm_device_spi_real_remove(spi);
 }
 #else
@@ -71,7 +74,8 @@ static int pdm_device_spi_remove(struct spi_device *spi) {
  *
  * @param spi Pointer to the SPI device structure.
  */
-static void pdm_device_spi_remove(struct spi_device *spi) {
+static void pdm_device_spi_remove(struct spi_device *spi)
+{
     if (pdm_device_spi_real_remove(spi)) {
         OSA_ERROR("pdm_device_spi_real_remove failed\n");
     }
@@ -122,7 +126,8 @@ static struct spi_driver pdm_device_spi_driver = {
  *
  * @return Returns 0 on success; negative error code on failure.
  */
-int pdm_device_spi_driver_init(void) {
+int pdm_device_spi_driver_init(void)
+{
     return spi_register_driver(&pdm_device_spi_driver);
 }
 
@@ -131,7 +136,8 @@ int pdm_device_spi_driver_init(void) {
  *
  * Unregisters the PDM device SPI driver from the system.
  */
-void pdm_device_spi_driver_exit(void) {
+void pdm_device_spi_driver_exit(void)
+{
     spi_unregister_driver(&pdm_device_spi_driver);
 }
 

@@ -18,9 +18,9 @@ static int pdm_nvmem_spi_write_reg(struct pdm_client *client, unsigned char addr
 
 /**
  * @struct pdm_nvmem_operations
- * @brief PDM NVMEM device operations structure (GPIO version).
+ * @brief PDM NVMEM device operations structure (SPI version).
  *
- * This structure defines the operation functions for a PDM NVMEM device using GPIO.
+ * This structure defines the operation functions for a PDM NVMEM device using SPI.
  */
 static const struct pdm_nvmem_operations pdm_device_nvmem_ops_spi = {
     .read_reg = pdm_nvmem_spi_read_reg,
@@ -28,9 +28,9 @@ static const struct pdm_nvmem_operations pdm_device_nvmem_ops_spi = {
 };
 
 /**
- * @brief Initializes GPIO settings for a PDM device.
+ * @brief Initializes SPI settings for a PDM device.
  *
- * This function initializes the GPIO settings for the specified PDM device and sets up the operation functions.
+ * This function initializes the SPI settings for the specified PDM device and sets up the operation functions.
  *
  * @param client Pointer to the PDM client structure.
  * @return Returns 0 on success; negative error code on failure.
@@ -50,6 +50,6 @@ int pdm_nvmem_spi_setup(struct pdm_client *client)
 
     nvmem_priv->ops = &pdm_device_nvmem_ops_spi;
 
-    OSA_DEBUG("GPIO NVMEM Setup: %s\n", dev_name(&client->dev));
+    OSA_DEBUG("SPI NVMEM Setup: %s\n", dev_name(&client->dev));
     return 0;
 }
