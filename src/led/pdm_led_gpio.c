@@ -35,6 +35,30 @@ static int pdm_led_gpio_set_state(struct pdm_client *client, int state)
     return 0;
 }
 
+static int pdm_led_gpio_get_state(struct pdm_client *client, int *state)
+{
+    struct gpio_desc *gpiod;
+    bool is_active_low;
+    int gpio_level;
+
+    if (!client || !client->pdmdev) {
+        OSA_ERROR("Invalid client\n");
+        return -EINVAL;
+    }
+
+    gpiod = client->hardware.gpio.gpiod;
+    is_active_low = gpiod_is_active_low(gpiod);
+    gpio_level = gpiod_get_value_cansleep(gpiod);
+    if (is_active_low) {
+        *state = !!gpio_level;
+    } else {
+        *state = !gpio_level;
+    }
+
+    OSA_INFO("GPIO PDM Led: Get %s state: %d\n", dev_name(&client->dev), *state);
+    return 0;
+}
+
 /**
  * @struct pdm_led_operations
  * @brief PDM LED device operations structure (GPIO version).
@@ -43,6 +67,7 @@ static int pdm_led_gpio_set_state(struct pdm_client *client, int state)
  */
 static const struct pdm_led_operations pdm_led_ops_gpio = {
     .set_state = pdm_led_gpio_set_state,
+    .get_state = pdm_led_gpio_get_state,
 };
 
 /**

@@ -3,23 +3,30 @@
 #include "pdm.h"
 #include "pdm_led_priv.h"
 
-/**
- * @brief Sets the state of a PWM LED.
- *
- * This function sets the state (on/off) of the specified PDM device's PWM LED.
- *
- * @param client Pointer to the PDM client structure.
- * @param state LED state (0 for off, 1 for on).
- * @return Returns 0 on success; negative error code on failure.
- */
-static int pdm_led_pwm_set_state(struct pdm_client *client, int state)
+
+static int pdm_led_pwm_set_brightness(struct pdm_client *client, int brightness)
 {
     if (!client || !client->pdmdev) {
         OSA_ERROR("Invalid client\n");
         return -EINVAL;
     }
 
-    OSA_INFO("PWM PDM Led: Set %s state to %d\n", dev_name(&client->dev), state);
+    OSA_INFO("PWM PDM Led: Set %s brightness to %d\n", dev_name(&client->dev), brightness);
+    return 0;
+}
+
+static int pdm_led_pwm_get_brightness(struct pdm_client *client, int *brightness)
+{
+    int pwm_value = 0;
+
+    if (!client || !client->pdmdev) {
+        OSA_ERROR("Invalid client\n");
+        return -EINVAL;
+    }
+
+    *brightness = pwm_value;
+
+    OSA_INFO("PWM PDM Led: Get %s brightness: %d\n", dev_name(&client->dev), *brightness);
     return 0;
 }
 
@@ -30,7 +37,8 @@ static int pdm_led_pwm_set_state(struct pdm_client *client, int state)
  * This structure defines the operation functions for a PDM LED device using PWM.
  */
 static const struct pdm_led_operations pdm_device_led_ops_pwm = {
-    .set_state = pdm_led_pwm_set_state,
+    .set_brightness = pdm_led_pwm_set_brightness,
+    .get_brightness = pdm_led_pwm_get_brightness,
 };
 
 /**

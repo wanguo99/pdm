@@ -157,8 +157,7 @@ static int pdm_led_get_state(struct pdm_client *client, int *state)
         return status;
     }
 
-    OSA_INFO("Current state is %d\n", *state);
-
+    OSA_INFO("Current state is %s\n", *state ? "ON" : "OFF");
     return 0;
 }
 
