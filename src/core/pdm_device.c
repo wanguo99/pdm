@@ -6,6 +6,9 @@
 #include "pdm_component.h"
 #include "pdm_device_priv.h"
 
+
+static struct ida pdm_device_ida;
+
 /**
  * @brief List to store all registered PDM device drivers.
  */
@@ -40,9 +43,6 @@ static struct pdm_component pdm_device_drivers[] = {
     },
     { }
 };
-
-
-static atomic_t pdm_device_no = ATOMIC_INIT(-1);
 
 /**
  * @brief Validates a PDM device.
@@ -180,10 +180,16 @@ static void pdm_device_drivers_unregister(void)
 struct pdm_device *pdm_device_alloc(struct device *dev)
 {
     struct pdm_device *pdmdev;
+    int index;
 
     if (!dev) {
         return ERR_PTR(-EINVAL);
     }
+
+    index = ida_alloc(&pdm_device_ida, GFP_KERNEL);
+	if (index < 0) {
+		return ERR_PTR(index);
+	}
 
     pdmdev = kzalloc(ALIGN(sizeof(struct pdm_device), 8), GFP_KERNEL);
     if (!pdmdev) {
@@ -191,12 +197,13 @@ struct pdm_device *pdm_device_alloc(struct device *dev)
         return ERR_PTR(-ENOMEM);
     }
 
+    pdmdev->index = index;
+
     pdmdev->dev.parent = dev;
     pdmdev->dev.bus = &pdm_bus_type;
     pdmdev->dev.type = &pdm_device_type;
     device_initialize(&pdmdev->dev);
 
-    pdmdev->index = (unsigned int )atomic_inc_return(&pdm_device_no);
     dev_set_name(&pdmdev->dev, "pdmdev%u", pdmdev->index);
 
     return pdmdev;
@@ -212,6 +219,7 @@ struct pdm_device *pdm_device_alloc(struct device *dev)
 void pdm_device_free(struct pdm_device *pdmdev)
 {
     if (pdmdev) {
+        ida_free(&pdm_device_ida, pdmdev->index);
         pdm_device_put(pdmdev);
     }
 }
@@ -271,6 +279,8 @@ int pdm_device_init(void)
 {
     int status;
 
+    ida_init(&pdm_device_ida);
+
     status = pdm_device_drivers_register();
     if (status < 0) {
         OSA_ERROR("Failed to register PDM Device Drivers, error: %d\n", status);
@@ -288,6 +298,8 @@ int pdm_device_init(void)
 void pdm_device_exit(void)
 {
     pdm_device_drivers_unregister();
+
+    ida_destroy(&pdm_device_ida);
 }
 
 MODULE_LICENSE("GPL");
