@@ -62,7 +62,7 @@ static int pdm_device_gpio_setup(struct pdm_device *pdmdev)
         gpiod_set_value_cansleep(gpiod, is_active_low ? 0 : 1);
     }
 
-    pdmdev_priv->hw_data.gpio.gpiod = gpiod;
+    pdmdev_priv->hardware.gpio.gpiod = gpiod;
     return 0;
 }
 
@@ -75,8 +75,8 @@ static void pdm_device_gpio_cleanup(struct pdm_device *pdmdev)
     }
 
     pdmdev_priv = pdm_device_get_private_data(pdmdev);
-    if (pdmdev_priv && !IS_ERR_OR_NULL(pdmdev_priv->hw_data.gpio.gpiod)) {
-        gpiod_put(pdmdev_priv->hw_data.gpio.gpiod);
+    if (pdmdev_priv && !IS_ERR_OR_NULL(pdmdev_priv->hardware.gpio.gpiod)) {
+        gpiod_put(pdmdev_priv->hardware.gpio.gpiod);
     }
 }
 
@@ -117,7 +117,7 @@ static int pdm_device_pwm_setup(struct pdm_device *pdmdev)
         return PTR_ERR(pwmdev);
     }
 
-    pdmdev_priv->hw_data.pwm.pwmdev = pwmdev;
+    pdmdev_priv->hardware.pwm.pwmdev = pwmdev;
     return 0;
 
 }
@@ -131,8 +131,8 @@ static void pdm_device_pwm_cleanup(struct pdm_device *pdmdev)
     }
 
     pdmdev_priv = pdm_device_get_private_data(pdmdev);
-    if (pdmdev_priv && !IS_ERR_OR_NULL(pdmdev_priv->hw_data.pwm.pwmdev)) {
-        pwm_put(pdmdev_priv->hw_data.pwm.pwmdev);
+    if (pdmdev_priv && !IS_ERR_OR_NULL(pdmdev_priv->hardware.pwm.pwmdev)) {
+        pwm_put(pdmdev_priv->hardware.pwm.pwmdev);
     }
 }
 

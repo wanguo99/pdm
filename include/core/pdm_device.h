@@ -30,9 +30,9 @@ struct pdm_device {
  * @struct pdm_device_gpio_data
  * @brief Data structure for GPIO-controlled PDM Devices.
  *
- * This structure holds the necessary data for controlling an LED via GPIO.
+ * This structure holds the necessary data for controlling an device via GPIO.
  */
-struct pdm_device_gpio_data {
+struct pdm_device_gpio {
     struct gpio_desc *gpiod;
 };
 
@@ -40,34 +40,58 @@ struct pdm_device_gpio_data {
  * @struct pdm_device_pwm_data
  * @brief Data structure for PWM-controlled PDM Devices.
  *
- * This structure holds the necessary data for controlling an LED via PWM.
+ * This structure holds the necessary data for controlling an device via PWM.
  */
-struct pdm_device_pwm_data {
+struct pdm_device_pwm {
     struct pwm_device *pwmdev;
 };
 
 /**
-* @union pdm_device_hw_data
- * @brief Union to hold hardware-specific data for different types of LED controls.
+ * @struct pdm_device_spi_data
+ * @brief Data structure for SPI-controlled PDM Devices.
  *
- * This union allows the same structure to accommodate different types of LED control
+ * This structure holds the necessary data for controlling an device via SPI.
+ */
+struct pdm_device_spi {
+    struct spi_device *spidev;
+    struct regmap *map;
+};
+
+/**
+ * @struct pdm_device_i2c_data
+ * @brief Data structure for I2C-controlled PDM Devices.
+ *
+ * This structure holds the necessary data for controlling an device via I2C.
+ */
+struct pdm_device_i2c {
+    struct i2c_client *client;
+    struct regmap *map;
+};
+
+/**
+* @union pdm_device_hw_data
+ * @brief Union to hold hardware-specific data for different types of device controls.
+ *
+ * This union allows the same structure to accommodate different types of device control
  * mechanisms (e.g., GPIO or PWM).
  */
-union pdm_device_hw_data {
-    struct pdm_device_gpio_data gpio;
-    struct pdm_device_pwm_data pwm;
+union pdm_hardware_device {
+    struct pdm_device_gpio  gpio;
+    struct pdm_device_pwm   pwm;
+    struct pdm_device_spi   spi;
+    struct pdm_device_i2c   i2c;
 };
 
 
 /**
  * @struct pdm_device_priv
- * @brief PDM LED Device Private Data Structure
+ * @brief PDM Device Private Data Structure
  *
  * This structure is used to store private data for a PDM Device, including pointers to
  * operation functions.
  */
 struct pdm_device_priv {
-    union pdm_device_hw_data hw_data;
+    union pdm_hardware_device hardware;
     const struct pdm_device_match_data *match_data;
 };
 

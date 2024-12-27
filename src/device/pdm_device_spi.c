@@ -97,13 +97,40 @@ static const struct spi_device_id pdm_device_spi_ids[] = {
 };
 MODULE_DEVICE_TABLE(spi, pdm_device_spi_ids);
 
+
+/**
+ * @brief Initializes GPIO settings for a PDM device.
+ *
+ * This function initializes the GPIO settings for the specified PDM device and sets up the operation functions.
+ *
+ * @param client Pointer to the PDM client structure.
+ * @return Returns 0 on success; negative error code on failure.
+ */
+static int pdm_device_spi_setup(struct pdm_device *pdmdev)
+{
+    return 0;
+}
+
+static void pdm_device_spi_cleanup(struct pdm_device *pdmdev)
+{
+    return;
+}
+
+/**
+ * @brief Match data structure for initializing GPIO type devices.
+ */
+static const struct pdm_device_match_data pdm_device_spi_match_data = {
+    .setup = pdm_device_spi_setup,
+    .cleanup = pdm_device_spi_cleanup,
+};
+
 /**
  * @brief DEVICE_TREE match table.
  *
  * Defines the supported DEVICE_TREE compatibility strings.
  */
 static const struct of_device_id pdm_device_spi_of_match[] = {
-    { .compatible = "pdm,device-spi" },
+    { .compatible = "pdm,device-spi",   .data = &pdm_device_spi_match_data },
     { }
 };
 MODULE_DEVICE_TABLE(of, pdm_device_spi_of_match);

@@ -30,7 +30,7 @@ static int pdm_led_gpio_set_state(struct pdm_client *client, int state)
         return -ENOMEM;
     }
 
-    gpiod = pdmdev_priv->hw_data.gpio.gpiod;
+    gpiod = pdmdev_priv->hardware.gpio.gpiod;
     is_active_low = gpiod_is_active_low(gpiod);
     if (is_active_low) {
         gpiod_set_value_cansleep(gpiod, !!state);
