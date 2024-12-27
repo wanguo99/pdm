@@ -1,4 +1,5 @@
 #include <linux/spi/spi.h>
+#include <linux/regmap.h>
 
 #include "pdm.h"
 #include "pdm_nvmem_priv.h"
@@ -27,6 +28,24 @@ static const struct pdm_nvmem_operations pdm_device_nvmem_ops_spi = {
     .write_reg = pdm_nvmem_spi_write_reg,
 };
 
+static int pdm_nvmem_regmap_spi_init(struct pdm_client *client)
+{
+    struct regmap_config regmap_config;
+    struct regmap *regmap;
+
+    memset(&regmap_config, 0, sizeof(regmap_config));
+    regmap_config.val_bits = 8;
+    regmap_config.reg_bits = 8;
+    regmap_config.disable_locking = true;
+
+    regmap = devm_regmap_init_spi(client->hardware.spi.spidev, &regmap_config);
+    if (IS_ERR(regmap)) {
+        return PTR_ERR(regmap);
+    }
+
+    return 0;
+}
+
 /**
  * @brief Initializes SPI settings for a PDM device.
  *
@@ -38,6 +57,9 @@ static const struct pdm_nvmem_operations pdm_device_nvmem_ops_spi = {
 int pdm_nvmem_spi_setup(struct pdm_client *client)
 {
     struct pdm_nvmem_priv *nvmem_priv;
+    struct device_node *np;
+    int status;
+
     if (!client) {
         OSA_ERROR("Invalid client\n");
     }
@@ -47,8 +69,22 @@ int pdm_nvmem_spi_setup(struct pdm_client *client)
         OSA_ERROR("Get PDM Client DevData Failed\n");
         return -ENOMEM;
     }
-
     nvmem_priv->ops = &pdm_device_nvmem_ops_spi;
+
+    np = pdm_client_get_of_node(client);
+    if (!np) {
+        OSA_ERROR("No DT node found\n");
+        return -EINVAL;
+    }
+
+    if (of_get_property(np, "enable-regmap", NULL)) {
+        OSA_INFO("No default-state property found, using defaults as off\n");
+        status = pdm_nvmem_regmap_spi_init(client);
+        if (status) {
+            OSA_ERROR("pdm_nvmem_regmap_spi_init failed, status: %d\n", status);
+            return status;
+        }
+    }
 
     OSA_DEBUG("SPI NVMEM Setup: %s\n", dev_name(&client->dev));
     return 0;
