@@ -149,7 +149,7 @@ static long pdm_client_fops_default_compat_ioctl(struct file *filp, unsigned int
  * @param client Pointer to the PDM Client.
  * @return 0 on success, negative error code on failure.
  */
-static int __pdm_client_device_register(struct pdm_client *client)
+static int pdm_client_device_register(struct pdm_client *client)
 {
     int status;
 
@@ -194,7 +194,7 @@ static int __pdm_client_device_register(struct pdm_client *client)
  *
  * @param client Pointer to the PDM Client structure.
  */
-static void __pdm_client_device_unregister(struct pdm_client *client)
+static void pdm_client_device_unregister(struct pdm_client *client)
 {
     cdev_device_del(&client->cdev, &client->dev);
 }
@@ -207,10 +207,9 @@ static void __pdm_client_device_unregister(struct pdm_client *client)
  * @param dev Pointer to the parent device structure.
  * @param res Pointer to the resource data.
  */
-static void __devm_pdm_client_unregister(struct device *dev, void *res)
+static void devm_pdm_client_unregister(void *data)
 {
-    struct pdm_client_devres *devres = res;
-    struct pdm_client *client = devres->client;
+    struct pdm_client *client = data;
 
     if ((!client) || (!client->adapter)) {
         OSA_ERROR("Invalid input parameters (adapter: %p, client: %p)\n", client->adapter, client);
@@ -223,7 +222,7 @@ static void __devm_pdm_client_unregister(struct device *dev, void *res)
     list_del(&client->entry);
     mutex_unlock(&client->adapter->client_list_mutex_lock);
 
-    __pdm_client_device_unregister(client);
+    pdm_client_device_unregister(client);
     pdm_adapter_id_free(client->adapter, client);
     pdm_adapter_put(client->adapter);
 }
@@ -240,7 +239,6 @@ static void __devm_pdm_client_unregister(struct device *dev, void *res)
  */
 int devm_pdm_client_register(struct pdm_adapter *adapter, struct pdm_client *client)
 {
-    struct pdm_client_devres *devres = NULL;
     int status;
 
     if (!adapter || !client) {
@@ -248,17 +246,9 @@ int devm_pdm_client_register(struct pdm_adapter *adapter, struct pdm_client *cli
         return -EINVAL;
     }
 
-    devres = devres_alloc(__devm_pdm_client_unregister, sizeof(*devres), GFP_KERNEL);
-    if (!devres) {
-        OSA_ERROR("Failed to allocate devres for pdm_client\n");
-        return -ENOMEM;
-    }
-    devres->client = client;
-
     if (!pdm_adapter_get(adapter)) {
         OSA_ERROR("Failed to get adapter\n");
-        status = -EBUSY;
-        goto err_devres_free;
+        return -EBUSY;
     }
 
     status = pdm_adapter_id_alloc(adapter, client);
@@ -268,7 +258,7 @@ int devm_pdm_client_register(struct pdm_adapter *adapter, struct pdm_client *cli
     }
 
     client->adapter = adapter;
-    status = __pdm_client_device_register(client);
+    status = pdm_client_device_register(client);
     if (status) {
         OSA_ERROR("Failed to register device, error: %d\n", status);
         goto err_free_id;
@@ -278,17 +268,19 @@ int devm_pdm_client_register(struct pdm_adapter *adapter, struct pdm_client *cli
     list_add_tail(&client->entry, &adapter->client_list);
     mutex_unlock(&adapter->client_list_mutex_lock);
 
-    OSA_INFO("PDM Client Registered: %s\n", dev_name(&client->dev));
-    devres_add(client->dev.parent, devres);
+    status = devm_add_action_or_reset(&client->pdmdev->dev, devm_pdm_client_unregister, client);
+    if (status) {
+        OSA_ERROR("Failed to add devres, error: %d\n", status);
+        return status;
+    }
 
+    OSA_INFO("PDM Client Registered: %s\n", dev_name(&client->dev));
     return 0;
 
 err_free_id:
     pdm_adapter_id_free(adapter, client);
 err_put_adapter:
     pdm_adapter_put(adapter);
-err_devres_free:
-    devres_free(devres);
     return status;
 }
 
@@ -299,7 +291,7 @@ err_devres_free:
  *
  * @param dev Pointer to the device structure.
  */
-static void __pdm_client_device_release(struct device *dev)
+static void pdm_client_device_release(struct device *dev)
 {
     struct pdm_client *client = container_of(dev, struct pdm_client, dev);
     kfree(client);
@@ -313,12 +305,9 @@ static void __pdm_client_device_release(struct device *dev)
  * @param dev Pointer to the parent device structure.
  * @param res Pointer to the resource data.
  */
-static void __devm_pdm_client_free(struct device *dev, void *res)
+static void devm_pdm_client_free(void *data)
 {
-    struct pdm_client_devres *devres = res;
-    struct pdm_client *client = devres->client;
-
-    pdm_client_put_device(client);
+    pdm_client_put_device((struct pdm_client *)data);
 }
 
 /**
@@ -334,7 +323,6 @@ static void __devm_pdm_client_free(struct device *dev, void *res)
 struct pdm_client *devm_pdm_client_alloc(struct pdm_device *pdmdev, unsigned int data_size)
 {
     struct pdm_client *client;
-    struct pdm_client_devres *devres;
     unsigned int client_size = sizeof(struct pdm_client);
     unsigned int total_size = ALIGN(client_size + data_size, 8);
 
@@ -343,30 +331,25 @@ struct pdm_client *devm_pdm_client_alloc(struct pdm_device *pdmdev, unsigned int
         return ERR_PTR(-EINVAL);
     }
 
-    devres = devres_alloc(__devm_pdm_client_free, sizeof(*devres), GFP_KERNEL);
-    if (!devres) {
-        return ERR_PTR(-ENOMEM);
-    }
-
     client = kzalloc(total_size, GFP_KERNEL);
     if (!client) {
         OSA_ERROR("Failed to allocate memory for pdm_client\n");
-        devres_free(devres);
         return ERR_PTR(-ENOMEM);
     }
 
     client->dev.class = &pdm_client_class;
-    client->dev.release = __pdm_client_device_release;
+    client->dev.release = pdm_client_device_release;
     client->dev.parent = &pdmdev->dev;
     device_initialize(&client->dev);
-
-    devres->client = client;
-    devres_add(&pdmdev->dev, devres);
 
     pdmdev->client = client;
     client->pdmdev = pdmdev;
     if (data_size) {
         pdm_client_set_private_data(client, (void *)(client + client_size));
+    }
+
+    if (devm_add_action_or_reset(&pdmdev->dev, devm_pdm_client_free, client)) {
+        return ERR_PTR(-ENOMEM);
     }
 
     return client;
