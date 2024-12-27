@@ -1,20 +1,20 @@
 #include "pdm.h"
 #include "pdm_adapter_priv.h"
-#include "pdm_eeprom_ioctl.h"
-#include "pdm_eeprom_priv.h"
+#include "pdm_nvmem_ioctl.h"
+#include "pdm_nvmem_priv.h"
 
-static struct pdm_adapter *eeprom_adapter = NULL;
+static struct pdm_adapter *nvmem_adapter = NULL;
 
 /**
- * @brief Sets the state of a specified PDM EEPROM device.
+ * @brief Sets the state of a specified PDM NVMEM device.
  *
  * @param client Pointer to the PDM client structure.
  * @param state State value (0 or 1).
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_eeprom_read_reg(struct pdm_client *client, unsigned char addr, unsigned char *value)
+static int pdm_nvmem_read_reg(struct pdm_client *client, unsigned char addr, unsigned char *value)
 {
-    struct pdm_eeprom_priv *eeprom_priv;
+    struct pdm_nvmem_priv *nvmem_priv;
     int status = 0;
 
     if (!client) {
@@ -22,20 +22,20 @@ static int pdm_eeprom_read_reg(struct pdm_client *client, unsigned char addr, un
         return -EINVAL;
     }
 
-    eeprom_priv = pdm_client_get_private_data(client);
-    if (!eeprom_priv) {
+    nvmem_priv = pdm_client_get_private_data(client);
+    if (!nvmem_priv) {
         OSA_ERROR("Get PDM Client Device Data Failed\n");
         return -ENOMEM;
     }
 
-    if (!eeprom_priv->ops || !eeprom_priv->ops->read_reg) {
+    if (!nvmem_priv->ops || !nvmem_priv->ops->read_reg) {
         OSA_ERROR("read_reg not supported\n");
         return -ENOTSUPP;
     }
 
-    status = eeprom_priv->ops->read_reg(client, addr, value);
+    status = nvmem_priv->ops->read_reg(client, addr, value);
     if (status) {
-        OSA_ERROR("PDM EEPROM read_reg failed, status: %d\n", status);
+        OSA_ERROR("PDM NVMEM read_reg failed, status: %d\n", status);
         return status;
     }
 
@@ -43,15 +43,15 @@ static int pdm_eeprom_read_reg(struct pdm_client *client, unsigned char addr, un
 }
 
 /**
- * @brief Gets the current state of a specified PDM EEPROM device.
+ * @brief Gets the current state of a specified PDM NVMEM device.
  *
  * @param client Pointer to the PDM client structure.
  * @param state Pointer to store the current state.
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_eeprom_write_reg(struct pdm_client *client, unsigned char addr, unsigned char value)
+static int pdm_nvmem_write_reg(struct pdm_client *client, unsigned char addr, unsigned char value)
 {
-    struct pdm_eeprom_priv *eeprom_priv;
+    struct pdm_nvmem_priv *nvmem_priv;
     int status = 0;
 
     if (!client) {
@@ -59,20 +59,20 @@ static int pdm_eeprom_write_reg(struct pdm_client *client, unsigned char addr, u
         return -EINVAL;
     }
 
-    eeprom_priv = pdm_client_get_private_data(client);
-    if (!eeprom_priv) {
+    nvmem_priv = pdm_client_get_private_data(client);
+    if (!nvmem_priv) {
         OSA_ERROR("Get PDM Client Device Data Failed\n");
         return -ENOMEM;
     }
 
-    if (!eeprom_priv->ops || !eeprom_priv->ops->write_reg) {
+    if (!nvmem_priv->ops || !nvmem_priv->ops->write_reg) {
         OSA_ERROR("write_reg not supported\n");
         return -ENOTSUPP;
     }
 
-    status = eeprom_priv->ops->write_reg(client, addr, value);
+    status = nvmem_priv->ops->write_reg(client, addr, value);
     if (status) {
-        OSA_ERROR("PDM EEPROM write_reg failed, status: %d\n", status);
+        OSA_ERROR("PDM NVMEM write_reg failed, status: %d\n", status);
         return status;
     }
 
@@ -87,7 +87,7 @@ static int pdm_eeprom_write_reg(struct pdm_client *client, unsigned char addr, u
  * @param arg Command argument.
  * @return Returns 0 on success; negative error code on failure.
  */
-static long pdm_eeprom_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+static long pdm_nvmem_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
     struct pdm_client *client = filp->private_data;
     int status = 0;
@@ -106,7 +106,7 @@ static long pdm_eeprom_ioctl(struct file *filp, unsigned int cmd, unsigned long 
     }
 
     if (status) {
-        OSA_ERROR("pdm_eeprom_ioctl error\n");
+        OSA_ERROR("pdm_nvmem_ioctl error\n");
         return status;
     }
 
@@ -115,7 +115,7 @@ static long pdm_eeprom_ioctl(struct file *filp, unsigned int cmd, unsigned long 
 
 
 /**
- * @brief Reads information about available commands or EEPROM state/brightness.
+ * @brief Reads information about available commands or NVMEM state/brightness.
  *
  * @param filp File pointer.
  * @param buf User buffer to write data into.
@@ -123,14 +123,14 @@ static long pdm_eeprom_ioctl(struct file *filp, unsigned int cmd, unsigned long 
  * @param ppos Offset in the file.
  * @return Returns number of bytes read or negative error code on failure.
  */
-static ssize_t pdm_eeprom_read(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
+static ssize_t pdm_nvmem_read(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
 {
     const char help_info[] =
         "Available commands:\n"
-        " > 1 <0|1>    - Set EEPROM state\n"
-        " > 2          - Get current EEPROM state\n"
-        " > 3 <0-255>  - Set EEPROM brightness\n"
-        " > 4          - Get current EEPROM brightness\n";
+        " > 1 <0|1>    - Set NVMEM state\n"
+        " > 2          - Get current NVMEM state\n"
+        " > 3 <0-255>  - Set NVMEM brightness\n"
+        " > 4          - Get current NVMEM brightness\n";
     size_t len = strlen(help_info);
 
     if (*ppos >= len)
@@ -147,7 +147,7 @@ static ssize_t pdm_eeprom_read(struct file *filp, char __user *buf, size_t count
 }
 
 /**
- * @brief Writes commands to change EEPROM state or brightness.
+ * @brief Writes commands to change NVMEM state or brightness.
  *
  * @param filp File pointer.
  * @param buf User buffer containing command data.
@@ -155,7 +155,7 @@ static ssize_t pdm_eeprom_read(struct file *filp, char __user *buf, size_t count
  * @param ppos Offset in the file.
  * @return Returns number of bytes written or negative error code on failure.
  */
-static ssize_t pdm_eeprom_write(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
+static ssize_t pdm_nvmem_write(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
 {
     struct pdm_client *client = filp->private_data;
     char kernel_buf[64];
@@ -183,7 +183,7 @@ static ssize_t pdm_eeprom_write(struct file *filp, const char __user *buf, size_
 
     switch (cmd)
     {
-        case PDM_EEPROM_CMD_WRITE_REG:
+        case PDM_NVMEM_CMD_WRITE_REG:
         {
             if (sscanf(kernel_buf, "%d 0x%hhx 0x%hhx", &cmd, &addr, &value) != 3) {
                 OSA_ERROR("Command %d requires one parameter.\n", cmd);
@@ -191,7 +191,7 @@ static ssize_t pdm_eeprom_write(struct file *filp, const char __user *buf, size_
             }
             break;
         }
-        case PDM_EEPROM_CMD_READ_REG:
+        case PDM_NVMEM_CMD_READ_REG:
         {
             if (sscanf(kernel_buf, "%d 0x%hhx", &cmd, &addr) != 2) {
                 OSA_ERROR("Command %d should not have parameters.\n", cmd);
@@ -208,18 +208,18 @@ static ssize_t pdm_eeprom_write(struct file *filp, const char __user *buf, size_
 
     switch (cmd)
     {
-        case PDM_EEPROM_CMD_WRITE_REG:
+        case PDM_NVMEM_CMD_WRITE_REG:
         {
-            if (pdm_eeprom_write_reg(client, addr, value)) {
-                OSA_ERROR("pdm_eeprom_set_state failed\n");
+            if (pdm_nvmem_write_reg(client, addr, value)) {
+                OSA_ERROR("pdm_nvmem_set_state failed\n");
                 return -EINVAL;
             }
             break;
         }
-        case PDM_EEPROM_CMD_READ_REG:
+        case PDM_NVMEM_CMD_READ_REG:
         {
-            if (pdm_eeprom_read_reg(client, addr, &value)) {
-                OSA_ERROR("pdm_eeprom_get_state failed\n");
+            if (pdm_nvmem_read_reg(client, addr, &value)) {
+                OSA_ERROR("pdm_nvmem_get_state failed\n");
                 return -EINVAL;
             }
             snprintf(buffer, sizeof(buffer), "%d\n", value);
@@ -237,14 +237,14 @@ static ssize_t pdm_eeprom_write(struct file *filp, const char __user *buf, size_
 }
 
 /**
- * @brief Initializes the EEPROM client using match data.
+ * @brief Initializes the NVMEM client using match data.
  *
  * @param client Pointer to the PDM client structure.
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_eeprom_match_setup(struct pdm_client *client)
+static int pdm_nvmem_match_setup(struct pdm_client *client)
 {
-    struct pdm_eeprom_priv *eeprom_priv;
+    struct pdm_nvmem_priv *nvmem_priv;
     const void *match_data;
     int status;
 
@@ -252,9 +252,9 @@ static int pdm_eeprom_match_setup(struct pdm_client *client)
         return -EINVAL;
     }
 
-    eeprom_priv = pdm_client_get_private_data(client);
-    if (!eeprom_priv) {
-        OSA_ERROR("EEPROM Client get private data is NULL\n");
+    nvmem_priv = pdm_client_get_private_data(client);
+    if (!nvmem_priv) {
+        OSA_ERROR("NVMEM Client get private data is NULL\n");
         return -ENOMEM;
     }
 
@@ -264,11 +264,11 @@ static int pdm_eeprom_match_setup(struct pdm_client *client)
         return -ENODEV;
     }
 
-    eeprom_priv->match_data = match_data;
-    if (eeprom_priv->match_data->setup) {
-        status = eeprom_priv->match_data->setup(client);
+    nvmem_priv->match_data = match_data;
+    if (nvmem_priv->match_data->setup) {
+        status = nvmem_priv->match_data->setup(client);
         if (status) {
-            OSA_ERROR("EEPROM Client Setup Failed, status=%d\n", status);
+            OSA_ERROR("NVMEM Client Setup Failed, status=%d\n", status);
             return status;
         }
     }
@@ -277,69 +277,69 @@ static int pdm_eeprom_match_setup(struct pdm_client *client)
 }
 
 /**
- * @brief Probes the EEPROM PDM device.
+ * @brief Probes the NVMEM PDM device.
  *
  * This function is called when a PDM device is detected and adds the device to the main device.
  *
  * @param pdmdev Pointer to the PDM device.
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_eeprom_device_probe(struct pdm_device *pdmdev)
+static int pdm_nvmem_device_probe(struct pdm_device *pdmdev)
 {
     struct pdm_client *client;
     int status;
 
-    client = devm_pdm_client_alloc(pdmdev, sizeof(struct pdm_eeprom_priv));
+    client = devm_pdm_client_alloc(pdmdev, sizeof(struct pdm_nvmem_priv));
     if (IS_ERR(client)) {
-        OSA_ERROR("EEPROM Client Alloc Failed\n");
+        OSA_ERROR("NVMEM Client Alloc Failed\n");
         return PTR_ERR(client);
     }
 
-    status = devm_pdm_client_register(eeprom_adapter, client);
+    status = devm_pdm_client_register(nvmem_adapter, client);
     if (status) {
-        OSA_ERROR("EEPROM Adapter Add Device Failed, status=%d\n", status);
+        OSA_ERROR("NVMEM Adapter Add Device Failed, status=%d\n", status);
         return status;
     }
 
-    status = pdm_eeprom_match_setup(client);
+    status = pdm_nvmem_match_setup(client);
     if (status) {
-        OSA_ERROR("EEPROM Client Setup Failed, status=%d\n", status);
+        OSA_ERROR("NVMEM Client Setup Failed, status=%d\n", status);
         return status;
     }
 
-    client->fops.read = pdm_eeprom_read;
-    client->fops.write = pdm_eeprom_write;
-    client->fops.unlocked_ioctl = pdm_eeprom_ioctl;
+    client->fops.read = pdm_nvmem_read;
+    client->fops.write = pdm_nvmem_write;
+    client->fops.unlocked_ioctl = pdm_nvmem_ioctl;
 
     return 0;
 }
 
 /**
- * @brief Removes the EEPROM PDM device.
+ * @brief Removes the NVMEM PDM device.
  *
  * This function is called when a PDM device is removed and deletes the device from the main device.
  *
  * @param pdmdev Pointer to the PDM device.
  */
-static void pdm_eeprom_device_remove(struct pdm_device *pdmdev)
+static void pdm_nvmem_device_remove(struct pdm_device *pdmdev)
 {
     if (pdmdev && pdmdev->client) {
-        pdm_eeprom_match_setup(pdmdev->client);
+        pdm_nvmem_match_setup(pdmdev->client);
     }
 }
 
 /**
- * @brief Match data structure for initializing GPIO type EEPROM devices.
+ * @brief Match data structure for initializing GPIO type NVMEM devices.
  */
-static const struct pdm_eeprom_match_data pdm_eeprom_spi_match_data = {
-    .setup = pdm_eeprom_spi_setup,
+static const struct pdm_nvmem_match_data pdm_nvmem_spi_match_data = {
+    .setup = pdm_nvmem_spi_setup,
     .cleanup = NULL,
 };
 
 /**
- * @brief Match data structure for initializing PWM type EEPROM devices.
+ * @brief Match data structure for initializing PWM type NVMEM devices.
  */
-static const struct pdm_eeprom_match_data pdm_eeprom_i2c_match_data = {
+static const struct pdm_nvmem_match_data pdm_nvmem_i2c_match_data = {
     .setup = NULL,
     .cleanup = NULL,
 };
@@ -349,74 +349,74 @@ static const struct pdm_eeprom_match_data pdm_eeprom_i2c_match_data = {
  *
  * Defines the supported device tree compatible properties.
  */
-static const struct of_device_id of_pdm_eeprom_match[] = {
-    { .compatible = "pdm,eeprom-spi",     .data = &pdm_eeprom_spi_match_data},
-    { .compatible = "pdm,eeprom-i2c",     .data = &pdm_eeprom_i2c_match_data},
+static const struct of_device_id of_pdm_nvmem_match[] = {
+    { .compatible = "pdm,nvmem-spi",     .data = &pdm_nvmem_spi_match_data},
+    { .compatible = "pdm,nvmem-i2c",     .data = &pdm_nvmem_i2c_match_data},
     {},
 };
-MODULE_DEVICE_TABLE(of, of_pdm_eeprom_match);
+MODULE_DEVICE_TABLE(of, of_pdm_nvmem_match);
 
 /**
- * @brief EEPROM PDM driver structure.
+ * @brief NVMEM PDM driver structure.
  *
- * Defines the basic information and operation functions of the EEPROM PDM driver.
+ * Defines the basic information and operation functions of the NVMEM PDM driver.
  */
-static struct pdm_driver pdm_eeprom_driver = {
-    .probe = pdm_eeprom_device_probe,
-    .remove = pdm_eeprom_device_remove,
+static struct pdm_driver pdm_nvmem_driver = {
+    .probe = pdm_nvmem_device_probe,
+    .remove = pdm_nvmem_device_remove,
     .driver = {
-        .name = "pdm-eeprom",
-        .of_match_table = of_pdm_eeprom_match,
+        .name = "pdm-nvmem",
+        .of_match_table = of_pdm_nvmem_match,
     },
 };
 
 /**
- * @brief Initializes the EEPROM PDM adapter driver.
+ * @brief Initializes the NVMEM PDM adapter driver.
  *
  * Allocates and registers the adapter and driver.
  *
  * @return Returns 0 on success; negative error code on failure.
  */
-int pdm_eeprom_driver_init(void)
+int pdm_nvmem_driver_init(void)
 {
     int status;
 
-    eeprom_adapter = pdm_adapter_alloc(sizeof(void *));
-    if (!eeprom_adapter) {
+    nvmem_adapter = pdm_adapter_alloc(sizeof(void *));
+    if (!nvmem_adapter) {
         OSA_ERROR("Failed to allocate pdm_adapter\n");
         return -ENOMEM;
     }
 
-    status = pdm_adapter_register(eeprom_adapter, PDM_EEPROM_NAME);
+    status = pdm_adapter_register(nvmem_adapter, PDM_NVMEM_NAME);
     if (status) {
-        OSA_ERROR("Failed to register EEPROM PDM Adapter, status=%d\n", status);
+        OSA_ERROR("Failed to register NVMEM PDM Adapter, status=%d\n", status);
         return status;
     }
 
-    status = pdm_bus_register_driver(THIS_MODULE, &pdm_eeprom_driver);
+    status = pdm_bus_register_driver(THIS_MODULE, &pdm_nvmem_driver);
     if (status) {
-        OSA_ERROR("Failed to register EEPROM PDM Driver, status=%d\n", status);
+        OSA_ERROR("Failed to register NVMEM PDM Driver, status=%d\n", status);
         goto err_adapter_unregister;
     }
 
     return 0;
 
 err_adapter_unregister:
-    pdm_adapter_unregister(eeprom_adapter);
+    pdm_adapter_unregister(nvmem_adapter);
     return status;
 }
 
 /**
- * @brief Exits the EEPROM PDM adapter driver.
+ * @brief Exits the NVMEM PDM adapter driver.
  *
  * Unregisters the driver and adapter, releasing related resources.
  */
-void pdm_eeprom_driver_exit(void)
+void pdm_nvmem_driver_exit(void)
 {
-    pdm_bus_unregister_driver(&pdm_eeprom_driver);
-    pdm_adapter_unregister(eeprom_adapter);
+    pdm_bus_unregister_driver(&pdm_nvmem_driver);
+    pdm_adapter_unregister(nvmem_adapter);
 }
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("<guohaoprc@163.com>");
-MODULE_DESCRIPTION("EEPROM PDM Adapter Driver");
+MODULE_DESCRIPTION("NVMEM PDM Adapter Driver");

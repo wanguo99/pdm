@@ -1,22 +1,6 @@
 #ifndef _PDM_DEVICE_PRIV_H_
 #define _PDM_DEVICE_PRIV_H_
 
-/**
- * @brief Initializes the PDM device drivers.
- *
- * Registers the device class and device drivers for the PDM devices.
- *
- * @return Returns 0 on success; negative error code on failure.
- */
-int pdm_device_drivers_register(void);
-
-/**
- * @brief Unregisters the PDM device drivers.
- *
- * Cleans up and unregisters the device drivers for the PDM devices.
- */
-void pdm_device_drivers_unregister(void);
-
 /* I2C Driver Initialization and Cleanup */
 /**
  * @brief Initializes the I2C driver.

@@ -143,7 +143,7 @@ static const struct device_type pdm_device_type = {
  *
  * @return 0 on success, negative error code on failure.
  */
-int pdm_device_drivers_register(void)
+static int pdm_device_drivers_register(void)
 {
     int status;
     struct pdm_component_params params = {
@@ -167,7 +167,7 @@ int pdm_device_drivers_register(void)
  *
  * Cleans up and unregisters the PDM device drivers.
  */
-void pdm_device_drivers_unregister(void)
+static void pdm_device_drivers_unregister(void)
 {
     pdm_component_unregister(&pdm_device_driver_list);
 }

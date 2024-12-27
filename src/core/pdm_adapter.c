@@ -19,11 +19,11 @@ static struct pdm_component pdm_adapter_drivers[] = {
         .exit = pdm_led_driver_exit,
     },
     {
-        .name = "EEPROM Adapter",
+        .name = "NVMEM Adapter",
         .enable = true,
         .ignore_failures = true,
-        .init = pdm_eeprom_driver_init,
-        .exit = pdm_eeprom_driver_exit,
+        .init = pdm_nvmem_driver_init,
+        .exit = pdm_nvmem_driver_exit,
     },
     { }
 };
@@ -35,7 +35,7 @@ static struct pdm_component pdm_adapter_drivers[] = {
  *
  * @return 0 on success, negative error code on failure.
  */
-int pdm_adapter_drivers_register(void)
+static int pdm_adapter_drivers_register(void)
 {
     int status;
     struct pdm_component_params params = {
@@ -56,7 +56,7 @@ int pdm_adapter_drivers_register(void)
 /**
  * @brief Unregisters PDM Adapter drivers.
  */
-void pdm_adapter_drivers_unregister(void)
+static void pdm_adapter_drivers_unregister(void)
 {
     pdm_component_unregister(&pdm_adapter_driver_list);
 }

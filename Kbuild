@@ -23,5 +23,5 @@ $(MODULE_NAME)-objs += src/led/pdm_led.o \
 	src/led/pdm_led_gpio.o \
 	src/led/pdm_led_pwm.o
 
-$(MODULE_NAME)-objs += src/eeprom/pdm_eeprom.o \
-	src/eeprom/pdm_eeprom_spi.o
+$(MODULE_NAME)-objs += src/nvmem/pdm_nvmem.o \
+	src/nvmem/pdm_nvmem_spi.o
