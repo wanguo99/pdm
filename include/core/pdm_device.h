@@ -54,7 +54,6 @@ struct pdm_device_pwm {
  */
 struct pdm_device_spi {
     struct spi_device *spidev;
-    struct regmap *map;
 };
 
 /**
@@ -65,7 +64,6 @@ struct pdm_device_spi {
  */
 struct pdm_device_i2c {
     struct i2c_client *client;
-    struct regmap *map;
 };
 
 /**
@@ -91,6 +89,7 @@ union pdm_hardware_device {
  * operation functions.
  */
 struct pdm_device_priv {
+    struct regmap *map;
     union pdm_hardware_device hardware;
     const struct pdm_device_match_data *match_data;
 };
