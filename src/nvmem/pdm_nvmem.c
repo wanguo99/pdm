@@ -350,8 +350,8 @@ static const struct pdm_nvmem_match_data pdm_nvmem_i2c_match_data = {
  * Defines the supported device tree compatible properties.
  */
 static const struct of_device_id of_pdm_nvmem_match[] = {
-    { .compatible = "pdm,nvmem-spi",     .data = &pdm_nvmem_spi_match_data},
-    { .compatible = "pdm,nvmem-i2c",     .data = &pdm_nvmem_i2c_match_data},
+    { .compatible = "pdm-nvmem-spi",     .data = &pdm_nvmem_spi_match_data},
+    { .compatible = "pdm-nvmem-i2c",     .data = &pdm_nvmem_i2c_match_data},
     {},
 };
 MODULE_DEVICE_TABLE(of, of_pdm_nvmem_match);

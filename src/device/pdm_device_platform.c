@@ -89,8 +89,8 @@ static void pdm_device_platform_remove(struct platform_device *pdev)
  * Defines the supported DEVICE_TREE compatibility strings.
  */
 static const struct of_device_id pdm_device_platform_of_match[] = {
-    { .compatible = "pdm,device-gpio" },
-    { .compatible = "pdm,device-pwm" },
+    { .compatible = "pdm-device-gpio" },
+    { .compatible = "pdm-device-pwm" },
     { }
 };
 MODULE_DEVICE_TABLE(of, pdm_device_platform_of_match);

@@ -139,7 +139,7 @@ MODULE_DEVICE_TABLE(i2c, pdm_device_i2c_id);
  * Defines the supported DEVICE_TREE compatibility strings.
  */
 static const struct of_device_id pdm_device_i2c_of_match[] = {
-    { .compatible = "pdm,device-i2c" },
+    { .compatible = "pdm-device-i2c" },
     { }
 };
 MODULE_DEVICE_TABLE(of, pdm_device_i2c_of_match);
