@@ -4,6 +4,17 @@
 #include "pdm.h"
 #include "pdm_led_priv.h"
 
+
+static bool pdm_led_gpio_level_to_state(struct gpio_desc *gpiod, int level)
+{
+    return gpiod_is_active_low(gpiod) ? 1 : 0;
+}
+
+static bool pdm_led_gpio_state_to_level(struct gpio_desc *gpiod, int state)
+{
+    return gpiod_is_active_low(gpiod) ? 1 : 0;
+}
+
 /**
  * @brief Sets the state of a GPIO LED.
  *
@@ -16,29 +27,6 @@
 static int pdm_led_gpio_set_state(struct pdm_client *client, int state)
 {
     struct gpio_desc *gpiod;
-    bool is_active_low;
-
-    if (!client || !client->pdmdev) {
-        OSA_ERROR("Invalid client\n");
-        return -EINVAL;
-    }
-
-    gpiod = client->hardware.gpio.gpiod;
-    is_active_low = gpiod_is_active_low(gpiod);
-    if (is_active_low) {
-        gpiod_set_value_cansleep(gpiod, !!state);
-    } else {
-        gpiod_set_value_cansleep(gpiod, !state);
-    }
-
-    OSA_INFO("GPIO PDM Led: Set %s state to %d\n", dev_name(&client->dev), state);
-    return 0;
-}
-
-static int pdm_led_gpio_get_state(struct pdm_client *client, int *state)
-{
-    struct gpio_desc *gpiod;
-    bool is_active_low;
     int gpio_level;
 
     if (!client || !client->pdmdev) {
@@ -47,13 +35,26 @@ static int pdm_led_gpio_get_state(struct pdm_client *client, int *state)
     }
 
     gpiod = client->hardware.gpio.gpiod;
-    is_active_low = gpiod_is_active_low(gpiod);
-    gpio_level = gpiod_get_value_cansleep(gpiod);
-    if (is_active_low) {
-        *state = !!gpio_level;
-    } else {
-        *state = !gpio_level;
+    gpio_level = pdm_led_gpio_state_to_level(gpiod, state);
+    gpiod_set_value_cansleep(gpiod, gpio_level);
+
+    OSA_INFO("GPIO PDM Led: Set %s state to %d\n", dev_name(&client->dev), state);
+    return 0;
+}
+
+static int pdm_led_gpio_get_state(struct pdm_client *client, int *state)
+{
+    struct gpio_desc *gpiod;
+    int gpio_level;
+
+    if (!client || !client->pdmdev) {
+        OSA_ERROR("Invalid client\n");
+        return -EINVAL;
     }
+
+    gpiod = client->hardware.gpio.gpiod;
+    gpio_level = gpiod_get_value_cansleep(gpiod);
+    *state = pdm_led_gpio_level_to_state(gpiod, gpio_level);
 
     OSA_INFO("GPIO PDM Led: Get %s state: %d\n", dev_name(&client->dev), *state);
     return 0;
@@ -84,7 +85,7 @@ static int pdm_led_gpio_setup(struct pdm_client *client)
     struct device_node *np;
     struct gpio_desc *gpiod;
     const char *default_state;
-    bool is_active_low;
+    int origin_level;
     int status;
 
     if (!client) {
@@ -117,27 +118,37 @@ static int pdm_led_gpio_setup(struct pdm_client *client)
         return PTR_ERR(gpiod);
     }
 
-    is_active_low = gpiod_is_active_low(gpiod);
-    if (!strcmp(default_state, "on")) {
-        gpiod_set_value_cansleep(gpiod, is_active_low ? 1 : 0);
-    } else if (!strcmp(default_state, "off")) {
-        gpiod_set_value_cansleep(gpiod, is_active_low ? 0 : 1);
-    } else {
-        OSA_INFO("Unknown default-state: %s, using off\n", default_state);
-        gpiod_set_value_cansleep(gpiod, is_active_low ? 0 : 1);
-    }
+    origin_level = gpiod_get_value_cansleep(gpiod);
+    led_priv->origin_state = pdm_led_gpio_level_to_state(gpiod, origin_level);
 
     client->hardware.gpio.gpiod = gpiod;
+
     OSA_DEBUG("GPIO LED Setup: %s\n", dev_name(&client->dev));
     return 0;
 }
 
 static void pdm_led_gpio_cleanup(struct pdm_client *client)
 {
-    if (client && !IS_ERR_OR_NULL(client->hardware.gpio.gpiod)) {
-        OSA_DEBUG("GPIO LED Cleanup: %s\n", dev_name(&client->dev));
-        gpiod_put(client->hardware.gpio.gpiod);
+    struct pdm_led_priv *led_priv;
+    struct gpio_desc *gpiod;
+    int origin_level;
+
+    if (!client && IS_ERR_OR_NULL(client->hardware.gpio.gpiod)) {
+        return;
     }
+
+    led_priv = pdm_client_get_private_data(client);
+    if (!led_priv) {
+        OSA_ERROR("Get PDM Client DevData Failed\n");
+        return;
+    }
+    gpiod = client->hardware.gpio.gpiod;
+
+    origin_level = pdm_led_gpio_state_to_level(gpiod, led_priv->origin_state);
+    gpiod_set_value_cansleep(gpiod, origin_level);
+    gpiod_put(client->hardware.gpio.gpiod);
+
+    OSA_DEBUG("GPIO LED Cleanup: %s\n", dev_name(&client->dev));
 }
 
 

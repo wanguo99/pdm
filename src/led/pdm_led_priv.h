@@ -48,7 +48,8 @@ struct pdm_led_operations {
  * operation functions.
  */
 struct pdm_led_priv {
-    const struct pdm_led_operations *ops;  ///< Pointer to operation function callbacks
+    bool origin_state;                      ///< Led origin state
+    const struct pdm_led_operations *ops;   ///< Pointer to operation function callbacks
 };
 
 /**
