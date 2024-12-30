@@ -17,7 +17,7 @@
 /**
  * @brief Maximum number of clients that can be registered with an adapter.
  */
-#define PDM_ADAPTER_CLIENT_IDR_END          (1024)
+#define PDM_ADAPTER_CLIENT_IDR_END		(1024)
 
 /**
  * @brief PDM Adapter structure.
@@ -25,14 +25,14 @@
  * This structure represents a PDM Adapter, which manages multiple PDM Client devices.
  */
 struct pdm_adapter {
-    char name[PDM_DEVICE_NAME_SIZE];        /**< Adapter name */
-    struct list_head entry;                 /**< List node handle */
-    struct list_head client_list;           /**< List of child devices */
-    struct mutex client_list_mutex_lock;    /**< Mutex to protect the client list */
-    struct ida client_ida;                  /**< IDA for allocating unique IDs to clients */
-    struct mutex ida_mutex_lock;            /**< Mutex to protect the IDA */
-    struct device dev;                      /**< Kernel device structure */
-    struct rw_semaphore rwlock;             /**< Read-write semaphore for sysfs attribute access */
+	char name[PDM_DEVICE_NAME_SIZE];	/**< Adapter name */
+	struct list_head entry;			/**< List node handle */
+	struct list_head client_list;		/**< List of child devices */
+	struct mutex client_list_mutex_lock;	/**< Mutex to protect the client list */
+	struct ida client_ida;			/**< IDA for allocating unique IDs to clients */
+	struct mutex ida_mutex_lock;		/**< Mutex to protect the IDA */
+	struct device dev;			/**< Kernel device structure */
+	struct rw_semaphore rwlock;		/**< Read-write semaphore for sysfs attribute access */
 };
 
 /**
@@ -71,11 +71,11 @@ void pdm_adapter_drvdata_set(struct pdm_adapter *adapter, void *data);
  */
 static inline struct pdm_adapter *pdm_adapter_get(struct pdm_adapter *adapter)
 {
-    if (!adapter || !get_device(&adapter->dev)) {
-        return NULL;
-    }
+	if (!adapter || !get_device(&adapter->dev)) {
+		return NULL;
+	}
 
-    return adapter;
+	return adapter;
 }
 
 /**
@@ -85,9 +85,9 @@ static inline struct pdm_adapter *pdm_adapter_get(struct pdm_adapter *adapter)
  */
 static inline void pdm_adapter_put(struct pdm_adapter *adapter)
 {
-    if (adapter) {
-        put_device(&adapter->dev);
-    }
+	if (adapter) {
+		put_device(&adapter->dev);
+	}
 }
 
 /**

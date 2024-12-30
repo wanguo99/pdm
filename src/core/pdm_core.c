@@ -25,14 +25,14 @@ static struct dentry *pdm_debugfs_dir;
  */
 static int pdm_bus_debug_fs_init(void)
 {
-    pdm_debugfs_dir = debugfs_create_dir(PDM_MODULE_NAME, NULL);
-    if (IS_ERR_OR_NULL(pdm_debugfs_dir)) {
-        OSA_WARN("Failed to register PDM debugfs, error %ld\n", PTR_ERR(pdm_debugfs_dir));
-        return PTR_ERR(pdm_debugfs_dir);
-    }
+	pdm_debugfs_dir = debugfs_create_dir(PDM_MODULE_NAME, NULL);
+	if (IS_ERR_OR_NULL(pdm_debugfs_dir)) {
+		OSA_WARN("Failed to register PDM debugfs, error %ld\n", PTR_ERR(pdm_debugfs_dir));
+		return PTR_ERR(pdm_debugfs_dir);
+	}
 
-    OSA_DEBUG("PDM debugfs registered\n");
-    return 0;
+	OSA_DEBUG("PDM debugfs registered\n");
+	return 0;
 }
 
 /**
@@ -42,10 +42,10 @@ static int pdm_bus_debug_fs_init(void)
  */
 static void pdm_bus_debug_fs_exit(void)
 {
-    if (!IS_ERR_OR_NULL(pdm_debugfs_dir)) {
-        debugfs_remove_recursive(pdm_debugfs_dir);
-        OSA_DEBUG("PDM debugfs unregistered\n");
-    }
+	if (!IS_ERR_OR_NULL(pdm_debugfs_dir)) {
+		debugfs_remove_recursive(pdm_debugfs_dir);
+		OSA_DEBUG("PDM debugfs unregistered\n");
+	}
 }
 
 static struct proc_dir_entry *pdm_procfs_dir;
@@ -59,14 +59,14 @@ static struct proc_dir_entry *pdm_procfs_dir;
  */
 static int pdm_bus_proc_fs_init(void)
 {
-    pdm_procfs_dir = proc_mkdir(PDM_MODULE_NAME, NULL);
-    if (!pdm_procfs_dir) {
-        OSA_WARN("Failed to register PDM procfs\n");
-        return -ENOMEM;
-    }
+	pdm_procfs_dir = proc_mkdir(PDM_MODULE_NAME, NULL);
+	if (!pdm_procfs_dir) {
+		OSA_WARN("Failed to register PDM procfs\n");
+		return -ENOMEM;
+	}
 
-    OSA_DEBUG("PDM procfs registered\n");
-    return 0;
+	OSA_DEBUG("PDM procfs registered\n");
+	return 0;
 }
 
 /**
@@ -76,10 +76,10 @@ static int pdm_bus_proc_fs_init(void)
  */
 static void pdm_bus_proc_fs_exit(void)
 {
-    if (pdm_procfs_dir) {
-        remove_proc_entry(PDM_MODULE_NAME, NULL);
-        OSA_DEBUG("PDM procfs unregistered\n");
-    }
+	if (pdm_procfs_dir) {
+		remove_proc_entry(PDM_MODULE_NAME, NULL);
+		OSA_DEBUG("PDM procfs unregistered\n");
+	}
 }
 
 /**
@@ -95,22 +95,22 @@ static void pdm_bus_proc_fs_exit(void)
  */
 static void pdm_show_module_init_info(void)
 {
-    OSA_print("\n");
-    OSA_INFO("\t========== Module Loading ==========\n");
-    OSA_INFO("\t| NAME   : %s\n", PDM_MODULE_NAME);
-    OSA_INFO("\t| BUILD  : %s\n", PDM_MODULE_BUILD_TIME);
-    OSA_INFO("\t| VERSION: %s\n", PDM_MODULE_VERSIONS);
-    OSA_INFO("\t------------------------------------\n");
+	OSA_print("\n");
+	OSA_INFO("\t========== Module Loading ==========\n");
+	OSA_INFO("\t| NAME   : %s\n", PDM_MODULE_NAME);
+	OSA_INFO("\t| BUILD  : %s\n", PDM_MODULE_BUILD_TIME);
+	OSA_INFO("\t| VERSION: %s\n", PDM_MODULE_VERSIONS);
+	OSA_INFO("\t------------------------------------\n");
 }
 
 static void pdm_show_module_exit_info(void)
 {
-    OSA_print("\n");
-    OSA_INFO("\t========== Module Removed ==========\n");
-    OSA_INFO("\t| NAME   : %s\n", PDM_MODULE_NAME);
-    OSA_INFO("\t| BUILD  : %s\n", PDM_MODULE_BUILD_TIME);
-    OSA_INFO("\t| VERSION: %s\n", PDM_MODULE_VERSIONS);
-    OSA_INFO("\t------------------------------------\n");
+	OSA_print("\n");
+	OSA_INFO("\t========== Module Removed ==========\n");
+	OSA_INFO("\t| NAME   : %s\n", PDM_MODULE_NAME);
+	OSA_INFO("\t| BUILD  : %s\n", PDM_MODULE_BUILD_TIME);
+	OSA_INFO("\t| VERSION: %s\n", PDM_MODULE_VERSIONS);
+	OSA_INFO("\t------------------------------------\n");
 }
 
 /**
@@ -118,49 +118,49 @@ static void pdm_show_module_exit_info(void)
  * @brief Array containing all PDM Core components that need to be registered.
  */
 static struct pdm_component pdm_core_components[] = {
-    {
-        .name = "Debug Filesystem",
-        .enable = true,
-        .ignore_failures = true,
-        .init = pdm_bus_debug_fs_init,
-        .exit = pdm_bus_debug_fs_exit,
-    },
-    {
-        .name = "Proc Filesystem",
-        .enable = true,
-        .ignore_failures = true,
-        .init = pdm_bus_proc_fs_init,
-        .exit = pdm_bus_proc_fs_exit,
-    },
-    {
-        .name = "PDM Bus",
-        .enable = true,
-        .ignore_failures = false,
-        .init = pdm_bus_init,
-        .exit = pdm_bus_exit,
-    },
-    {
-        .name = "PDM Device",
-        .enable = true,
-        .ignore_failures = false,
-        .init = pdm_device_init,
-        .exit = pdm_device_exit,
-    },
-    {
-        .name = "PDM Client",
-        .enable = true,
-        .ignore_failures = false,
-        .init = pdm_client_init,
-        .exit = pdm_client_exit,
-    },
-    {
-        .name = "PDM Adapter",
-        .enable = true,
-        .ignore_failures = false,
-        .init = pdm_adapter_init,
-        .exit = pdm_adapter_exit,
-    },
-    {  .name = NULL }
+	{
+		.name = "Debug Filesystem",
+		.enable = true,
+		.ignore_failures = true,
+		.init = pdm_bus_debug_fs_init,
+		.exit = pdm_bus_debug_fs_exit,
+	},
+	{
+		.name = "Proc Filesystem",
+		.enable = true,
+		.ignore_failures = true,
+		.init = pdm_bus_proc_fs_init,
+		.exit = pdm_bus_proc_fs_exit,
+	},
+	{
+		.name = "PDM Bus",
+		.enable = true,
+		.ignore_failures = false,
+		.init = pdm_bus_init,
+		.exit = pdm_bus_exit,
+	},
+	{
+		.name = "PDM Device",
+		.enable = true,
+		.ignore_failures = false,
+		.init = pdm_device_init,
+		.exit = pdm_device_exit,
+	},
+	{
+		.name = "PDM Client",
+		.enable = true,
+		.ignore_failures = false,
+		.init = pdm_client_init,
+		.exit = pdm_client_exit,
+	},
+	{
+		.name = "PDM Adapter",
+		.enable = true,
+		.ignore_failures = false,
+		.init = pdm_adapter_init,
+		.exit = pdm_adapter_exit,
+	},
+	{  .name = NULL }
 };
 
 /**
@@ -172,22 +172,22 @@ static struct pdm_component pdm_core_components[] = {
  */
 static int __init pdm_init(void)
 {
-    int status;
-    struct pdm_component_params params = {
-        .components = pdm_core_components,
-        .count = ARRAY_SIZE(pdm_core_components),
-        .list = &pdm_core_component_list,
-    };
+	int status;
+	struct pdm_component_params params = {
+		.components = pdm_core_components,
+		.count = ARRAY_SIZE(pdm_core_components),
+		.list = &pdm_core_component_list,
+	};
 
-    pdm_show_module_init_info();
-    INIT_LIST_HEAD(&pdm_core_component_list);
-    status = pdm_component_register(&params);
-    if (status < 0) {
-        OSA_ERROR("Failed to register PDM Core Component, error: %d\n", status);
-        return status;
-    }
+	pdm_show_module_init_info();
+	INIT_LIST_HEAD(&pdm_core_component_list);
+	status = pdm_component_register(&params);
+	if (status < 0) {
+		OSA_ERROR("Failed to register PDM Core Component, error: %d\n", status);
+		return status;
+	}
 
-    return 0;
+	return 0;
 }
 
 /**
@@ -197,8 +197,8 @@ static int __init pdm_init(void)
  */
 static void __exit pdm_exit(void)
 {
-    pdm_show_module_exit_info();
-    pdm_component_unregister(&pdm_core_component_list);
+	pdm_show_module_exit_info();
+	pdm_component_unregister(&pdm_core_component_list);
 }
 
 module_init(pdm_init);

@@ -20,28 +20,28 @@ static struct list_head pdm_device_driver_list;
  * Each `pdm_component` structure contains the driver's name, init and exit functions.
  */
 static struct pdm_component pdm_device_drivers[] = {
-    {
-        .name = "SPI PDM Device",
-        .enable = true,
-        .ignore_failures = true,
-        .init = pdm_device_spi_driver_init,
-        .exit = pdm_device_spi_driver_exit
-    },
-    {
-        .name = "I2C PDM Device",
-        .enable = true,
-        .ignore_failures = true,
-        .init = pdm_device_i2c_driver_init,
-        .exit = pdm_device_i2c_driver_exit
-    },
-    {
-        .name = "PLATFORM PDM Device",
-        .enable = true,
-        .ignore_failures = true,
-        .init = pdm_device_platform_driver_init,
-        .exit = pdm_device_platform_driver_exit
-    },
-    { }
+	{
+		.name = "SPI PDM Device",
+		.enable = true,
+		.ignore_failures = true,
+		.init = pdm_device_spi_driver_init,
+		.exit = pdm_device_spi_driver_exit
+	},
+	{
+		.name = "I2C PDM Device",
+		.enable = true,
+		.ignore_failures = true,
+		.init = pdm_device_i2c_driver_init,
+		.exit = pdm_device_i2c_driver_exit
+	},
+	{
+		.name = "PLATFORM PDM Device",
+		.enable = true,
+		.ignore_failures = true,
+		.init = pdm_device_platform_driver_init,
+		.exit = pdm_device_platform_driver_exit
+	},
+	{ }
 };
 
 /**
@@ -54,11 +54,11 @@ static struct pdm_component pdm_device_drivers[] = {
  */
 static int pdm_device_verify(struct pdm_device *pdmdev)
 {
-    if (!pdmdev || !pdmdev->dev.parent) {
-        OSA_ERROR("%s is null\n", !pdmdev ? "pdmdev" : "parent");
-        return -EINVAL;
-    }
-    return 0;
+	if (!pdmdev || !pdmdev->dev.parent) {
+		OSA_ERROR("%s is null\n", !pdmdev ? "pdmdev" : "parent");
+		return -EINVAL;
+	}
+	return 0;
 }
 
 /**
@@ -74,11 +74,11 @@ static int pdm_device_uevent(struct device *dev, struct kobj_uevent_env *env)
 static int pdm_device_uevent(const struct device *dev, struct kobj_uevent_env *env)
 #endif
 {
-    struct pdm_device *pdmdev = dev_to_pdm_device(dev);
-    if (pdm_device_verify(pdmdev)) {
-        return -EINVAL;
-    }
-    return add_uevent_var(env, "MODALIAS=%s", dev_name(dev));
+	struct pdm_device *pdmdev = dev_to_pdm_device(dev);
+	if (pdm_device_verify(pdmdev)) {
+		return -EINVAL;
+	}
+	return add_uevent_var(env, "MODALIAS=%s", dev_name(dev));
 }
 
 /**
@@ -92,12 +92,12 @@ static int pdm_device_uevent(const struct device *dev, struct kobj_uevent_env *e
  */
 static ssize_t name_show(struct device *dev, struct device_attribute *da, char *buf)
 {
-    struct pdm_device *pdmdev = dev_to_pdm_device(dev);
-    if (pdm_device_verify(pdmdev)) {
-        return -EINVAL;
-    }
+	struct pdm_device *pdmdev = dev_to_pdm_device(dev);
+	if (pdm_device_verify(pdmdev)) {
+		return -EINVAL;
+	}
 
-    return sysfs_emit(buf, "%s\n", dev_name(dev));
+	return sysfs_emit(buf, "%s\n", dev_name(dev));
 }
 static DEVICE_ATTR_RO(name);
 
@@ -109,8 +109,8 @@ static DEVICE_ATTR_RO(name);
  * 使用 `ATTRIBUTE_GROUPS` 宏将属性数组转换为属性组，以便在设备模型中注册。
  */
 static struct attribute *pdm_device_attrs[] = {
-    &dev_attr_name.attr,
-    NULL,
+	&dev_attr_name.attr,
+	NULL,
 };
 ATTRIBUTE_GROUPS(pdm_device);
 
@@ -123,17 +123,17 @@ ATTRIBUTE_GROUPS(pdm_device);
  */
 static void pdm_device_release(struct device *dev)
 {
-    kfree(dev_to_pdm_device(dev));
+	kfree(dev_to_pdm_device(dev));
 }
 
 /**
  * pdm_device_type - PDM设备类型
  */
 static const struct device_type pdm_device_type = {
-    .name   = "pdm_device",
-    .groups = pdm_device_groups,
-    .release = pdm_device_release,
-    .uevent = pdm_device_uevent,
+	.name   = "pdm_device",
+	.groups = pdm_device_groups,
+	.release = pdm_device_release,
+	.uevent = pdm_device_uevent,
 };
 
 /**
@@ -145,21 +145,21 @@ static const struct device_type pdm_device_type = {
  */
 static int pdm_device_drivers_register(void)
 {
-    int status;
-    struct pdm_component_params params = {
-        .components = pdm_device_drivers,
-        .count = ARRAY_SIZE(pdm_device_drivers),
-        .list = &pdm_device_driver_list,
-    };
+	int status;
+	struct pdm_component_params params = {
+		.components = pdm_device_drivers,
+		.count = ARRAY_SIZE(pdm_device_drivers),
+		.list = &pdm_device_driver_list,
+	};
 
-    INIT_LIST_HEAD(&pdm_device_driver_list);
-    status = pdm_component_register(&params);
-    if (status < 0) {
-        OSA_ERROR("Failed to register PDM Device Drivers, error: %d\n", status);
-        return status;
-    }
+	INIT_LIST_HEAD(&pdm_device_driver_list);
+	status = pdm_component_register(&params);
+	if (status < 0) {
+		OSA_ERROR("Failed to register PDM Device Drivers, error: %d\n", status);
+		return status;
+	}
 
-    return 0;
+	return 0;
 }
 
 /**
@@ -169,7 +169,7 @@ static int pdm_device_drivers_register(void)
  */
 static void pdm_device_drivers_unregister(void)
 {
-    pdm_component_unregister(&pdm_device_driver_list);
+	pdm_component_unregister(&pdm_device_driver_list);
 }
 
 /**
@@ -179,34 +179,34 @@ static void pdm_device_drivers_unregister(void)
  */
 struct pdm_device *pdm_device_alloc(struct device *dev)
 {
-    struct pdm_device *pdmdev;
-    int index;
+	struct pdm_device *pdmdev;
+	int index;
 
-    if (!dev) {
-        return ERR_PTR(-EINVAL);
-    }
+	if (!dev) {
+		return ERR_PTR(-EINVAL);
+	}
 
-    index = ida_alloc(&pdm_device_ida, GFP_KERNEL);
-    if (index < 0) {
-        return ERR_PTR(index);
-    }
+	index = ida_alloc(&pdm_device_ida, GFP_KERNEL);
+	if (index < 0) {
+		return ERR_PTR(index);
+	}
 
-    pdmdev = kzalloc(ALIGN(sizeof(struct pdm_device), 8), GFP_KERNEL);
-    if (!pdmdev) {
-        OSA_ERROR("Failed to allocate memory for PDM device\n");
-        return ERR_PTR(-ENOMEM);
-    }
+	pdmdev = kzalloc(ALIGN(sizeof(struct pdm_device), 8), GFP_KERNEL);
+	if (!pdmdev) {
+		OSA_ERROR("Failed to allocate memory for PDM device\n");
+		return ERR_PTR(-ENOMEM);
+	}
 
-    pdmdev->index = index;
+	pdmdev->index = index;
 
-    pdmdev->dev.parent = dev;
-    pdmdev->dev.bus = &pdm_bus_type;
-    pdmdev->dev.type = &pdm_device_type;
-    device_initialize(&pdmdev->dev);
+	pdmdev->dev.parent = dev;
+	pdmdev->dev.bus = &pdm_bus_type;
+	pdmdev->dev.type = &pdm_device_type;
+	device_initialize(&pdmdev->dev);
 
-    dev_set_name(&pdmdev->dev, "pdmdev%u", pdmdev->index);
+	dev_set_name(&pdmdev->dev, "pdmdev%u", pdmdev->index);
 
-    return pdmdev;
+	return pdmdev;
 }
 
 /**
@@ -218,10 +218,10 @@ struct pdm_device *pdm_device_alloc(struct device *dev)
  */
 void pdm_device_free(struct pdm_device *pdmdev)
 {
-    if (pdmdev) {
-        ida_free(&pdm_device_ida, pdmdev->index);
-        pdm_device_put(pdmdev);
-    }
+	if (pdmdev) {
+		ida_free(&pdm_device_ida, pdmdev->index);
+		pdm_device_put(pdmdev);
+	}
 }
 
 /**
@@ -235,24 +235,24 @@ void pdm_device_free(struct pdm_device *pdmdev)
  */
 int pdm_device_register(struct pdm_device *pdmdev)
 {
-    int status;
+	int status;
 
-    if (pdm_device_verify(pdmdev)) {
-        return -EINVAL;
-    }
+	if (pdm_device_verify(pdmdev)) {
+		return -EINVAL;
+	}
 
-    if (pdm_bus_find_device_by_parent(pdmdev->dev.parent)) {
-        OSA_ERROR("Device with parent %s already exists: %s\n", dev_name(pdmdev->dev.parent), dev_name(&pdmdev->dev));
-        return -EEXIST;
-    }
+	if (pdm_bus_find_device_by_parent(pdmdev->dev.parent)) {
+		OSA_ERROR("Device with parent %s already exists: %s\n", dev_name(pdmdev->dev.parent), dev_name(&pdmdev->dev));
+		return -EEXIST;
+	}
 
-    status = device_add(&pdmdev->dev);
-    if (status) {
-        OSA_ERROR("Failed to add device %s, error: %d\n", dev_name(&pdmdev->dev), status);
-        return status;
-    }
+	status = device_add(&pdmdev->dev);
+	if (status) {
+		OSA_ERROR("Failed to add device %s, error: %d\n", dev_name(&pdmdev->dev), status);
+		return status;
+	}
 
-    return 0;
+	return 0;
 }
 
 /**
@@ -264,9 +264,9 @@ int pdm_device_register(struct pdm_device *pdmdev)
  */
 void pdm_device_unregister(struct pdm_device *pdmdev)
 {
-    if (pdmdev) {
-        device_del(&pdmdev->dev);
-    }
+	if (pdmdev) {
+		device_del(&pdmdev->dev);
+	}
 }
 
 /**
@@ -278,17 +278,17 @@ void pdm_device_unregister(struct pdm_device *pdmdev)
  */
 int pdm_device_init(void)
 {
-    int status;
+	int status;
 
-    ida_init(&pdm_device_ida);
+	ida_init(&pdm_device_ida);
 
-    status = pdm_device_drivers_register();
-    if (status < 0) {
-        OSA_ERROR("Failed to register PDM Device Drivers, error: %d\n", status);
-        return status;
-    }
+	status = pdm_device_drivers_register();
+	if (status < 0) {
+		OSA_ERROR("Failed to register PDM Device Drivers, error: %d\n", status);
+		return status;
+	}
 
-    return 0;
+	return 0;
 }
 
 /**
@@ -298,9 +298,9 @@ int pdm_device_init(void)
  */
 void pdm_device_exit(void)
 {
-    pdm_device_drivers_unregister();
+	pdm_device_drivers_unregister();
 
-    ida_destroy(&pdm_device_ida);
+	ida_destroy(&pdm_device_ida);
 }
 
 MODULE_LICENSE("GPL");

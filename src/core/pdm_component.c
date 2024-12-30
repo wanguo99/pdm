@@ -14,24 +14,24 @@
  */
 static int pdm_component_register_single(struct pdm_component *driver, struct list_head *list)
 {
-    const char *name = driver->name ? driver->name : "Unknown";
-    int status = 0;
+	const char *name = driver->name ? driver->name : "Unknown";
+	int status = 0;
 
-    if (driver->enable && driver->init) {
-        status = driver->init();
-        if (status) {
-            if (driver->ignore_failures) {
-                OSA_WARN("Failed to register component <%s>, status = %d\n", name, status);
-                return 0;
-            } else {
-                OSA_ERROR("Failed to register component <%s>, status = %d\n", name, status);
-                return status;
-            }
-        }
-    }
+	if (driver->enable && driver->init) {
+		status = driver->init();
+		if (status) {
+			if (driver->ignore_failures) {
+				OSA_WARN("Failed to register component <%s>, status = %d\n", name, status);
+				return 0;
+			} else {
+				OSA_ERROR("Failed to register component <%s>, status = %d\n", name, status);
+				return status;
+			}
+		}
+	}
 
-    list_add_tail(&driver->entry, list);
-    return 0;
+	list_add_tail(&driver->entry, list);
+	return 0;
 }
 
 
@@ -45,11 +45,11 @@ static int pdm_component_register_single(struct pdm_component *driver, struct li
  */
 static void pdm_component_unregister_single(struct pdm_component *driver)
 {
-    list_del(&driver->entry);
+	list_del(&driver->entry);
 
-    if (driver->enable && driver->exit) {
-        driver->exit();
-    }
+	if (driver->enable && driver->exit) {
+		driver->exit();
+	}
 }
 
 /**
@@ -61,16 +61,16 @@ static void pdm_component_unregister_single(struct pdm_component *driver)
  */
 void pdm_component_unregister(struct list_head *list)
 {
-    struct pdm_component *driver, *tmp;
+	struct pdm_component *driver, *tmp;
 
-    if (!list || list_empty(list)) {
-        OSA_ERROR("Invalid or uninitialized list pointer\n");
-        return;
-    }
+	if (!list || list_empty(list)) {
+		OSA_ERROR("Invalid or uninitialized list pointer\n");
+		return;
+	}
 
-    list_for_each_entry_safe_reverse(driver, tmp, list, entry) {
-        pdm_component_unregister_single(driver);
-    }
+	list_for_each_entry_safe_reverse(driver, tmp, list, entry) {
+		pdm_component_unregister_single(driver);
+	}
 }
 
 /**
@@ -86,21 +86,21 @@ void pdm_component_unregister(struct list_head *list)
  */
 int pdm_component_register(struct pdm_component_params *params)
 {
-    int i, status = 0;
+	int i, status = 0;
 
-    if (!params || !params->components || params->count <= 0 || !params->list) {
-        OSA_ERROR("Invalid input parameters\n");
-        return -EINVAL;
-    }
+	if (!params || !params->components || params->count <= 0 || !params->list) {
+		OSA_ERROR("Invalid input parameters\n");
+		return -EINVAL;
+	}
 
-    for (i = 0; i < params->count; i++) {
-        status = pdm_component_register_single(&params->components[i], params->list);
-        if (status) {
-            pdm_component_unregister(params->list);
-            return status;
-        }
-    }
-    return 0;
+	for (i = 0; i < params->count; i++) {
+		status = pdm_component_register_single(&params->components[i], params->list);
+		if (status) {
+			pdm_component_unregister(params->list);
+			return status;
+		}
+	}
+	return 0;
 }
 
 MODULE_LICENSE("GPL");

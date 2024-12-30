@@ -13,25 +13,25 @@ static int pdm_nvmem_regmap_spi_read_reg(struct pdm_client *client, unsigned int
 	char *buf = val;
 	int status;
 
-    spi_message_init(&m);
-    memset(t, 0, sizeof(t));
+	spi_message_init(&m);
+	memset(t, 0, sizeof(t));
 
-    t[0].tx_buf = &cmd;
-    t[0].len = 1;
-    spi_message_add_tail(&t[0], &m);
+	t[0].tx_buf = &cmd;
+	t[0].len = 1;
+	spi_message_add_tail(&t[0], &m);
 
-    t[1].rx_buf = buf;
-    t[1].len = 1;
-    spi_message_add_tail(&t[1], &m);
+	t[1].rx_buf = buf;
+	t[1].len = 1;
+	spi_message_add_tail(&t[1], &m);
 
-    status = spi_sync(client->hardware.spi.spidev, &m);
+	status = spi_sync(client->hardware.spi.spidev, &m);
 
-    return 0;
+	return 0;
 }
 
 static int pdm_nvmem_regmap_spi_write_reg(struct pdm_client *client, unsigned int offset, void *val, size_t bytes)
 {
-    return 0;
+	return 0;
 }
 
 /**
@@ -41,34 +41,34 @@ static int pdm_nvmem_regmap_spi_write_reg(struct pdm_client *client, unsigned in
  * This structure defines the operation functions for a PDM NVMEM device using SPI.
  */
 static const struct pdm_nvmem_operations pdm_nvmem_ops_regmap_spi = {
-    .read_reg = pdm_nvmem_regmap_spi_read_reg,
-    .write_reg = pdm_nvmem_regmap_spi_write_reg,
+	.read_reg = pdm_nvmem_regmap_spi_read_reg,
+	.write_reg = pdm_nvmem_regmap_spi_write_reg,
 };
 
 static int pdm_nvmem_regmap_spi_init(struct pdm_client *client)
 {
-    struct pdm_nvmem_priv *nvmem_priv;
-    struct regmap_config regmap_config;
-    struct regmap *regmap;
+	struct pdm_nvmem_priv *nvmem_priv;
+	struct regmap_config regmap_config;
+	struct regmap *regmap;
 
-    nvmem_priv = pdm_client_get_private_data(client);
-    if (!nvmem_priv) {
-        OSA_ERROR("Get PDM Client DevData Failed\n");
-        return -ENOMEM;
-    }
-    nvmem_priv->ops = &pdm_nvmem_ops_regmap_spi;
+	nvmem_priv = pdm_client_get_private_data(client);
+	if (!nvmem_priv) {
+		OSA_ERROR("Get PDM Client DevData Failed\n");
+		return -ENOMEM;
+	}
+	nvmem_priv->ops = &pdm_nvmem_ops_regmap_spi;
 
-    memset(&regmap_config, 0, sizeof(regmap_config));
-    regmap_config.val_bits = 8;
-    regmap_config.reg_bits = 8;
-    regmap_config.disable_locking = true;
+	memset(&regmap_config, 0, sizeof(regmap_config));
+	regmap_config.val_bits = 8;
+	regmap_config.reg_bits = 8;
+	regmap_config.disable_locking = true;
 
-    regmap = devm_regmap_init_spi(client->hardware.spi.spidev, &regmap_config);
-    if (IS_ERR(regmap)) {
-        return PTR_ERR(regmap);
-    }
+	regmap = devm_regmap_init_spi(client->hardware.spi.spidev, &regmap_config);
+	if (IS_ERR(regmap)) {
+		return PTR_ERR(regmap);
+	}
 
-    return 0;
+	return 0;
 }
 
 /**
@@ -81,28 +81,28 @@ static int pdm_nvmem_regmap_spi_init(struct pdm_client *client)
  */
 int pdm_nvmem_spi_setup(struct pdm_client *client)
 {
-    struct device_node *np;
-    int status;
+	struct device_node *np;
+	int status;
 
-    if (!client) {
-        OSA_ERROR("Invalid client\n");
-    }
+	if (!client) {
+		OSA_ERROR("Invalid client\n");
+	}
 
-    np = pdm_client_get_of_node(client);
-    if (!np) {
-        OSA_ERROR("No DT node found\n");
-        return -EINVAL;
-    }
+	np = pdm_client_get_of_node(client);
+	if (!np) {
+		OSA_ERROR("No DT node found\n");
+		return -EINVAL;
+	}
 
-    if (of_get_property(np, "enable-regmap", NULL)) {
-        OSA_INFO("No default-state property found, using defaults as off\n");
-        status = pdm_nvmem_regmap_spi_init(client);
-        if (status) {
-            OSA_ERROR("pdm_nvmem_regmap_spi_init failed, status: %d\n", status);
-            return status;
-        }
-    }
+	if (of_get_property(np, "enable-regmap", NULL)) {
+		OSA_INFO("No default-state property found, using defaults as off\n");
+		status = pdm_nvmem_regmap_spi_init(client);
+		if (status) {
+			OSA_ERROR("pdm_nvmem_regmap_spi_init failed, status: %d\n", status);
+			return status;
+		}
+	}
 
-    OSA_DEBUG("SPI NVMEM Setup: %s\n", dev_name(&client->dev));
-    return 0;
+	OSA_DEBUG("SPI NVMEM Setup: %s\n", dev_name(&client->dev));
+	return 0;
 }

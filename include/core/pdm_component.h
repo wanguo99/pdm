@@ -18,12 +18,12 @@
  * This structure defines the basic information and operation functions for a PDM component.
  */
 struct pdm_component {
-    bool enable;                /**< Whether the driver need loaded. Default is false. Set to true to enable. */
-    bool ignore_failures;       /**< Whether to ignore initialization failures. */
-    const char *name;           /**< Name of the component. */
-    int (*init)(void);          /**< Initialization function for the component. */
-    void (*exit)(void);         /**< Exit function for the component. */
-    struct list_head entry;      /**< List node for management in a linked entry. */
+	bool enable;			/**< Whether the driver need loaded. Default is false. Set to true to enable. */
+	bool ignore_failures;		/**< Whether to ignore initialization failures. */
+	const char *name;		/**< Name of the component. */
+	int (*init)(void);		/**< Initialization function for the component. */
+	void (*exit)(void);		/**< Exit function for the component. */
+	struct list_head entry;		/**< List node for management in a linked entry. */
 };
 
 /**
@@ -33,9 +33,9 @@ struct pdm_component {
  * This structure is used to pass an array of components and other necessary parameters to the registration function.
  */
 struct pdm_component_params {
-    struct pdm_component *components;  /**< Array of components to register. */
-    int count;                         /**< Length of the components array. */
-    struct list_head *list;            /**< Pointer to the head of the component list. */
+	struct pdm_component *components;	/**< Array of components to register. */
+	int count;				/**< Length of the components array. */
+	struct list_head *list;			/**< Pointer to the head of the component list. */
 };
 
 /**

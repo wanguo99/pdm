@@ -10,8 +10,8 @@
  */
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 25)
 struct i2c_device_id {
-    char name[I2C_NAME_SIZE];
-    kernel_ulong_t driver_data;
+	char name[I2C_NAME_SIZE];
+	kernel_ulong_t driver_data;
 };
 #endif
 
@@ -26,26 +26,26 @@ struct i2c_device_id {
  */
 static int pdm_device_i2c_real_probe(struct i2c_client *client, const struct i2c_device_id *id)
 {
-    struct pdm_device *pdmdev;
-    int status;
+	struct pdm_device *pdmdev;
+	int status;
 
-    pdmdev = pdm_device_alloc(&client->dev);
-    if (IS_ERR(pdmdev)) {
-        OSA_ERROR("Failed to allocate pdm_device\n");
-        return PTR_ERR(pdmdev);
-    }
+	pdmdev = pdm_device_alloc(&client->dev);
+	if (IS_ERR(pdmdev)) {
+		OSA_ERROR("Failed to allocate pdm_device\n");
+		return PTR_ERR(pdmdev);
+	}
 
-    status = pdm_device_register(pdmdev);
-    if (status) {
-        OSA_ERROR("Failed to register pdm device, status=%d\n", status);
-        goto err_pdmdev_free;
-    }
+	status = pdm_device_register(pdmdev);
+	if (status) {
+		OSA_ERROR("Failed to register pdm device, status=%d\n", status);
+		goto err_pdmdev_free;
+	}
 
-    return 0;
+	return 0;
 
 err_pdmdev_free:
-    pdm_device_free(pdmdev);
-    return status;
+	pdm_device_free(pdmdev);
+	return status;
 }
 
 /**
@@ -58,11 +58,11 @@ err_pdmdev_free:
  */
 static void pdm_device_i2c_real_remove(struct i2c_client *client)
 {
-    struct pdm_device *pdmdev = pdm_bus_find_device_by_parent(&client->dev);
-    if (pdmdev) {
-        pdm_device_unregister(pdmdev);
-        pdm_device_free(pdmdev);
-    }
+	struct pdm_device *pdmdev = pdm_bus_find_device_by_parent(&client->dev);
+	if (pdmdev) {
+		pdm_device_unregister(pdmdev);
+		pdm_device_free(pdmdev);
+	}
 }
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
@@ -77,7 +77,7 @@ static void pdm_device_i2c_real_remove(struct i2c_client *client)
  */
 static int pdm_device_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id)
 {
-    return pdm_device_i2c_real_probe(client, id);
+	return pdm_device_i2c_real_probe(client, id);
 }
 #else
 /**
@@ -90,7 +90,7 @@ static int pdm_device_i2c_probe(struct i2c_client *client, const struct i2c_devi
  */
 static int pdm_device_i2c_probe(struct i2c_client *client)
 {
-    return pdm_device_i2c_real_probe(client, NULL);
+	return pdm_device_i2c_real_probe(client, NULL);
 }
 #endif
 
@@ -105,8 +105,8 @@ static int pdm_device_i2c_probe(struct i2c_client *client)
  */
 static int pdm_device_i2c_remove(struct i2c_client *client)
 {
-    pdm_device_i2c_real_remove(client);
-    return 0;
+	pdm_device_i2c_real_remove(client);
+	return 0;
 }
 #else
 /**
@@ -118,7 +118,7 @@ static int pdm_device_i2c_remove(struct i2c_client *client)
  */
 static void pdm_device_i2c_remove(struct i2c_client *client)
 {
-    pdm_device_i2c_real_remove(client);
+	pdm_device_i2c_real_remove(client);
 }
 #endif
 
@@ -128,8 +128,8 @@ static void pdm_device_i2c_remove(struct i2c_client *client)
  * Defines the supported I2C device IDs.
  */
 static const struct i2c_device_id pdm_device_i2c_id[] = {
-    { "pdm-device-i2c", 0 },
-    { }
+	{ "pdm-device-i2c", 0 },
+	{ }
 };
 MODULE_DEVICE_TABLE(i2c, pdm_device_i2c_id);
 
@@ -139,8 +139,8 @@ MODULE_DEVICE_TABLE(i2c, pdm_device_i2c_id);
  * Defines the supported DEVICE_TREE compatibility strings.
  */
 static const struct of_device_id pdm_device_i2c_of_match[] = {
-    { .compatible = "pdm-device-i2c" },
-    { }
+	{ .compatible = "pdm-device-i2c" },
+	{ }
 };
 MODULE_DEVICE_TABLE(of, pdm_device_i2c_of_match);
 
@@ -150,14 +150,14 @@ MODULE_DEVICE_TABLE(of, pdm_device_i2c_of_match);
  * Defines the basic information and operation functions of the I2C driver.
  */
 static struct i2c_driver pdm_device_i2c_driver = {
-    .probe = pdm_device_i2c_probe,
-    .remove = pdm_device_i2c_remove,
-    .id_table = pdm_device_i2c_id,
-    .driver = {
-        .name = "pdm-device-i2c",
-        .owner = THIS_MODULE,
-        .of_match_table = pdm_device_i2c_of_match,
-    },
+	.probe = pdm_device_i2c_probe,
+	.remove = pdm_device_i2c_remove,
+	.id_table = pdm_device_i2c_id,
+	.driver = {
+		.name = "pdm-device-i2c",
+		.owner = THIS_MODULE,
+		.of_match_table = pdm_device_i2c_of_match,
+	},
 };
 
 /**
@@ -169,7 +169,7 @@ static struct i2c_driver pdm_device_i2c_driver = {
  */
 int pdm_device_i2c_driver_init(void)
 {
-    return i2c_add_driver(&pdm_device_i2c_driver);
+	return i2c_add_driver(&pdm_device_i2c_driver);
 }
 
 /**
@@ -179,7 +179,7 @@ int pdm_device_i2c_driver_init(void)
  */
 void pdm_device_i2c_driver_exit(void)
 {
-    i2c_del_driver(&pdm_device_i2c_driver);
+	i2c_del_driver(&pdm_device_i2c_driver);
 }
 
 MODULE_LICENSE("GPL");

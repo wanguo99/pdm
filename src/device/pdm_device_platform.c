@@ -16,26 +16,26 @@
  */
 static int pdm_device_platform_probe(struct platform_device *pdev)
 {
-    struct pdm_device *pdmdev;
-    int status;
+	struct pdm_device *pdmdev;
+	int status;
 
-    pdmdev = pdm_device_alloc(&pdev->dev);
-    if (IS_ERR(pdmdev)) {
-        OSA_ERROR("Failed to allocate pdm_device\n");
-        return PTR_ERR(pdmdev);
-    }
+	pdmdev = pdm_device_alloc(&pdev->dev);
+	if (IS_ERR(pdmdev)) {
+		OSA_ERROR("Failed to allocate pdm_device\n");
+		return PTR_ERR(pdmdev);
+	}
 
-    status = pdm_device_register(pdmdev);
-    if (status) {
-        OSA_ERROR("Failed to register pdm device, status=%d\n", status);
-        goto err_pdmdev_free;
-    }
+	status = pdm_device_register(pdmdev);
+	if (status) {
+		OSA_ERROR("Failed to register pdm device, status=%d\n", status);
+		goto err_pdmdev_free;
+	}
 
-    return 0;
+	return 0;
 
 err_pdmdev_free:
-    pdm_device_free(pdmdev);
-    return status;
+	pdm_device_free(pdmdev);
+	return status;
 }
 
 /**
@@ -48,11 +48,11 @@ err_pdmdev_free:
  */
 static void pdm_device_platform_real_remove(struct platform_device *pdev)
 {
-    struct pdm_device *pdmdev = pdm_bus_find_device_by_parent(&pdev->dev);
-    if (pdmdev) {
-        pdm_device_unregister(pdmdev);
-        pdm_device_free(pdmdev);
-    }
+	struct pdm_device *pdmdev = pdm_bus_find_device_by_parent(&pdev->dev);
+	if (pdmdev) {
+		pdm_device_unregister(pdmdev);
+		pdm_device_free(pdmdev);
+	}
 }
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 10, 0)
@@ -66,8 +66,8 @@ static void pdm_device_platform_real_remove(struct platform_device *pdev)
  */
 static int pdm_device_platform_remove(struct platform_device *pdev)
 {
-    pdm_device_platform_real_remove(pdev);
-    return 0;
+	pdm_device_platform_real_remove(pdev);
+	return 0;
 }
 #else
 /**
@@ -79,7 +79,7 @@ static int pdm_device_platform_remove(struct platform_device *pdev)
  */
 static void pdm_device_platform_remove(struct platform_device *pdev)
 {
-    pdm_device_platform_real_remove(pdev);
+	pdm_device_platform_real_remove(pdev);
 }
 #endif
 
@@ -89,9 +89,9 @@ static void pdm_device_platform_remove(struct platform_device *pdev)
  * Defines the supported DEVICE_TREE compatibility strings.
  */
 static const struct of_device_id pdm_device_platform_of_match[] = {
-    { .compatible = "pdm-device-gpio" },
-    { .compatible = "pdm-device-pwm" },
-    { }
+	{ .compatible = "pdm-device-gpio" },
+	{ .compatible = "pdm-device-pwm" },
+	{ }
 };
 MODULE_DEVICE_TABLE(of, pdm_device_platform_of_match);
 
@@ -101,12 +101,12 @@ MODULE_DEVICE_TABLE(of, pdm_device_platform_of_match);
  * Defines the basic information and operation functions of the PLATFORM driver.
  */
 static struct platform_driver pdm_device_platform_driver = {
-    .probe = pdm_device_platform_probe,
-    .remove = pdm_device_platform_remove,
-    .driver = {
-        .name = "pdm-device-platform",
-        .of_match_table = pdm_device_platform_of_match,
-    },
+	.probe = pdm_device_platform_probe,
+	.remove = pdm_device_platform_remove,
+	.driver = {
+		.name = "pdm-device-platform",
+		.of_match_table = pdm_device_platform_of_match,
+	},
 };
 
 /**
@@ -118,7 +118,7 @@ static struct platform_driver pdm_device_platform_driver = {
  */
 int pdm_device_platform_driver_init(void)
 {
-    return platform_driver_register(&pdm_device_platform_driver);
+	return platform_driver_register(&pdm_device_platform_driver);
 }
 
 /**
@@ -128,7 +128,7 @@ int pdm_device_platform_driver_init(void)
  */
 void pdm_device_platform_driver_exit(void)
 {
-    platform_driver_unregister(&pdm_device_platform_driver);
+	platform_driver_unregister(&pdm_device_platform_driver);
 }
 
 MODULE_LICENSE("GPL");

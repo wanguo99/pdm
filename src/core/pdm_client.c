@@ -13,15 +13,15 @@
  */
 static char *pdm_client_devnode(const struct device *dev, umode_t *mode)
 {
-    return kasprintf(GFP_KERNEL, "pdm_client/%s", dev_name(dev));
+	return kasprintf(GFP_KERNEL, "pdm_client/%s", dev_name(dev));
 }
 
 /**
  * @brief PDM Client class.
  */
 static struct class pdm_client_class = {
-    .name = "pdm_client",
-    .devnode = pdm_client_devnode,
+	.name = "pdm_client",
+	.devnode = pdm_client_devnode,
 };
 
 /**
@@ -41,15 +41,15 @@ static dev_t pdm_client_major;
  */
 static int pdm_client_fops_default_open(struct inode *inode, struct file *filp)
 {
-    struct pdm_client *client = container_of(inode->i_cdev, struct pdm_client, cdev);
+	struct pdm_client *client = container_of(inode->i_cdev, struct pdm_client, cdev);
 
-    if (!client) {
-        OSA_ERROR("Invalid client\n");
-        return -EINVAL;
-    }
+	if (!client) {
+		OSA_ERROR("Invalid client\n");
+		return -EINVAL;
+	}
 
-    filp->private_data = client;
-    return 0;
+	filp->private_data = client;
+	return 0;
 }
 
 /**
@@ -64,7 +64,7 @@ static int pdm_client_fops_default_open(struct inode *inode, struct file *filp)
  */
 static int pdm_client_fops_default_release(struct inode *inode, struct file *filp)
 {
-    return 0;
+	return 0;
 }
 
 /**
@@ -81,7 +81,7 @@ static int pdm_client_fops_default_release(struct inode *inode, struct file *fil
  */
 static ssize_t pdm_client_fops_default_read(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
 {
-    return 0;
+	return 0;
 }
 
 /**
@@ -98,7 +98,7 @@ static ssize_t pdm_client_fops_default_read(struct file *filp, char __user *buf,
  */
 static ssize_t pdm_client_fops_default_write(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
 {
-    return count;
+	return count;
 }
 
 /**
@@ -114,8 +114,8 @@ static ssize_t pdm_client_fops_default_write(struct file *filp, const char __use
  */
 static long pdm_client_fops_default_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
-    OSA_INFO("This client does not support ioctl operations\n");
-    return -ENOTSUPP;
+	OSA_INFO("This client does not support ioctl operations\n");
+	return -ENOTSUPP;
 }
 
 /**
@@ -131,13 +131,13 @@ static long pdm_client_fops_default_ioctl(struct file *filp, unsigned int cmd, u
  */
 static long pdm_client_fops_default_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
-    OSA_INFO("pdm_client_fops_default_compat_ioctl for %s\n", dev_name(filp->private_data));
+	OSA_INFO("pdm_client_fops_default_compat_ioctl for %s\n", dev_name(filp->private_data));
 
-    if (_IOC_DIR(cmd) & (_IOC_READ | _IOC_WRITE)) {
-        arg = (unsigned long)compat_ptr(arg);
-    }
+	if (_IOC_DIR(cmd) & (_IOC_READ | _IOC_WRITE)) {
+		arg = (unsigned long)compat_ptr(arg);
+	}
 
-    return filp->f_op->unlocked_ioctl(filp, cmd, arg);
+	return filp->f_op->unlocked_ioctl(filp, cmd, arg);
 }
 
 
@@ -151,40 +151,40 @@ static long pdm_client_fops_default_compat_ioctl(struct file *filp, unsigned int
  */
 static int pdm_client_device_register(struct pdm_client *client)
 {
-    int status;
+	int status;
 
-    if (!client || !client->adapter) {
-        OSA_ERROR("Invalid input parameter\n");
-        return -EINVAL;
-    }
+	if (!client || !client->adapter) {
+		OSA_ERROR("Invalid input parameter\n");
+		return -EINVAL;
+	}
 
-    if (client->pdmdev->index >= PDM_CLIENT_MINORS) {
-        OSA_ERROR("Out of pdm_client minors (%d)\n", client->pdmdev->index);
-        return -ENODEV;
-    }
+	if (client->pdmdev->index >= PDM_CLIENT_MINORS) {
+		OSA_ERROR("Out of pdm_client minors (%d)\n", client->pdmdev->index);
+		return -ENODEV;
+	}
 
-    client->dev.devt = MKDEV(pdm_client_major, client->pdmdev->index);
-    status = dev_set_name(&client->dev, "%s.%d", dev_name(&client->adapter->dev), client->index);
-    if (status) {
-        OSA_ERROR("Failed to set client name, error:%d\n", status);
-        return status;
-    }
+	client->dev.devt = MKDEV(pdm_client_major, client->pdmdev->index);
+	status = dev_set_name(&client->dev, "%s.%d", dev_name(&client->adapter->dev), client->index);
+	if (status) {
+		OSA_ERROR("Failed to set client name, error:%d\n", status);
+		return status;
+	}
 
-    client->fops.open = pdm_client_fops_default_open;
-    client->fops.release = pdm_client_fops_default_release;
-    client->fops.read = pdm_client_fops_default_read;
-    client->fops.write = pdm_client_fops_default_write;
-    client->fops.unlocked_ioctl = pdm_client_fops_default_ioctl;
-    client->fops.compat_ioctl = pdm_client_fops_default_compat_ioctl;
-    cdev_init(&client->cdev, &client->fops);
+	client->fops.open = pdm_client_fops_default_open;
+	client->fops.release = pdm_client_fops_default_release;
+	client->fops.read = pdm_client_fops_default_read;
+	client->fops.write = pdm_client_fops_default_write;
+	client->fops.unlocked_ioctl = pdm_client_fops_default_ioctl;
+	client->fops.compat_ioctl = pdm_client_fops_default_compat_ioctl;
+	cdev_init(&client->cdev, &client->fops);
 
-    status = cdev_device_add(&client->cdev, &client->dev);
-    if (status < 0) {
-        OSA_ERROR("Failed to add char device for %s, error: %d\n", dev_name(&client->dev), status);
-        return status;
-    }
+	status = cdev_device_add(&client->cdev, &client->dev);
+	if (status < 0) {
+		OSA_ERROR("Failed to add char device for %s, error: %d\n", dev_name(&client->dev), status);
+		return status;
+	}
 
-    return 0;
+	return 0;
 }
 
 /**
@@ -196,7 +196,7 @@ static int pdm_client_device_register(struct pdm_client *client)
  */
 static void pdm_client_device_unregister(struct pdm_client *client)
 {
-    cdev_device_del(&client->cdev, &client->dev);
+	cdev_device_del(&client->cdev, &client->dev);
 }
 
 /**
@@ -209,22 +209,22 @@ static void pdm_client_device_unregister(struct pdm_client *client)
  */
 static void devm_pdm_client_unregister(void *data)
 {
-    struct pdm_client *client = data;
+	struct pdm_client *client = data;
 
-    if ((!client) || (!client->adapter)) {
-        OSA_ERROR("Invalid input parameters (adapter: %p, client: %p)\n", client->adapter, client);
-        return;
-    }
+	if ((!client) || (!client->adapter)) {
+		OSA_ERROR("Invalid input parameters (adapter: %p, client: %p)\n", client->adapter, client);
+		return;
+	}
 
-    OSA_INFO("PDM Client Unregistered: %s\n", dev_name(&client->dev));
+	OSA_INFO("PDM Client Unregistered: %s\n", dev_name(&client->dev));
 
-    mutex_lock(&client->adapter->client_list_mutex_lock);
-    list_del(&client->entry);
-    mutex_unlock(&client->adapter->client_list_mutex_lock);
+	mutex_lock(&client->adapter->client_list_mutex_lock);
+	list_del(&client->entry);
+	mutex_unlock(&client->adapter->client_list_mutex_lock);
 
-    pdm_client_device_unregister(client);
-    pdm_adapter_id_free(client->adapter, client);
-    pdm_adapter_put(client->adapter);
+	pdm_client_device_unregister(client);
+	pdm_adapter_id_free(client->adapter, client);
+	pdm_adapter_put(client->adapter);
 }
 
 /**
@@ -239,49 +239,49 @@ static void devm_pdm_client_unregister(void *data)
  */
 int devm_pdm_client_register(struct pdm_adapter *adapter, struct pdm_client *client)
 {
-    int status;
+	int status;
 
-    if (!adapter || !client) {
-        OSA_ERROR("Invalid input parameters (adapter: %p, client: %p)\n", adapter, client);
-        return -EINVAL;
-    }
+	if (!adapter || !client) {
+		OSA_ERROR("Invalid input parameters (adapter: %p, client: %p)\n", adapter, client);
+		return -EINVAL;
+	}
 
-    if (!pdm_adapter_get(adapter)) {
-        OSA_ERROR("Failed to get adapter\n");
-        return -EBUSY;
-    }
+	if (!pdm_adapter_get(adapter)) {
+		OSA_ERROR("Failed to get adapter\n");
+		return -EBUSY;
+	}
 
-    status = pdm_adapter_id_alloc(adapter, client);
-    if (status) {
-        OSA_ERROR("Alloc id for client failed: %d\n", status);
-        goto err_put_adapter;
-    }
+	status = pdm_adapter_id_alloc(adapter, client);
+	if (status) {
+		OSA_ERROR("Alloc id for client failed: %d\n", status);
+		goto err_put_adapter;
+	}
 
-    client->adapter = adapter;
-    status = pdm_client_device_register(client);
-    if (status) {
-        OSA_ERROR("Failed to register device, error: %d\n", status);
-        goto err_free_id;
-    }
+	client->adapter = adapter;
+	status = pdm_client_device_register(client);
+	if (status) {
+		OSA_ERROR("Failed to register device, error: %d\n", status);
+		goto err_free_id;
+	}
 
-    mutex_lock(&adapter->client_list_mutex_lock);
-    list_add_tail(&client->entry, &adapter->client_list);
-    mutex_unlock(&adapter->client_list_mutex_lock);
+	mutex_lock(&adapter->client_list_mutex_lock);
+	list_add_tail(&client->entry, &adapter->client_list);
+	mutex_unlock(&adapter->client_list_mutex_lock);
 
-    status = devm_add_action_or_reset(&client->pdmdev->dev, devm_pdm_client_unregister, client);
-    if (status) {
-        OSA_ERROR("Failed to add devres, error: %d\n", status);
-        return status;
-    }
+	status = devm_add_action_or_reset(&client->pdmdev->dev, devm_pdm_client_unregister, client);
+	if (status) {
+		OSA_ERROR("Failed to add devres, error: %d\n", status);
+		return status;
+	}
 
-    OSA_INFO("PDM Client Registered: %s\n", dev_name(&client->dev));
-    return 0;
+	OSA_INFO("PDM Client Registered: %s\n", dev_name(&client->dev));
+	return 0;
 
 err_free_id:
-    pdm_adapter_id_free(adapter, client);
+	pdm_adapter_id_free(adapter, client);
 err_put_adapter:
-    pdm_adapter_put(adapter);
-    return status;
+	pdm_adapter_put(adapter);
+	return status;
 }
 
 /**
@@ -293,8 +293,8 @@ err_put_adapter:
  */
 static void pdm_client_device_release(struct device *dev)
 {
-    struct pdm_client *client = container_of(dev, struct pdm_client, dev);
-    kfree(client);
+	struct pdm_client *client = container_of(dev, struct pdm_client, dev);
+	kfree(client);
 }
 
 /**
@@ -307,7 +307,7 @@ static void pdm_client_device_release(struct device *dev)
  */
 static void devm_pdm_client_free(void *data)
 {
-    pdm_client_put_device((struct pdm_client *)data);
+	pdm_client_put_device((struct pdm_client *)data);
 }
 
 /**
@@ -322,37 +322,37 @@ static void devm_pdm_client_free(void *data)
  */
 struct pdm_client *devm_pdm_client_alloc(struct pdm_device *pdmdev, unsigned int data_size)
 {
-    struct pdm_client *client;
-    unsigned int client_size = sizeof(struct pdm_client);
-    unsigned int total_size = ALIGN(client_size + data_size, 8);
+	struct pdm_client *client;
+	unsigned int client_size = sizeof(struct pdm_client);
+	unsigned int total_size = ALIGN(client_size + data_size, 8);
 
-    if (!pdmdev) {
-        OSA_ERROR("Invalid pdm_device pointer\n");
-        return ERR_PTR(-EINVAL);
-    }
+	if (!pdmdev) {
+		OSA_ERROR("Invalid pdm_device pointer\n");
+		return ERR_PTR(-EINVAL);
+	}
 
-    client = kzalloc(total_size, GFP_KERNEL);
-    if (!client) {
-        OSA_ERROR("Failed to allocate memory for pdm_client\n");
-        return ERR_PTR(-ENOMEM);
-    }
+	client = kzalloc(total_size, GFP_KERNEL);
+	if (!client) {
+		OSA_ERROR("Failed to allocate memory for pdm_client\n");
+		return ERR_PTR(-ENOMEM);
+	}
 
-    client->dev.class = &pdm_client_class;
-    client->dev.release = pdm_client_device_release;
-    client->dev.parent = &pdmdev->dev;
-    device_initialize(&client->dev);
+	client->dev.class = &pdm_client_class;
+	client->dev.release = pdm_client_device_release;
+	client->dev.parent = &pdmdev->dev;
+	device_initialize(&client->dev);
 
-    pdmdev->client = client;
-    client->pdmdev = pdmdev;
-    if (data_size) {
-        pdm_client_set_private_data(client, (void *)(client + client_size));
-    }
+	pdmdev->client = client;
+	client->pdmdev = pdmdev;
+	if (data_size) {
+		pdm_client_set_private_data(client, (void *)(client + client_size));
+	}
 
-    if (devm_add_action_or_reset(&pdmdev->dev, devm_pdm_client_free, client)) {
-        return ERR_PTR(-ENOMEM);
-    }
+	if (devm_add_action_or_reset(&pdmdev->dev, devm_pdm_client_free, client)) {
+		return ERR_PTR(-ENOMEM);
+	}
 
-    return client;
+	return client;
 }
 
 /**
@@ -366,20 +366,20 @@ struct pdm_client *devm_pdm_client_alloc(struct pdm_device *pdmdev, unsigned int
  */
 const void *pdm_client_get_match_data(struct pdm_client *client)
 {
-    const struct of_device_id *match;
+	const struct of_device_id *match;
 
-    if (!client || !client->pdmdev || !client->pdmdev->dev.driver) {
-        return NULL;
-    }
-    if (!client->pdmdev->dev.driver->of_match_table || !client->pdmdev->dev.parent) {
-        return NULL;
-    }
+	if (!client || !client->pdmdev || !client->pdmdev->dev.driver) {
+		return NULL;
+	}
+	if (!client->pdmdev->dev.driver->of_match_table || !client->pdmdev->dev.parent) {
+		return NULL;
+	}
 
-    match = of_match_device(client->pdmdev->dev.driver->of_match_table, client->pdmdev->dev.parent);
-    if (!match) {
-        return NULL;
-    }
-    return match->data;
+	match = of_match_device(client->pdmdev->dev.driver->of_match_table, client->pdmdev->dev.parent);
+	if (!match) {
+		return NULL;
+	}
+	return match->data;
 }
 
 /**
@@ -393,10 +393,10 @@ const void *pdm_client_get_match_data(struct pdm_client *client)
  */
 struct device_node *pdm_client_get_of_node(struct pdm_client *client)
 {
-    if (!client || !client->pdmdev || !client->pdmdev->dev.parent) {
-        return NULL;
-    }
-    return dev_of_node(client->pdmdev->dev.parent);
+	if (!client || !client->pdmdev || !client->pdmdev->dev.parent) {
+		return NULL;
+	}
+	return dev_of_node(client->pdmdev->dev.parent);
 }
 
 /**
@@ -407,24 +407,24 @@ struct device_node *pdm_client_get_of_node(struct pdm_client *client)
  */
 int pdm_client_setup(struct pdm_client *client)
 {
-    const struct pdm_client_match_data *match_data;
-    int status;
+	const struct pdm_client_match_data *match_data;
+	int status;
 
-    match_data = pdm_client_get_match_data(client);
-    if (!match_data) {
-        OSA_DEBUG("Failed to get match data for device: %s\n", dev_name(&client->dev));
-        return 0;
-    }
+	match_data = pdm_client_get_match_data(client);
+	if (!match_data) {
+		OSA_DEBUG("Failed to get match data for device: %s\n", dev_name(&client->dev));
+		return 0;
+	}
 
-    if (match_data->setup) {
-        status = match_data->setup(client);
-        if (status) {
-            OSA_ERROR("PDM Device Setup Failed, status=%d\n", status);
-            return status;
-        }
-    }
+	if (match_data->setup) {
+		status = match_data->setup(client);
+		if (status) {
+			OSA_ERROR("PDM Device Setup Failed, status=%d\n", status);
+			return status;
+		}
+	}
 
-    return status;
+	return status;
 }
 
 /**
@@ -434,17 +434,17 @@ int pdm_client_setup(struct pdm_client *client)
  */
 void pdm_client_cleanup(struct pdm_client *client)
 {
-    const struct pdm_client_match_data *match_data;
+	const struct pdm_client_match_data *match_data;
 
-    match_data = pdm_client_get_match_data(client);
-    if (!match_data) {
-        OSA_ERROR("Failed to get match data for device\n");
-        return;
-    }
+	match_data = pdm_client_get_match_data(client);
+	if (!match_data) {
+		OSA_ERROR("Failed to get match data for device\n");
+		return;
+	}
 
-    if (match_data->cleanup) {
-        match_data->cleanup(client);
-    }
+	if (match_data->cleanup) {
+		match_data->cleanup(client);
+	}
 }
 
 /**
@@ -456,26 +456,26 @@ void pdm_client_cleanup(struct pdm_client *client)
  */
 int pdm_client_init(void)
 {
-    int status;
-    dev_t dev;
+	int status;
+	dev_t dev;
 
-    status = class_register(&pdm_client_class);
-    if (status < 0) {
-        OSA_ERROR("Failed to register PDM Client Class, error: %d\n", status);
-        return status;
-    }
+	status = class_register(&pdm_client_class);
+	if (status < 0) {
+		OSA_ERROR("Failed to register PDM Client Class, error: %d\n", status);
+		return status;
+	}
 
-    status = alloc_chrdev_region(&dev, 0, PDM_CLIENT_MINORS, PDM_CLIENT_DEVICE_NAME);
-    if (status < 0) {
-        OSA_ERROR("Failed to allocate device region for %s, error: %d\n",
-                  PDM_CLIENT_DEVICE_NAME, status);
-        class_unregister(&pdm_client_class);
-        return status;
-    }
+	status = alloc_chrdev_region(&dev, 0, PDM_CLIENT_MINORS, PDM_CLIENT_DEVICE_NAME);
+	if (status < 0) {
+		OSA_ERROR("Failed to allocate device region for %s, error: %d\n",
+				  PDM_CLIENT_DEVICE_NAME, status);
+		class_unregister(&pdm_client_class);
+		return status;
+	}
 
-    pdm_client_major = MAJOR(dev);
-    OSA_DEBUG("PDM Client Initialized, Major is %d\n", pdm_client_major);
-    return 0;
+	pdm_client_major = MAJOR(dev);
+	OSA_DEBUG("PDM Client Initialized, Major is %d\n", pdm_client_major);
+	return 0;
 }
 
 /**
@@ -485,8 +485,8 @@ int pdm_client_init(void)
  */
 void pdm_client_exit(void)
 {
-    unregister_chrdev_region(MKDEV(pdm_client_major, 0), PDM_CLIENT_MINORS);
-    class_unregister(&pdm_client_class);
+	unregister_chrdev_region(MKDEV(pdm_client_major, 0), PDM_CLIENT_MINORS);
+	class_unregister(&pdm_client_class);
 }
 
 MODULE_LICENSE("GPL");

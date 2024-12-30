@@ -9,9 +9,9 @@
  */
 static int pdm_bus_device_match_parent(struct device *dev, const void *data)
 {
-    struct pdm_device *pdmdev = dev_to_pdm_device(dev);
-    struct device *parent = (struct device *)data;
-    return (pdmdev->dev.parent == parent) ? 1 : 0;
+	struct pdm_device *pdmdev = dev_to_pdm_device(dev);
+	struct device *parent = (struct device *)data;
+	return (pdmdev->dev.parent == parent) ? 1 : 0;
 }
 
 /**
@@ -25,11 +25,11 @@ static int pdm_bus_device_match_parent(struct device *dev, const void *data)
  */
 struct pdm_device *pdm_bus_find_device_by_parent(struct device *parent)
 {
-    struct device *dev = bus_find_device(&pdm_bus_type, NULL, parent, pdm_bus_device_match_parent);
-    if (!dev) {
-        return NULL;
-    }
-    return dev_to_pdm_device(dev);
+	struct device *dev = bus_find_device(&pdm_bus_type, NULL, parent, pdm_bus_device_match_parent);
+	if (!dev) {
+		return NULL;
+	}
+	return dev_to_pdm_device(dev);
 }
 
 /**
@@ -41,20 +41,20 @@ struct pdm_device *pdm_bus_find_device_by_parent(struct device *parent)
  */
 int pdm_bus_register_driver(struct module *owner, struct pdm_driver *driver)
 {
-    int status;
+	int status;
 
-    if (!driver) {
-        return -EINVAL;
-    }
+	if (!driver) {
+		return -EINVAL;
+	}
 
-    driver->driver.owner = owner;
-    driver->driver.bus = &pdm_bus_type;
-    status = driver_register(&driver->driver);
-    if (status) {
-        OSA_ERROR("Failed to register driver [%s], error %d\n", driver->driver.name, status);
-        return status;
-    }
-    return 0;
+	driver->driver.owner = owner;
+	driver->driver.bus = &pdm_bus_type;
+	status = driver_register(&driver->driver);
+	if (status) {
+		OSA_ERROR("Failed to register driver [%s], error %d\n", driver->driver.name, status);
+		return status;
+	}
+	return 0;
 }
 
 /**
@@ -64,10 +64,10 @@ int pdm_bus_register_driver(struct module *owner, struct pdm_driver *driver)
  */
 void pdm_bus_unregister_driver(struct pdm_driver *driver)
 {
-    if (!driver) {
-        return;
-    }
-    driver_unregister(&driver->driver);
+	if (!driver) {
+		return;
+	}
+	driver_unregister(&driver->driver);
 }
 
 /**
@@ -80,21 +80,21 @@ void pdm_bus_unregister_driver(struct pdm_driver *driver)
  */
 static int pdm_bus_device_probe(struct device *dev)
 {
-    struct pdm_device *pdmdev;
-    struct pdm_driver *pdmdrv;
+	struct pdm_device *pdmdev;
+	struct pdm_driver *pdmdrv;
 
-    if (!dev) {
-        return -EINVAL;
-    }
+	if (!dev) {
+		return -EINVAL;
+	}
 
-    pdmdev = dev_to_pdm_device(dev);
-    pdmdrv = drv_to_pdm_driver(dev->driver);
-    if (pdmdev && pdmdrv && pdmdrv->probe) {
-        return pdmdrv->probe(pdmdev);
-    }
+	pdmdev = dev_to_pdm_device(dev);
+	pdmdrv = drv_to_pdm_driver(dev->driver);
+	if (pdmdev && pdmdrv && pdmdrv->probe) {
+		return pdmdrv->probe(pdmdev);
+	}
 
-    OSA_WARN("Driver or device not found or probe function not available\n");
-    return -ENODEV;
+	OSA_WARN("Driver or device not found or probe function not available\n");
+	return -ENODEV;
 }
 
 /**
@@ -106,18 +106,18 @@ static int pdm_bus_device_probe(struct device *dev)
  */
 static void pdm_bus_device_remove(struct device *dev)
 {
-    struct pdm_device *pdmdev;
-    struct pdm_driver *pdmdrv;
+	struct pdm_device *pdmdev;
+	struct pdm_driver *pdmdrv;
 
-    if (!dev) {
-        return;
-    }
+	if (!dev) {
+		return;
+	}
 
-    pdmdev = dev_to_pdm_device(dev);
-    pdmdrv = drv_to_pdm_driver(dev->driver);
-    if (pdmdev && pdmdrv && pdmdrv->remove) {
-        pdmdrv->remove(pdmdev);
-    }
+	pdmdev = dev_to_pdm_device(dev);
+	pdmdrv = drv_to_pdm_driver(dev->driver);
+	if (pdmdev && pdmdrv && pdmdrv->remove) {
+		pdmdrv->remove(pdmdev);
+	}
 }
 
 /**
@@ -131,20 +131,20 @@ static void pdm_bus_device_remove(struct device *dev)
  */
 static int pdm_bus_device_real_match(struct device *dev, const struct device_driver *drv)
 {
-    /* Attempt an OF style match */
-    if (of_driver_match_device(dev->parent, drv)) {
-        return 1;
-    }
-    return 0;
+	/* Attempt an OF style match */
+	if (of_driver_match_device(dev->parent, drv)) {
+		return 1;
+	}
+	return 0;
 }
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 10, 0)
 static int pdm_bus_device_match(struct device *dev, struct device_driver *drv) {
-    return pdm_bus_device_real_match(dev, (const struct device_driver *)drv);
+	return pdm_bus_device_real_match(dev, (const struct device_driver *)drv);
 }
 #else
 static int pdm_bus_device_match(struct device *dev, const struct device_driver *drv) {
-    return pdm_bus_device_real_match(dev, drv);
+	return pdm_bus_device_real_match(dev, drv);
 }
 #endif
 
@@ -158,10 +158,10 @@ struct bus_type pdm_bus_type = {
 #else
 const struct bus_type pdm_bus_type = {
 #endif
-    .name   = "pdm",
-    .probe  = pdm_bus_device_probe,
-    .remove = pdm_bus_device_remove,
-    .match  = pdm_bus_device_match,
+	.name   = "pdm",
+	.probe  = pdm_bus_device_probe,
+	.remove = pdm_bus_device_remove,
+	.match  = pdm_bus_device_match,
 };
 
 /**
@@ -176,16 +176,16 @@ const struct bus_type pdm_bus_type = {
  */
 int pdm_bus_init(void)
 {
-    int status;
+	int status;
 
-    status = bus_register(&pdm_bus_type);
-    if (status < 0) {
-        OSA_ERROR("Failed to register PDM bus, error %d\n", status);
-        return status;
-    }
+	status = bus_register(&pdm_bus_type);
+	if (status < 0) {
+		OSA_ERROR("Failed to register PDM bus, error %d\n", status);
+		return status;
+	}
 
-    OSA_DEBUG("PDM bus initialized\n");
-    return 0;
+	OSA_DEBUG("PDM bus initialized\n");
+	return 0;
 }
 
 /**
@@ -199,8 +199,8 @@ int pdm_bus_init(void)
  */
 void pdm_bus_exit(void)
 {
-    bus_unregister(&pdm_bus_type);
-    OSA_DEBUG("PDM bus unregistered\n");
+	bus_unregister(&pdm_bus_type);
+	OSA_DEBUG("PDM bus unregistered\n");
 }
 
 MODULE_LICENSE("GPL");

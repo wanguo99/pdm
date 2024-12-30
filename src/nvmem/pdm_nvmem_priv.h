@@ -18,10 +18,10 @@
 #define PDM_NVMEM_NAME "pdm_nvmem"
 
 enum pdm_nvmem_command {
-    PDM_NVMEM_CMD_NULL            = 0x0,
-    PDM_NVMEM_CMD_READ_REG        = 0x1,
-    PDM_NVMEM_CMD_WRITE_REG       = 0x2,
-    PDM_NVMEM_CMD_INVALID         = 0xFF
+	PDM_NVMEM_CMD_NULL	= 0x0,
+	PDM_NVMEM_CMD_READ_REG	= 0x1,
+	PDM_NVMEM_CMD_WRITE_REG	= 0x2,
+	PDM_NVMEM_CMD_INVALID	= 0xFF
 };
 
 /**
@@ -32,8 +32,8 @@ enum pdm_nvmem_command {
  * and cleaning up specific types of NVMEM devices.
  */
 struct pdm_nvmem_match_data {
-    int (*setup)(struct pdm_client *client);
-    void (*cleanup)(struct pdm_client *client);
+	int (*setup)(struct pdm_client *client);
+	void (*cleanup)(struct pdm_client *client);
 };
 
 /**
@@ -44,8 +44,8 @@ struct pdm_nvmem_match_data {
  * the NVMEM state (on/off).
  */
 struct pdm_nvmem_operations {
-    int (*read_reg)(struct pdm_client *client, unsigned int offset, void *val, size_t bytes);
-    int (*write_reg)(struct pdm_client *client, unsigned int offset, void *val, size_t bytes);
+	int (*read_reg)(struct pdm_client *client, unsigned int offset, void *val, size_t bytes);
+	int (*write_reg)(struct pdm_client *client, unsigned int offset, void *val, size_t bytes);
 };
 
 /**
@@ -56,9 +56,9 @@ struct pdm_nvmem_operations {
  * operation functions.
  */
 struct pdm_nvmem_priv {
-    const struct pdm_nvmem_operations *ops;  ///< Pointer to operation function callbacks
-    const struct pdm_nvmem_match_data *match_data;
-    void *private_data;
+	const struct pdm_nvmem_operations *ops;		///< Pointer to operation function callbacks
+	const struct pdm_nvmem_match_data *match_data;
+	void *private_data;
 };
 
 /**

@@ -13,26 +13,26 @@
  */
 static int pdm_device_spi_probe(struct spi_device *spi)
 {
-    struct pdm_device *pdmdev;
-    int status;
+	struct pdm_device *pdmdev;
+	int status;
 
-    pdmdev = pdm_device_alloc(&spi->dev);
-    if (IS_ERR(pdmdev)) {
-        OSA_ERROR("Failed to allocate pdm_device\n");
-        return PTR_ERR(pdmdev);
-    }
+	pdmdev = pdm_device_alloc(&spi->dev);
+	if (IS_ERR(pdmdev)) {
+		OSA_ERROR("Failed to allocate pdm_device\n");
+		return PTR_ERR(pdmdev);
+	}
 
-    status = pdm_device_register(pdmdev);
-    if (status) {
-        OSA_ERROR("Failed to register pdm device, status=%d\n", status);
-        goto err_pdmdev_free;
-    }
+	status = pdm_device_register(pdmdev);
+	if (status) {
+		OSA_ERROR("Failed to register pdm device, status=%d\n", status);
+		goto err_pdmdev_free;
+	}
 
-    return 0;
+	return 0;
 
 err_pdmdev_free:
-    pdm_device_free(pdmdev);
-    return status;
+	pdm_device_free(pdmdev);
+	return status;
 }
 
 /**
@@ -45,12 +45,12 @@ err_pdmdev_free:
  */
 static int pdm_device_spi_real_remove(struct spi_device *spi)
 {
-    struct pdm_device *pdmdev = pdm_bus_find_device_by_parent(&spi->dev);
-    if (pdmdev) {
-        pdm_device_unregister(pdmdev);
-        pdm_device_free(pdmdev);
-    }
-    return 0;
+	struct pdm_device *pdmdev = pdm_bus_find_device_by_parent(&spi->dev);
+	if (pdmdev) {
+		pdm_device_unregister(pdmdev);
+		pdm_device_free(pdmdev);
+	}
+	return 0;
 }
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 17, 0)
@@ -64,7 +64,7 @@ static int pdm_device_spi_real_remove(struct spi_device *spi)
  */
 static int pdm_device_spi_remove(struct spi_device *spi)
 {
-    return pdm_device_spi_real_remove(spi);
+	return pdm_device_spi_real_remove(spi);
 }
 #else
 /**
@@ -76,9 +76,9 @@ static int pdm_device_spi_remove(struct spi_device *spi)
  */
 static void pdm_device_spi_remove(struct spi_device *spi)
 {
-    if (pdm_device_spi_real_remove(spi)) {
-        OSA_ERROR("pdm_device_spi_real_remove failed\n");
-    }
+	if (pdm_device_spi_real_remove(spi)) {
+		OSA_ERROR("pdm_device_spi_real_remove failed\n");
+	}
 }
 #endif
 
@@ -88,8 +88,8 @@ static void pdm_device_spi_remove(struct spi_device *spi)
  * Defines the supported SPI device IDs.
  */
 static const struct spi_device_id pdm_device_spi_ids[] = {
-    { .name = "pdm-device-spi" },
-    { }
+	{ .name = "pdm-device-spi" },
+	{ }
 };
 MODULE_DEVICE_TABLE(spi, pdm_device_spi_ids);
 
@@ -99,8 +99,8 @@ MODULE_DEVICE_TABLE(spi, pdm_device_spi_ids);
  * Defines the supported DEVICE_TREE compatibility strings.
  */
 static const struct of_device_id pdm_device_spi_of_match[] = {
-    { .compatible = "pdm-device-spi" },
-    { }
+	{ .compatible = "pdm-device-spi" },
+	{ }
 };
 MODULE_DEVICE_TABLE(of, pdm_device_spi_of_match);
 
@@ -110,13 +110,13 @@ MODULE_DEVICE_TABLE(of, pdm_device_spi_of_match);
  * Defines the basic information and operation functions of the SPI driver.
  */
 static struct spi_driver pdm_device_spi_driver = {
-    .probe = pdm_device_spi_probe,
-    .remove = pdm_device_spi_remove,
-    .id_table = pdm_device_spi_ids,
-    .driver = {
-        .name = "pdm-device-spi",
-        .of_match_table = pdm_device_spi_of_match,
-    },
+	.probe = pdm_device_spi_probe,
+	.remove = pdm_device_spi_remove,
+	.id_table = pdm_device_spi_ids,
+	.driver = {
+		.name = "pdm-device-spi",
+		.of_match_table = pdm_device_spi_of_match,
+	},
 };
 
 /**
@@ -128,7 +128,7 @@ static struct spi_driver pdm_device_spi_driver = {
  */
 int pdm_device_spi_driver_init(void)
 {
-    return spi_register_driver(&pdm_device_spi_driver);
+	return spi_register_driver(&pdm_device_spi_driver);
 }
 
 /**
@@ -138,7 +138,7 @@ int pdm_device_spi_driver_init(void)
  */
 void pdm_device_spi_driver_exit(void)
 {
-    spi_unregister_driver(&pdm_device_spi_driver);
+	spi_unregister_driver(&pdm_device_spi_driver);
 }
 
 MODULE_LICENSE("GPL");

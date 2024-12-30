@@ -6,7 +6,7 @@
  *
  * This is the name used to identify the PDM Client device in the system.
  */
-#define PDM_CLIENT_DEVICE_NAME              "pdm_client"
+#define PDM_CLIENT_DEVICE_NAME			"pdm_client"
 
 /**
  * @brief Minor count for PDM Client devices.
@@ -14,7 +14,7 @@
  * Defines the number of minor devices allowed for PDM Client.
  * MINORMASK is the upper limit minus 1.
  */
-#define PDM_CLIENT_MINORS                   (MINORMASK + 1)
+#define PDM_CLIENT_MINORS			(MINORMASK + 1)
 
 /**
  * @struct pdm_led_match_data
@@ -24,8 +24,8 @@
  * and cleaning up specific types of LED devices.
  */
 struct pdm_client_match_data {
-    int (*setup)(struct pdm_client *client);
-    void (*cleanup)(struct pdm_client *client);
+	int (*setup)(struct pdm_client *client);
+	void (*cleanup)(struct pdm_client *client);
 };
 
 /**
@@ -35,7 +35,7 @@ struct pdm_client_match_data {
  * This structure holds the necessary data for controlling an device via GPIO.
  */
 struct pdm_client_gpio {
-    struct gpio_desc *gpiod;
+	struct gpio_desc *gpiod;
 };
 
 /**
@@ -45,7 +45,7 @@ struct pdm_client_gpio {
  * This structure holds the necessary data for controlling an device via PWM.
  */
 struct pdm_client_pwm {
-    struct pwm_device *pwmdev;
+	struct pwm_device *pwmdev;
 };
 
 /**
@@ -55,7 +55,7 @@ struct pdm_client_pwm {
  * This structure holds the necessary data for controlling an device via SPI.
  */
 struct pdm_client_spi {
-    struct spi_device *spidev;
+	struct spi_device *spidev;
 };
 
 /**
@@ -65,7 +65,7 @@ struct pdm_client_spi {
  * This structure holds the necessary data for controlling an device via I2C.
  */
 struct pdm_client_i2c {
-    struct i2c_client *client;
+	struct i2c_client *client;
 };
 
 /**
@@ -76,10 +76,10 @@ struct pdm_client_i2c {
  * mechanisms (e.g., GPIO or PWM).
  */
 union pdm_client_hardware {
-    struct pdm_client_gpio  gpio;
-    struct pdm_client_pwm   pwm;
-    struct pdm_client_spi   spi;
-    struct pdm_client_i2c   i2c;
+	struct pdm_client_gpio  gpio;
+	struct pdm_client_pwm   pwm;
+	struct pdm_client_spi   spi;
+	struct pdm_client_i2c   i2c;
 };
 
 /**
@@ -89,17 +89,17 @@ union pdm_client_hardware {
  * which is a device that interacts with a PDM (Pulse Density Modulation) adapter.
  */
 struct pdm_client {
-    int index;                                  /**< Client ID allocated by the adapter */
-    bool force_dts_id;                          /**< Flag indicating whether to force ID from Device Tree Source (DTS) */
-    struct pdm_adapter *adapter;                /**< Pointer to the owning PDM Adapter */
-    struct pdm_device *pdmdev;                  /**< Pointer to the PDM Device */
-    struct device dev;                          /**< Kernel device structure, holds device-related info */
-    struct cdev cdev;                           /**< Character device structure for device operations */
-    struct file_operations fops;                /**< File operations structure, defining operations for this device */
-    struct list_head entry;                     /**< List node for linking devices in a linked list */
-    struct regmap *map;                         /**< PDM Client regmap handle. */
-    union pdm_client_hardware hardware;         /**< PDM Client hardware information. */
-    void *priv_data;                            /**< PDM Client private data. */
+	int index;				/**< Client ID allocated by the adapter */
+	bool force_dts_id;			/**< Flag indicating whether to force ID from Device Tree Source (DTS) */
+	struct pdm_adapter *adapter;		/**< Pointer to the owning PDM Adapter */
+	struct pdm_device *pdmdev;		/**< Pointer to the PDM Device */
+	struct device dev;			/**< Kernel device structure, holds device-related info */
+	struct cdev cdev;			/**< Character device structure for device operations */
+	struct file_operations fops;		/**< File operations structure, defining operations for this device */
+	struct list_head entry;			/**< List node for linking devices in a linked list */
+	struct regmap *map;			/**< PDM Client regmap handle. */
+	union pdm_client_hardware hardware;	 /**< PDM Client hardware information. */
+	void *priv_data;			/**< PDM Client private data. */
 };
 
 /**
@@ -109,7 +109,7 @@ struct pdm_client {
  * device in a devres (device resource) context.
  */
 struct pdm_client_devres {
-    struct pdm_client *client;                  /**< Pointer to the associated pdm_client structure */
+	struct pdm_client *client;			/**< Pointer to the associated pdm_client structure */
 };
 
 /**
@@ -133,7 +133,7 @@ struct pdm_client_devres {
  */
 static inline struct pdm_client *pdm_client_get_device(struct pdm_client *client)
 {
-    return client ? to_pdm_client_dev(get_device(&client->dev)) : NULL;
+	return client ? to_pdm_client_dev(get_device(&client->dev)) : NULL;
 }
 
 /**
@@ -145,9 +145,9 @@ static inline struct pdm_client *pdm_client_get_device(struct pdm_client *client
  */
 static inline void pdm_client_put_device(struct pdm_client *client)
 {
-    if (client) {
-        put_device(&client->dev);  /**< Decreases the reference count on the device */
-    }
+	if (client) {
+		put_device(&client->dev);  /**< Decreases the reference count on the device */
+	}
 }
 
 /**
@@ -160,10 +160,10 @@ static inline void pdm_client_put_device(struct pdm_client *client)
  */
 static inline void *pdm_client_get_private_data(struct pdm_client *client)
 {
-    if (!client) {
-        return NULL;
-    }
-    return client->priv_data;
+	if (!client) {
+		return NULL;
+	}
+	return client->priv_data;
 
 }
 
@@ -177,7 +177,7 @@ static inline void *pdm_client_get_private_data(struct pdm_client *client)
  */
 static inline void pdm_client_set_private_data(struct pdm_client *client, void *data)
 {
-    client->priv_data = data;
+	client->priv_data = data;
 }
 
 /**

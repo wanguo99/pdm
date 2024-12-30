@@ -21,8 +21,8 @@
  * strings and driver private data.
  */
 struct pdm_device_id {
-    char compatible[PDM_DEVICE_NAME_SIZE];     /**< Compatibility string: Used for driver matching */
-    kernel_ulong_t driver_data;                /**< Driver private data: Extra info passed to the driver */
+	char compatible[PDM_DEVICE_NAME_SIZE];		/**< Compatibility string: Used for driver matching */
+	kernel_ulong_t driver_data;			/**< Driver private data: Extra info passed to the driver */
 };
 
 /**
@@ -33,10 +33,10 @@ struct pdm_device_id {
  * device IDs and probe/remove callback functions.
  */
 struct pdm_driver {
-    struct device_driver driver;               /**< Kernel device driver structure */
-    const struct pdm_device_id *id_table;      /**< Device ID table: Lists all supported devices */
-    int (*probe)(struct pdm_device *dev);      /**< Probe callback: Called when a matching device is found */
-    void (*remove)(struct pdm_device *dev);    /**< Remove callback: Called when a device is unloaded */
+	struct device_driver driver;			/**< Kernel device driver structure */
+	const struct pdm_device_id *id_table;		/**< Device ID table: Lists all supported devices */
+	int (*probe)(struct pdm_device *dev);		/**< Probe callback: Called when a matching device is found */
+	void (*remove)(struct pdm_device *dev);		/**< Remove callback: Called when a device is unloaded */
 };
 
 /**
