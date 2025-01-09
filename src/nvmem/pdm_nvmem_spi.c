@@ -70,7 +70,7 @@ static int pdm_nvmem_regmap_spi_init(struct pdm_client *client)
  * @param client Pointer to the PDM client structure.
  * @return Returns 0 on success; negative error code on failure.
  */
-int pdm_nvmem_spi_setup(struct pdm_client *client)
+static int pdm_nvmem_spi_setup(struct pdm_client *client)
 {
 	struct device_node *np;
 	int status;
@@ -97,3 +97,11 @@ int pdm_nvmem_spi_setup(struct pdm_client *client)
 	OSA_DEBUG("SPI NVMEM Setup: %s\n", dev_name(&client->dev));
 	return 0;
 }
+
+/**
+ * @brief Match data structure for initializing PWM type DIMMER devices.
+ */
+const struct pdm_client_match_data pdm_nvmem_spi_match_data = {
+	.setup = pdm_nvmem_spi_setup,
+	.cleanup = NULL,
+};

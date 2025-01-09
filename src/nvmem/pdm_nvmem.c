@@ -220,46 +220,6 @@ static ssize_t pdm_nvmem_write(struct file *filp, const char __user *buf, size_t
 }
 
 /**
- * @brief Initializes the NVMEM client using match data.
- *
- * @param client Pointer to the PDM client structure.
- * @return Returns 0 on success; negative error code on failure.
- */
-static int pdm_nvmem_match_setup(struct pdm_client *client)
-{
-	struct pdm_nvmem_priv *nvmem_priv;
-	const void *match_data;
-	int status;
-
-	if (!client) {
-		return -EINVAL;
-	}
-
-	nvmem_priv = pdm_client_get_private_data(client);
-	if (!nvmem_priv) {
-		OSA_ERROR("NVMEM Client get private data is NULL\n");
-		return -ENOMEM;
-	}
-
-	match_data = pdm_client_get_match_data(client);
-	if (!match_data) {
-		OSA_ERROR("Failed to get match data for device\n");
-		return -ENODEV;
-	}
-
-	nvmem_priv->match_data = match_data;
-	if (nvmem_priv->match_data->setup) {
-		status = nvmem_priv->match_data->setup(client);
-		if (status) {
-			OSA_ERROR("NVMEM Client Setup Failed, status=%d\n", status);
-			return status;
-		}
-	}
-
-	return 0;
-}
-
-/**
  * @brief Probes the NVMEM PDM device.
  *
  * This function is called when a PDM device is detected and adds the device to the main device.
@@ -284,9 +244,9 @@ static int pdm_nvmem_device_probe(struct pdm_device *pdmdev)
 		return status;
 	}
 
-	status = pdm_nvmem_match_setup(client);
+	status = pdm_client_setup(client);
 	if (status) {
-		OSA_ERROR("NVMEM Client Setup Failed, status=%d\n", status);
+		OSA_ERROR("DIMMER Client Setup Failed, status=%d\n", status);
 		return status;
 	}
 
@@ -307,25 +267,9 @@ static int pdm_nvmem_device_probe(struct pdm_device *pdmdev)
 static void pdm_nvmem_device_remove(struct pdm_device *pdmdev)
 {
 	if (pdmdev && pdmdev->client) {
-		pdm_nvmem_match_setup(pdmdev->client);
+		pdm_client_cleanup(pdmdev->client);
 	}
 }
-
-/**
- * @brief Match data structure for initializing GPIO type NVMEM devices.
- */
-static const struct pdm_nvmem_match_data pdm_nvmem_spi_match_data = {
-	.setup = pdm_nvmem_spi_setup,
-	.cleanup = NULL,
-};
-
-/**
- * @brief Match data structure for initializing PWM type NVMEM devices.
- */
-static const struct pdm_nvmem_match_data pdm_nvmem_i2c_match_data = {
-	.setup = NULL,
-	.cleanup = NULL,
-};
 
 /**
  * @brief Device tree match table.
@@ -334,7 +278,6 @@ static const struct pdm_nvmem_match_data pdm_nvmem_i2c_match_data = {
  */
 static const struct of_device_id of_pdm_nvmem_match[] = {
 	{ .compatible = "pdm-nvmem-spi",	 .data = &pdm_nvmem_spi_match_data},
-	{ .compatible = "pdm-nvmem-i2c",	 .data = &pdm_nvmem_i2c_match_data},
 	{},
 };
 MODULE_DEVICE_TABLE(of, of_pdm_nvmem_match);

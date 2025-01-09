@@ -18,22 +18,10 @@
 #define PDM_NVMEM_NAME "pdm_nvmem"
 
 enum pdm_nvmem_command {
-	PDM_NVMEM_CMD_NULL	= 0x0,
-	PDM_NVMEM_CMD_READ_REG	= 0x1,
-	PDM_NVMEM_CMD_WRITE_REG	= 0x2,
+	PDM_NVMEM_CMD_NULL	= 0x00,
+	PDM_NVMEM_CMD_READ_REG	= 0x01,
+	PDM_NVMEM_CMD_WRITE_REG	= 0x02,
 	PDM_NVMEM_CMD_INVALID	= 0xFF
-};
-
-/**
- * @struct pdm_nvmem_match_data
- * @brief Match data structure for initializing specific types of NVMEM devices.
- *
- * This structure contains setup and cleanup function pointers for initializing
- * and cleaning up specific types of NVMEM devices.
- */
-struct pdm_nvmem_match_data {
-	int (*setup)(struct pdm_client *client);
-	void (*cleanup)(struct pdm_client *client);
 };
 
 /**
@@ -46,28 +34,12 @@ struct pdm_nvmem_match_data {
 struct pdm_nvmem_priv {
 	int (*read_reg)(struct pdm_client *client, unsigned int offset, void *val, size_t bytes);
 	int (*write_reg)(struct pdm_client *client, unsigned int offset, void *val, size_t bytes);
-	const struct pdm_nvmem_match_data *match_data;
-	void *private_data;
 };
 
-/**
- * @brief Initializes GPIO settings for a PDM NVMEM device.
- *
- * This function initializes the GPIO settings for the specified PDM NVMEM device and sets up the operation functions.
- *
- * @param client Pointer to the PDM client structure representing the NVMEM device.
- * @return Returns 0 on success; negative error code on failure.
- */
-int pdm_nvmem_spi_setup(struct pdm_client *client);
 
 /**
- * @brief Cleans up GPIO settings for a PDM NVMEM device.
- *
- * This function cleans up resources associated with GPIO-controlled NVMEM devices.
- *
- * @param client Pointer to the PDM client structure representing the NVMEM device.
- * @return Returns 0 on success; negative error code on failure.
+ * @brief Match data structure for initializing PWM type DIMMER devices.
  */
-int pdm_nvmem_spi_cleanup(struct pdm_client *client);
+extern const struct pdm_client_match_data pdm_nvmem_spi_match_data;
 
 #endif /* _PDM_NVMEM_PRIV_H_ */
