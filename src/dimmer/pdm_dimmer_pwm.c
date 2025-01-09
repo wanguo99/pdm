@@ -4,18 +4,18 @@
 #include "pdm_dimmer_priv.h"
 
 
-static int pdm_dimmer_pwm_set_brightness(struct pdm_client *client, int brightness)
+static int pdm_dimmer_pwm_set_level(struct pdm_client *client, int level)
 {
 	if (!client || !client->pdmdev) {
 		OSA_ERROR("Invalid client\n");
 		return -EINVAL;
 	}
 
-	OSA_INFO("PWM PDM Dimmer: Set %s brightness to %d\n", dev_name(&client->dev), brightness);
+	OSA_INFO("PWM PDM Dimmer: Set %s level to %d\n", dev_name(&client->dev), level);
 	return 0;
 }
 
-static int pdm_dimmer_pwm_get_brightness(struct pdm_client *client, int *brightness)
+static int pdm_dimmer_pwm_get_level(struct pdm_client *client, int *level)
 {
 	int pwm_value = 0;
 
@@ -24,22 +24,11 @@ static int pdm_dimmer_pwm_get_brightness(struct pdm_client *client, int *brightn
 		return -EINVAL;
 	}
 
-	*brightness = pwm_value;
+	*level = pwm_value;
 
-	OSA_INFO("PWM PDM Dimmer: Get %s brightness: %d\n", dev_name(&client->dev), *brightness);
+	OSA_INFO("PWM PDM Dimmer: Get %s level: %d\n", dev_name(&client->dev), *level);
 	return 0;
 }
-
-/**
- * @struct pdm_dimmer_operations
- * @brief PDM DIMMER device operations structure (PWM version).
- *
- * This structure defines the operation functions for a PDM DIMMER device using PWM.
- */
-static const struct pdm_dimmer_operations pdm_dimmer_ops_pwm = {
-	.set_brightness = pdm_dimmer_pwm_set_brightness,
-	.get_brightness = pdm_dimmer_pwm_get_brightness,
-};
 
 /**
  * @brief Initializes PWM settings for a PDM device.
@@ -67,7 +56,9 @@ static int pdm_dimmer_pwm_setup(struct pdm_client *client)
 		OSA_ERROR("Get PDM Client DevData Failed\n");
 		return -ENOMEM;
 	}
-	dimmer_priv->ops = &pdm_dimmer_ops_pwm;
+
+	dimmer_priv->set_level = pdm_dimmer_pwm_set_level;
+	dimmer_priv->get_level = pdm_dimmer_pwm_get_level;
 
 	np = pdm_client_get_of_node(client);
 	if (!np) {

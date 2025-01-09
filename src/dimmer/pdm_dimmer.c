@@ -6,13 +6,13 @@
 static struct pdm_adapter *dimmer_adapter = NULL;
 
 /**
- * @brief Sets the brightness of a specified PDM DIMMER device.
+ * @brief Sets the level of a specified PDM DIMMER device.
  *
  * @param client Pointer to the PDM client structure.
- * @param brightness Brightness level (0-255).
+ * @param level (0-255).
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_dimmer_set_brightness(struct pdm_client *client, int brightness)
+static int pdm_dimmer_set_level(struct pdm_client *client, int level)
 {
 	struct pdm_dimmer_priv *dimmer_priv;
 	int status = 0;
@@ -22,8 +22,8 @@ static int pdm_dimmer_set_brightness(struct pdm_client *client, int brightness)
 		return -EINVAL;
 	}
 
-	if (brightness < 0 || brightness > 255) {
-		OSA_ERROR("Invalid brightness: %d\n", brightness);
+	if (level < 0 || level > 255) {
+		OSA_ERROR("Invalid level: %d\n", level);
 		return -EINVAL;
 	}
 
@@ -33,14 +33,14 @@ static int pdm_dimmer_set_brightness(struct pdm_client *client, int brightness)
 		return -ENOMEM;
 	}
 
-	if (!dimmer_priv->ops || !dimmer_priv->ops->set_brightness) {
-		OSA_ERROR("set_brightness not supported\n");
+	if (!dimmer_priv->set_level) {
+		OSA_ERROR("set_level not supported\n");
 		return -ENOTSUPP;
 	}
 
-	status = dimmer_priv->ops->set_brightness(client, brightness);
+	status = dimmer_priv->set_level(client, level);
 	if (status) {
-		OSA_ERROR("PDM Dimmer set_brightness failed, status: %d\n", status);
+		OSA_ERROR("PDM Dimmer set_level failed, status: %d\n", status);
 		return status;
 	}
 
@@ -48,18 +48,18 @@ static int pdm_dimmer_set_brightness(struct pdm_client *client, int brightness)
 }
 
 /**
- * @brief Gets the current brightness of a specified PDM DIMMER device.
+ * @brief Gets the current level of a specified PDM DIMMER device.
  *
  * @param client Pointer to the PDM client structure.
- * @param brightness Pointer to store the current brightness.
+ * @param level Pointer to store the current level.
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_dimmer_get_brightness(struct pdm_client *client, int *brightness)
+static int pdm_dimmer_get_level(struct pdm_client *client, int *level)
 {
 	struct pdm_dimmer_priv *dimmer_priv;
 	int status = 0;
 
-	if (!client || !brightness) {
+	if (!client || !level) {
 		OSA_ERROR("Invalid argument\n");
 		return -EINVAL;
 	}
@@ -70,18 +70,18 @@ static int pdm_dimmer_get_brightness(struct pdm_client *client, int *brightness)
 		return -ENOMEM;
 	}
 
-	if (!dimmer_priv->ops || !dimmer_priv->ops->get_brightness) {
-		OSA_ERROR("get_brightness not supported\n");
+	if (!dimmer_priv->get_level) {
+		OSA_ERROR("get_level not supported\n");
 		return -ENOTSUPP;
 	}
 
-	status = dimmer_priv->ops->get_brightness(client, brightness);
+	status = dimmer_priv->get_level(client, level);
 	if (status) {
-		OSA_ERROR("PDM Dimmer get_brightness failed, status: %d\n", status);
+		OSA_ERROR("PDM Dimmer get_level failed, status: %d\n", status);
 		return status;
 	}
 
-	OSA_INFO("Current brightness is %d\n", *brightness);
+	OSA_INFO("Current level is %d\n", *level);
 
 	return 0;
 }
@@ -106,27 +106,27 @@ static long pdm_dimmer_ioctl(struct file *filp, unsigned int cmd, unsigned long 
 	}
 
 	switch (cmd) {
-		case PDM_DIMMER_SET_BRIGHTNESS:
+		case PDM_DIMMER_CMD_SET_LEVEL:
 		{
-			int brightness;
-			if (copy_from_user(&brightness, (void __user *)arg, sizeof(brightness))) {
+			int level;
+			if (copy_from_user(&level, (void __user *)arg, sizeof(level))) {
 				OSA_ERROR("Failed to copy data from user space\n");
 				return -EFAULT;
 			}
-			OSA_INFO("PDM_DIMMER: Set %s's brightness to %d\n", dev_name(&client->dev), brightness);
-			status = pdm_dimmer_set_brightness(client, brightness);
+			OSA_INFO("PDM_DIMMER: Set %s's level to %d\n", dev_name(&client->dev), level);
+			status = pdm_dimmer_set_level(client, level);
 			break;
 		}
-		case PDM_DIMMER_GET_BRIGHTNESS:
+		case PDM_DIMMER_CMD_GET_LEVEL:
 		{
-			int brightness;
-			status = pdm_dimmer_get_brightness(client, &brightness);
+			int level;
+			status = pdm_dimmer_get_level(client, &level);
 			if (status) {
-				OSA_ERROR("Failed to get DIMMER brightness, status: %d\n", status);
+				OSA_ERROR("Failed to get DIMMER level, status: %d\n", status);
 				return status;
 			}
-			OSA_INFO("PDM_DIMMER: Current brightness is %d\n", brightness);
-			if (copy_to_user((void __user *)arg, &brightness, sizeof(brightness))) {
+			OSA_INFO("PDM_DIMMER: Current level is %d\n", level);
+			if (copy_to_user((void __user *)arg, &level, sizeof(level))) {
 				OSA_ERROR("Failed to copy data to user space\n");
 				return -EFAULT;
 			}
@@ -149,7 +149,7 @@ static long pdm_dimmer_ioctl(struct file *filp, unsigned int cmd, unsigned long 
 
 
 /**
- * @brief Reads information about available commands or DIMMER brightness.
+ * @brief Reads information about available commands or DIMMER level.
  *
  * @param filp File pointer.
  * @param buf User buffer to write data into.
@@ -161,8 +161,8 @@ static ssize_t pdm_dimmer_read(struct file *filp, char __user *buf, size_t count
 {
 	const char help_info[] =
 		"Available commands:\n"
-		" > 3 <0-255>  - Set DIMMER brightness\n"
-		" > 4		  - Get current DIMMER brightness\n";
+		" > 1 <0-255>	- Set DIMMER level\n"
+		" > 2		- Get current DIMMER level\n";
 	size_t len = strlen(help_info);
 
 	if (*ppos >= len)
@@ -179,7 +179,7 @@ static ssize_t pdm_dimmer_read(struct file *filp, char __user *buf, size_t count
 }
 
 /**
- * @brief Writes commands to change DIMMER brightness.
+ * @brief Writes commands to change DIMMER level.
  *
  * @param filp File pointer.
  * @param buf User buffer containing command data.
@@ -213,21 +213,9 @@ static ssize_t pdm_dimmer_write(struct file *filp, const char __user *buf, size_
 
 	switch (cmd)
 	{
-		case PDM_DIMMER_CMD_SET_BRIGHTNESS:
+		case PDM_DIMMER_CMD_GET_LEVEL:
 		{
-			if (sscanf(kernel_buf, "%d %d", &cmd, &param) != 2) {
-				OSA_ERROR("Command %d requires one parameter.\n", cmd);
-				return -EINVAL;
-			}
-			break;
-		}
-		case PDM_DIMMER_CMD_GET_BRIGHTNESS:
-		{
-			if (sscanf(kernel_buf, "%d", &cmd) != 1) {
-				OSA_ERROR("Command %d should not have parameters.\n", cmd);
-				return -EINVAL;
-			}
-			param = 0;
+
 			break;
 		}
 		default:
@@ -239,23 +227,32 @@ static ssize_t pdm_dimmer_write(struct file *filp, const char __user *buf, size_
 
 	switch (cmd)
 	{
-		case PDM_DIMMER_CMD_SET_BRIGHTNESS:
+		case PDM_DIMMER_CMD_SET_LEVEL:
 		{
-			if (pdm_dimmer_set_brightness(client, param)) {
-				OSA_ERROR("pdm_dimmer_set_brightness failed\n");
+			if (sscanf(kernel_buf, "%d", &cmd) != 1) {
+				OSA_ERROR("Command %d should not have parameters.\n", cmd);
+				return -EINVAL;
+			}
+			param = 0;
+			if (sscanf(kernel_buf, "%d %d", &cmd, &param) != 2) {
+				OSA_ERROR("Command %d requires one parameter.\n", cmd);
+				return -EINVAL;
+			}
+			if (pdm_dimmer_set_level(client, param)) {
+				OSA_ERROR("pdm_dimmer_set_level failed\n");
 				return -EINVAL;
 			}
 			break;
 		}
-		case PDM_DIMMER_CMD_GET_BRIGHTNESS:
+		case PDM_DIMMER_CMD_GET_LEVEL:
 		{
-			int brightness;
-			if (pdm_dimmer_get_brightness(client, &brightness)) {
-				OSA_ERROR("pdm_dimmer_get_brightness failed\n");
+			int level;
+			if (pdm_dimmer_get_level(client, &level)) {
+				OSA_ERROR("pdm_dimmer_get_level failed\n");
 				return -EINVAL;
 			}
 			char buffer[32];
-			snprintf(buffer, sizeof(buffer), "%d\n", brightness);
+			snprintf(buffer, sizeof(buffer), "%d\n", level);
 			bytes_read = simple_read_from_buffer((void __user *)buf, strlen(buffer), ppos, buffer, strlen(buffer));
 			return bytes_read;
 		}

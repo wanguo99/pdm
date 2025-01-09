@@ -17,11 +17,11 @@
 #define PDM_CLIENT_MINORS			(MINORMASK + 1)
 
 /**
- * @struct pdm_led_match_data
- * @brief Match data structure for initializing specific types of LED devices.
+ * @struct pdm_client_match_data
+ * @brief Match data structure for initializing specific types of PDM Client.
  *
  * This structure contains setup and cleanup function pointers for initializing
- * and cleaning up specific types of LED devices.
+ * and cleaning up specific types of PDM Client.
  */
 struct pdm_client_match_data {
 	int (*setup)(struct pdm_client *client);

@@ -28,12 +28,12 @@ static int pdm_nvmem_read_reg(struct pdm_client *client, unsigned int offset, vo
 		return -ENOMEM;
 	}
 
-	if (!nvmem_priv->ops || !nvmem_priv->ops->read_reg) {
+	if (!nvmem_priv->read_reg) {
 		OSA_ERROR("read_reg not supported\n");
 		return -ENOTSUPP;
 	}
 
-	status = nvmem_priv->ops->read_reg(client, offset, val, bytes);
+	status = nvmem_priv->read_reg(client, offset, val, bytes);
 	if (status) {
 		OSA_ERROR("PDM NVMEM read_reg failed, status: %d\n", status);
 		return status;
@@ -65,12 +65,12 @@ static int pdm_nvmem_write_reg(struct pdm_client *client, unsigned int offset, v
 		return -ENOMEM;
 	}
 
-	if (!nvmem_priv->ops || !nvmem_priv->ops->write_reg) {
+	if (!nvmem_priv->write_reg) {
 		OSA_ERROR("write_reg not supported\n");
 		return -ENOTSUPP;
 	}
 
-	status = nvmem_priv->ops->write_reg(client, offset, val, bytes);
+	status = nvmem_priv->write_reg(client, offset, val, bytes);
 	if (status) {
 		OSA_ERROR("PDM NVMEM write_reg failed, status: %d\n", status);
 		return status;
@@ -127,10 +127,8 @@ static ssize_t pdm_nvmem_read(struct file *filp, char __user *buf, size_t count,
 {
 	const char help_info[] =
 		"Available commands:\n"
-		" > 1 <0|1>	- Set NVMEM state\n"
-		" > 2		  - Get current NVMEM state\n"
-		" > 3 <0-255>  - Set NVMEM brightness\n"
-		" > 4		  - Get current NVMEM brightness\n";
+		" > 1		- Read NVMEM Reg\n"
+		" > 2		- Write NVMEM Reg\n";
 	size_t len = strlen(help_info);
 
 	if (*ppos >= len)
@@ -189,27 +187,7 @@ static ssize_t pdm_nvmem_write(struct file *filp, const char __user *buf, size_t
 				OSA_ERROR("Command %d requires one parameter.\n", cmd);
 				return -EINVAL;
 			}
-			break;
-		}
-		case PDM_NVMEM_CMD_READ_REG:
-		{
-			if (sscanf(kernel_buf, "%d 0x%x", &cmd, &offset) != 2) {
-				OSA_ERROR("Command %d should not have parameters.\n", cmd);
-				return -EINVAL;
-			}
-			break;
-		}
-		default:
-		{
-			OSA_ERROR("Unknown command: %d\n", cmd);
-			return -EINVAL;
-		}
-	}
 
-	switch (cmd)
-	{
-		case PDM_NVMEM_CMD_WRITE_REG:
-		{
 			if (pdm_nvmem_write_reg(client, offset, &value, 1)) {
 				OSA_ERROR("pdm_nvmem_set_state failed\n");
 				return -EINVAL;
@@ -218,6 +196,11 @@ static ssize_t pdm_nvmem_write(struct file *filp, const char __user *buf, size_t
 		}
 		case PDM_NVMEM_CMD_READ_REG:
 		{
+			if (sscanf(kernel_buf, "%d 0x%x", &cmd, &offset) != 2) {
+				OSA_ERROR("Command %d should not have parameters.\n", cmd);
+				return -EINVAL;
+			}
+
 			if (pdm_nvmem_read_reg(client, offset, &value, 1)) {
 				OSA_ERROR("pdm_nvmem_get_state failed\n");
 				return -EINVAL;

@@ -61,17 +61,6 @@ static int pdm_switch_gpio_get_state(struct pdm_client *client, int *state)
 }
 
 /**
- * @struct pdm_switch_operations
- * @brief PDM SWITCH device operations structure (GPIO version).
- *
- * This structure defines the operation functions for a PDM SWITCH device using GPIO.
- */
-static const struct pdm_switch_operations pdm_switch_ops_gpio = {
-	.set_state = pdm_switch_gpio_set_state,
-	.get_state = pdm_switch_gpio_get_state,
-};
-
-/**
  * @brief Initializes GPIO settings for a PDM device.
  *
  * This function initializes the GPIO settings for the specified PDM device and sets up the operation functions.
@@ -98,7 +87,9 @@ static int pdm_switch_gpio_setup(struct pdm_client *client)
 		OSA_ERROR("Get PDM Client DevData Failed\n");
 		return -ENOMEM;
 	}
-	switch_priv->ops = &pdm_switch_ops_gpio;
+
+	switch_priv->set_state = pdm_switch_gpio_set_state;
+	switch_priv->get_state = pdm_switch_gpio_get_state;
 
 	np = pdm_client_get_of_node(client);
 	if (!np) {

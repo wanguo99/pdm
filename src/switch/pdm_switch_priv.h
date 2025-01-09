@@ -19,26 +19,11 @@
 
 enum pdm_switch_command {
 	PDM_SWITCH_CMD_NULL		= 0x0,
-	PDM_SWITCH_CMD_SET_STATE		= 0x1,
-	PDM_SWITCH_CMD_GET_STATE		= 0x2,
-	PDM_SWITCH_CMD_SET_BRIGHTNESS	= 0x3,
-	PDM_SWITCH_CMD_GET_BRIGHTNESS	= 0x4,
+	PDM_SWITCH_CMD_SET_STATE	= 0x1,
+	PDM_SWITCH_CMD_GET_STATE	= 0x2,
 	PDM_SWITCH_CMD_INVALID		= 0xFF
 };
 
-/**
- * @struct pdm_switch_operations
- * @brief PDM SWITCH Device Operations Structure
- *
- * This structure defines the operation functions for a PDM SWITCH device, including setting
- * the SWITCH state (on/off).
- */
-struct pdm_switch_operations {
-	int (*set_state)(struct pdm_client *client, int state);
-	int (*get_state)(struct pdm_client *client, int *state);
-	int (*set_brightness)(struct pdm_client *client, int brightness);
-	int (*get_brightness)(struct pdm_client *client, int *brightness);
-};
 
 /**
  * @struct pdm_switch_priv
@@ -48,8 +33,9 @@ struct pdm_switch_operations {
  * operation functions.
  */
 struct pdm_switch_priv {
-	bool origin_state;			///< Switch origin state
-	const struct pdm_switch_operations *ops;	///< Pointer to operation function callbacks
+	bool origin_state;
+	int (*set_state)(struct pdm_client *client, int state);
+	int (*get_state)(struct pdm_client *client, int *state);
 };
 
 /**

@@ -34,17 +34,6 @@ static int pdm_nvmem_regmap_spi_write_reg(struct pdm_client *client, unsigned in
 	return 0;
 }
 
-/**
- * @struct pdm_nvmem_operations
- * @brief PDM NVMEM device operations structure (SPI version).
- *
- * This structure defines the operation functions for a PDM NVMEM device using SPI.
- */
-static const struct pdm_nvmem_operations pdm_nvmem_ops_regmap_spi = {
-	.read_reg = pdm_nvmem_regmap_spi_read_reg,
-	.write_reg = pdm_nvmem_regmap_spi_write_reg,
-};
-
 static int pdm_nvmem_regmap_spi_init(struct pdm_client *client)
 {
 	struct pdm_nvmem_priv *nvmem_priv;
@@ -56,7 +45,9 @@ static int pdm_nvmem_regmap_spi_init(struct pdm_client *client)
 		OSA_ERROR("Get PDM Client DevData Failed\n");
 		return -ENOMEM;
 	}
-	nvmem_priv->ops = &pdm_nvmem_ops_regmap_spi;
+
+	nvmem_priv->read_reg = pdm_nvmem_regmap_spi_read_reg;
+	nvmem_priv->write_reg = pdm_nvmem_regmap_spi_write_reg;
 
 	memset(&regmap_config, 0, sizeof(regmap_config));
 	regmap_config.val_bits = 8;

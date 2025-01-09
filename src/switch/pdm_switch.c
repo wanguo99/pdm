@@ -29,12 +29,12 @@ static int pdm_switch_set_state(struct pdm_client *client, int state)
 		return -ENOMEM;
 	}
 
-	if (!switch_priv->ops || !switch_priv->ops->set_state) {
+	if (!switch_priv->set_state) {
 		OSA_ERROR("set_state not supported\n");
 		return -ENOTSUPP;
 	}
 
-	status = switch_priv->ops->set_state(client, state);
+	status = switch_priv->set_state(client, state);
 	if (status) {
 		OSA_ERROR("PDM Switch set_state failed, status: %d\n", status);
 		return status;
@@ -66,12 +66,12 @@ static int pdm_switch_get_state(struct pdm_client *client, int *state)
 		return -ENOMEM;
 	}
 
-	if (!switch_priv->ops || !switch_priv->ops->get_state) {
+	if (!switch_priv->get_state) {
 		OSA_ERROR("get_state not supported\n");
 		return -ENOTSUPP;
 	}
 
-	status = switch_priv->ops->get_state(client, state);
+	status = switch_priv->get_state(client, state);
 	if (status) {
 		OSA_ERROR("PDM Switch get_state failed, status: %d\n", status);
 		return status;
@@ -156,7 +156,7 @@ static ssize_t pdm_switch_read(struct file *filp, char __user *buf, size_t count
 	const char help_info[] =
 		"Available commands:\n"
 		" > 1 <0|1>	- Set SWITCH state\n"
-		" > 2		  - Get current SWITCH state\n";
+		" > 2		- Get current SWITCH state\n";
 	size_t len = strlen(help_info);
 
 	if (*ppos >= len)

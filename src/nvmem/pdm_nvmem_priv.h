@@ -37,18 +37,6 @@ struct pdm_nvmem_match_data {
 };
 
 /**
- * @struct pdm_nvmem_operations
- * @brief PDM NVMEM Device Operations Structure
- *
- * This structure defines the operation functions for a PDM NVMEM device, including setting
- * the NVMEM state (on/off).
- */
-struct pdm_nvmem_operations {
-	int (*read_reg)(struct pdm_client *client, unsigned int offset, void *val, size_t bytes);
-	int (*write_reg)(struct pdm_client *client, unsigned int offset, void *val, size_t bytes);
-};
-
-/**
  * @struct pdm_nvmem_priv
  * @brief PDM NVMEM Device Private Data Structure
  *
@@ -56,7 +44,8 @@ struct pdm_nvmem_operations {
  * operation functions.
  */
 struct pdm_nvmem_priv {
-	const struct pdm_nvmem_operations *ops;		///< Pointer to operation function callbacks
+	int (*read_reg)(struct pdm_client *client, unsigned int offset, void *val, size_t bytes);
+	int (*write_reg)(struct pdm_client *client, unsigned int offset, void *val, size_t bytes);
 	const struct pdm_nvmem_match_data *match_data;
 	void *private_data;
 };
