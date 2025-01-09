@@ -205,6 +205,7 @@ static ssize_t pdm_switch_write(struct file *filp, const char __user *buf, size_
 		return -EINVAL;
 	}
 
+
 	switch (cmd)
 	{
 		case PDM_SWITCH_CMD_SET_STATE:
@@ -213,28 +214,6 @@ static ssize_t pdm_switch_write(struct file *filp, const char __user *buf, size_
 				OSA_ERROR("Command %d requires one parameter.\n", cmd);
 				return -EINVAL;
 			}
-			break;
-		}
-		case PDM_SWITCH_CMD_GET_STATE:
-		{
-			if (sscanf(kernel_buf, "%d", &cmd) != 1) {
-				OSA_ERROR("Command %d should not have parameters.\n", cmd);
-				return -EINVAL;
-			}
-			param = 0;
-			break;
-		}
-		default:
-		{
-			OSA_ERROR("Unknown command: %d\n", cmd);
-			return -EINVAL;
-		}
-	}
-
-	switch (cmd)
-	{
-		case PDM_SWITCH_CMD_SET_STATE:
-		{
 			if (param != 0 && param != 1) {
 				OSA_ERROR("Invalid state: %d\n", param);
 				return -EINVAL;
@@ -247,6 +226,11 @@ static ssize_t pdm_switch_write(struct file *filp, const char __user *buf, size_
 		}
 		case PDM_SWITCH_CMD_GET_STATE:
 		{
+			if (sscanf(kernel_buf, "%d", &cmd) != 1) {
+				OSA_ERROR("Command %d should not have parameters.\n", cmd);
+				return -EINVAL;
+			}
+			param = 0;
 			int state;
 			if (pdm_switch_get_state(client, &state)) {
 				OSA_ERROR("pdm_switch_get_state failed\n");

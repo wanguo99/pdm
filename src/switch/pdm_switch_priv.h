@@ -43,11 +43,4 @@ struct pdm_switch_priv {
  */
 extern const struct pdm_client_match_data pdm_switch_gpio_match_data;
 
-/**
- * @brief Match data structure for initializing PWM type SWITCH devices.
- */
-extern const struct pdm_client_match_data pdm_switch_pwm_match_data;
-
-
-
 #endif /* _PDM_SWITCH_PRIV_H_ */

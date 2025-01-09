@@ -36,7 +36,6 @@ struct pdm_nvmem_priv {
 	int (*write_reg)(struct pdm_client *client, unsigned int offset, void *val, size_t bytes);
 };
 
-
 /**
  * @brief Match data structure for initializing PWM type DIMMER devices.
  */

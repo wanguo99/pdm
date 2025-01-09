@@ -98,10 +98,15 @@ static int pdm_nvmem_spi_setup(struct pdm_client *client)
 	return 0;
 }
 
+static void pdm_nvmem_spi_cleanup(struct pdm_client *client)
+{
+	return;
+}
+
 /**
- * @brief Match data structure for initializing PWM type DIMMER devices.
+ * @brief Match data structure for initializing SPI type NVMEM devices.
  */
 const struct pdm_client_match_data pdm_nvmem_spi_match_data = {
 	.setup = pdm_nvmem_spi_setup,
-	.cleanup = NULL,
+	.cleanup = pdm_nvmem_spi_cleanup,
 };

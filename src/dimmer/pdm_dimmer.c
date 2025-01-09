@@ -86,7 +86,6 @@ static int pdm_dimmer_get_level(struct pdm_client *client, int *level)
 	return 0;
 }
 
-
 /**
  * @brief Handles IOCTL commands from user space.
  *
@@ -209,20 +208,6 @@ static ssize_t pdm_dimmer_write(struct file *filp, const char __user *buf, size_
 	if (sscanf(kernel_buf, "%d", &cmd) != 1) {
 		OSA_ERROR("Invalid command format: %s\n", kernel_buf);
 		return -EINVAL;
-	}
-
-	switch (cmd)
-	{
-		case PDM_DIMMER_CMD_GET_LEVEL:
-		{
-
-			break;
-		}
-		default:
-		{
-			OSA_ERROR("Unknown command: %d\n", cmd);
-			return -EINVAL;
-		}
 	}
 
 	switch (cmd)

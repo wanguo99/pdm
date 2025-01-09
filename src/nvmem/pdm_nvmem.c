@@ -98,6 +98,32 @@ static long pdm_nvmem_ioctl(struct file *filp, unsigned int cmd, unsigned long a
 	}
 
 	switch (cmd) {
+		case PDM_NVMEM_CMD_WRITE_REG:
+		{
+			int level;
+			if (copy_from_user(&level, (void __user *)arg, sizeof(level))) {
+				OSA_ERROR("Failed to copy data from user space\n");
+				return -EFAULT;
+			}
+			OSA_INFO("PDM_DIMMER: Set %s's level to %d\n", dev_name(&client->dev), level);
+			status = pdm_nvmem_write_reg(client, 0, 0, 0);
+			break;
+		}
+		case PDM_NVMEM_CMD_READ_REG:
+		{
+			int level;
+			status = pdm_nvmem_read_reg(client, 0, &level, 0);
+			if (status) {
+				OSA_ERROR("Failed to get DIMMER level, status: %d\n", status);
+				return status;
+			}
+			OSA_INFO("PDM_DIMMER: Current level is %d\n", level);
+			if (copy_to_user((void __user *)arg, &level, sizeof(level))) {
+				OSA_ERROR("Failed to copy data to user space\n");
+				return -EFAULT;
+			}
+			break;
+		}
 		default:
 		{
 			OSA_ERROR("Unknown ioctl command\n");
