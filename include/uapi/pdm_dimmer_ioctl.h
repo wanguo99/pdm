@@ -1,0 +1,10 @@
+#ifndef _PDM_DIMMER_IOCTL_H_
+#define _PDM_DIMMER_IOCTL_H_
+
+#define PDM_DIMMER_IOC_MAGIC	'd'
+
+/* IOCTL commands */
+#define PDM_DIMMER_SET_BRIGHTNESS		_IOW(PDM_DIMMER_IOC_MAGIC, 0, int *)
+#define PDM_DIMMER_GET_BRIGHTNESS		_IOW(PDM_DIMMER_IOC_MAGIC, 1, int *)
+
+#endif /* _PDM_DIMMER_IOCTL_H_ */

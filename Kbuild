@@ -19,9 +19,11 @@ $(MODULE_NAME)-objs += src/device/pdm_device_i2c.o \
 	src/device/pdm_device_platform.o \
 	src/device/pdm_device_spi.o
 
-$(MODULE_NAME)-objs += src/led/pdm_led.o \
-	src/led/pdm_led_gpio.o \
-	src/led/pdm_led_pwm.o
+$(MODULE_NAME)-objs += src/switch/pdm_switch.o \
+	src/switch/pdm_switch_gpio.o
+
+$(MODULE_NAME)-objs += src/dimmer/pdm_dimmer.o \
+	src/dimmer/pdm_dimmer_pwm.o
 
 $(MODULE_NAME)-objs += src/nvmem/pdm_nvmem.o \
 	src/nvmem/pdm_nvmem_spi.o

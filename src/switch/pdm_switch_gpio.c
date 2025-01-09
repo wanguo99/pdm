@@ -2,29 +2,29 @@
 #include <linux/gpio.h>
 
 #include "pdm.h"
-#include "pdm_led_priv.h"
+#include "pdm_switch_priv.h"
 
 
-static bool pdm_led_gpio_level_to_state(struct gpio_desc *gpiod, int level)
+static bool pdm_switch_gpio_level_to_state(struct gpio_desc *gpiod, int level)
 {
 	return gpiod_is_active_low(gpiod) ? 1 : 0;
 }
 
-static bool pdm_led_gpio_state_to_level(struct gpio_desc *gpiod, int state)
+static bool pdm_switch_gpio_state_to_level(struct gpio_desc *gpiod, int state)
 {
 	return gpiod_is_active_low(gpiod) ? 1 : 0;
 }
 
 /**
- * @brief Sets the state of a GPIO LED.
+ * @brief Sets the state of a GPIO SWITCH.
  *
- * This function sets the state (on/off) of the specified PDM device's GPIO LED.
+ * This function sets the state (on/off) of the specified PDM device's GPIO SWITCH.
  *
  * @param client Pointer to the PDM client structure.
- * @param state LED state (0 for off, 1 for on).
+ * @param state SWITCH state (0 for off, 1 for on).
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_led_gpio_set_state(struct pdm_client *client, int state)
+static int pdm_switch_gpio_set_state(struct pdm_client *client, int state)
 {
 	struct gpio_desc *gpiod;
 	int gpio_level;
@@ -35,14 +35,14 @@ static int pdm_led_gpio_set_state(struct pdm_client *client, int state)
 	}
 
 	gpiod = client->hardware.gpio.gpiod;
-	gpio_level = pdm_led_gpio_state_to_level(gpiod, state);
+	gpio_level = pdm_switch_gpio_state_to_level(gpiod, state);
 	gpiod_set_value_cansleep(gpiod, gpio_level);
 
-	OSA_INFO("GPIO PDM Led: Set %s state to %d\n", dev_name(&client->dev), state);
+	OSA_INFO("GPIO PDM switch: Set %s state to %d\n", dev_name(&client->dev), state);
 	return 0;
 }
 
-static int pdm_led_gpio_get_state(struct pdm_client *client, int *state)
+static int pdm_switch_gpio_get_state(struct pdm_client *client, int *state)
 {
 	struct gpio_desc *gpiod;
 	int gpio_level;
@@ -54,21 +54,21 @@ static int pdm_led_gpio_get_state(struct pdm_client *client, int *state)
 
 	gpiod = client->hardware.gpio.gpiod;
 	gpio_level = gpiod_get_value_cansleep(gpiod);
-	*state = pdm_led_gpio_level_to_state(gpiod, gpio_level);
+	*state = pdm_switch_gpio_level_to_state(gpiod, gpio_level);
 
-	OSA_INFO("GPIO PDM Led: Get %s state: %d\n", dev_name(&client->dev), *state);
+	OSA_INFO("GPIO PDM switch: Get %s state: %d\n", dev_name(&client->dev), *state);
 	return 0;
 }
 
 /**
- * @struct pdm_led_operations
- * @brief PDM LED device operations structure (GPIO version).
+ * @struct pdm_switch_operations
+ * @brief PDM SWITCH device operations structure (GPIO version).
  *
- * This structure defines the operation functions for a PDM LED device using GPIO.
+ * This structure defines the operation functions for a PDM SWITCH device using GPIO.
  */
-static const struct pdm_led_operations pdm_led_ops_gpio = {
-	.set_state = pdm_led_gpio_set_state,
-	.get_state = pdm_led_gpio_get_state,
+static const struct pdm_switch_operations pdm_switch_ops_gpio = {
+	.set_state = pdm_switch_gpio_set_state,
+	.get_state = pdm_switch_gpio_get_state,
 };
 
 /**
@@ -79,9 +79,9 @@ static const struct pdm_led_operations pdm_led_ops_gpio = {
  * @param client Pointer to the PDM client structure.
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_led_gpio_setup(struct pdm_client *client)
+static int pdm_switch_gpio_setup(struct pdm_client *client)
 {
-	struct pdm_led_priv *led_priv;
+	struct pdm_switch_priv *switch_priv;
 	struct device_node *np;
 	struct gpio_desc *gpiod;
 	const char *default_state;
@@ -93,12 +93,12 @@ static int pdm_led_gpio_setup(struct pdm_client *client)
 		return -EINVAL;
 	}
 
-	led_priv = pdm_client_get_private_data(client);
-	if (!led_priv) {
+	switch_priv = pdm_client_get_private_data(client);
+	if (!switch_priv) {
 		OSA_ERROR("Get PDM Client DevData Failed\n");
 		return -ENOMEM;
 	}
-	led_priv->ops = &pdm_led_ops_gpio;
+	switch_priv->ops = &pdm_switch_ops_gpio;
 
 	np = pdm_client_get_of_node(client);
 	if (!np) {
@@ -119,17 +119,17 @@ static int pdm_led_gpio_setup(struct pdm_client *client)
 	}
 
 	origin_level = gpiod_get_value_cansleep(gpiod);
-	led_priv->origin_state = pdm_led_gpio_level_to_state(gpiod, origin_level);
+	switch_priv->origin_state = pdm_switch_gpio_level_to_state(gpiod, origin_level);
 
 	client->hardware.gpio.gpiod = gpiod;
 
-	OSA_DEBUG("GPIO LED Setup: %s\n", dev_name(&client->dev));
+	OSA_DEBUG("GPIO SWITCH Setup: %s\n", dev_name(&client->dev));
 	return 0;
 }
 
-static void pdm_led_gpio_cleanup(struct pdm_client *client)
+static void pdm_switch_gpio_cleanup(struct pdm_client *client)
 {
-	struct pdm_led_priv *led_priv;
+	struct pdm_switch_priv *switch_priv;
 	struct gpio_desc *gpiod;
 	int origin_level;
 
@@ -137,26 +137,26 @@ static void pdm_led_gpio_cleanup(struct pdm_client *client)
 		return;
 	}
 
-	led_priv = pdm_client_get_private_data(client);
-	if (!led_priv) {
+	switch_priv = pdm_client_get_private_data(client);
+	if (!switch_priv) {
 		OSA_ERROR("Get PDM Client DevData Failed\n");
 		return;
 	}
 	gpiod = client->hardware.gpio.gpiod;
 
-	origin_level = pdm_led_gpio_state_to_level(gpiod, led_priv->origin_state);
+	origin_level = pdm_switch_gpio_state_to_level(gpiod, switch_priv->origin_state);
 	gpiod_set_value_cansleep(gpiod, origin_level);
 	gpiod_put(client->hardware.gpio.gpiod);
 
-	OSA_DEBUG("GPIO LED Cleanup: %s\n", dev_name(&client->dev));
+	OSA_DEBUG("GPIO SWITCH Cleanup: %s\n", dev_name(&client->dev));
 }
 
 
 /**
- * @brief Match data structure for initializing GPIO type LED devices.
+ * @brief Match data structure for initializing GPIO type SWITCH devices.
  */
-const struct pdm_client_match_data pdm_led_gpio_match_data = {
-	.setup = pdm_led_gpio_setup,
-	.cleanup = pdm_led_gpio_cleanup,
+const struct pdm_client_match_data pdm_switch_gpio_match_data = {
+	.setup = pdm_switch_gpio_setup,
+	.cleanup = pdm_switch_gpio_cleanup,
 };
 

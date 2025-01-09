@@ -12,11 +12,18 @@ static struct list_head pdm_adapter_driver_list;
  */
 static struct pdm_component pdm_adapter_drivers[] = {
 	{
-		.name = "LED Adapter",
+		.name = "SWITCH Adapter",
 		.enable = true,
 		.ignore_failures = true,
-		.init = pdm_led_driver_init,
-		.exit = pdm_led_driver_exit,
+		.init = pdm_switch_driver_init,
+		.exit = pdm_switch_driver_exit,
+	},
+	{
+		.name = "DIMMER Adapter",
+		.enable = true,
+		.ignore_failures = true,
+		.init = pdm_dimmer_driver_init,
+		.exit = pdm_dimmer_driver_exit,
 	},
 	{
 		.name = "NVMEM Adapter",
