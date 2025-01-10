@@ -68,6 +68,7 @@ static int pdm_dimmer_pwm_get_level(struct pdm_client *client, unsigned int *lev
 	struct pwm_state pwmstate;
 	int duty_cycle;
 	int index;
+	int status = -ENOENT;
 
 	if (!client || !client->pdmdev) {
 		OSA_ERROR("Invalid client\n");
@@ -91,15 +92,25 @@ static int pdm_dimmer_pwm_get_level(struct pdm_client *client, unsigned int *lev
 	*level = 0;
 	if (pwmstate.enabled == true) {
 		duty_cycle = pwm_get_relative_duty_cycle(&pwmstate, PDM_DIMMER_MAX_LEVEL_VALUE);
-
-		for (index = 0; index < dimmer_priv->max_level; index++)
+		for (index = 0; index <= dimmer_priv->max_level; index++)
 		{
 			if (duty_cycle == dimmer_priv->level_map[index]) {
 				*level = index;
+				status = 0;
 				break;
 			}
 		}
 	}
+	else {
+		*level = 0;
+		status = 0;
+	}
+
+	if (status) {
+		OSA_ERROR("PWM PDM Dimmer: Get level failed\n");
+		return status;
+	}
+
 	OSA_INFO("PWM PDM Dimmer: Get %s level: %u\n", dev_name(&client->dev), *level);
 	return 0;
 }

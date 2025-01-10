@@ -118,6 +118,7 @@ static long pdm_dimmer_ioctl(struct file *filp, unsigned int cmd, unsigned long 
 		}
 		case PDM_DIMMER_CMD_GET_LEVEL:
 		{
+			level = 0;
 			status = pdm_dimmer_get_level(client, &level);
 			if (status) {
 				OSA_ERROR("Failed to get DIMMER level, status: %d\n", status);
@@ -226,6 +227,7 @@ static ssize_t pdm_dimmer_write(struct file *filp, const char __user *buf, size_
 		}
 		case PDM_DIMMER_CMD_GET_LEVEL:
 		{
+			level = 0;
 			if (pdm_dimmer_get_level(client, &level)) {
 				OSA_ERROR("pdm_dimmer_get_level failed\n");
 				return -EINVAL;
