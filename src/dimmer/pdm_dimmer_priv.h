@@ -34,7 +34,6 @@ enum pdm_dimmer_command {
  * operation functions.
  */
 struct pdm_dimmer_priv {
-	unsigned int origin_level;
 	unsigned int max_level;
 	unsigned int *level_map;
 	int (*set_level)(struct pdm_client *client, unsigned int level);

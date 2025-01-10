@@ -36,7 +36,7 @@ static int pdm_dimmer_pwm_set_level(struct pdm_client *client, unsigned int leve
 
 	OSA_DEBUG("PWM PDM Dimmer: Set %s level to %u\n", dev_name(&client->dev), level);
 
-	if (0 == level) {
+	if (!level) {
 		pwm_disable(pwmdev);
 		return 0;
 	}
@@ -47,7 +47,9 @@ static int pdm_dimmer_pwm_set_level(struct pdm_client *client, unsigned int leve
 		return -EINVAL;
 	}
 
+	memset(&pwmargs, 0, sizeof(pwmargs));
 	pwm_get_args(pwmdev, &pwmargs);
+
 	memset(&pwmstate, 0, sizeof(pwmstate));
 	pwmstate.period = pwmargs.period;
 	pwmstate.enabled = true;
@@ -66,7 +68,7 @@ static int pdm_dimmer_pwm_get_level(struct pdm_client *client, unsigned int *lev
 	struct pdm_dimmer_priv *dimmer_priv;
 	struct pwm_device *pwmdev;
 	struct pwm_state pwmstate;
-	int duty_cycle;
+	unsigned int duty_cycle;
 	int index;
 	int status = -ENOENT;
 
@@ -90,7 +92,7 @@ static int pdm_dimmer_pwm_get_level(struct pdm_client *client, unsigned int *lev
 	pwm_get_state(pwmdev, &pwmstate);
 
 	*level = 0;
-	if (pwmstate.enabled == true) {
+	if (pwmstate.enabled) {
 		duty_cycle = pwm_get_relative_duty_cycle(&pwmstate, PDM_DIMMER_MAX_LEVEL_VALUE);
 		for (index = 0; index <= dimmer_priv->max_level; index++)
 		{
@@ -100,8 +102,7 @@ static int pdm_dimmer_pwm_get_level(struct pdm_client *client, unsigned int *lev
 				break;
 			}
 		}
-	}
-	else {
+	} else {
 		*level = 0;
 		status = 0;
 	}
@@ -126,12 +127,12 @@ static int pdm_dimmer_pwm_get_level(struct pdm_client *client, unsigned int *lev
 static int pdm_dimmer_pwm_setup(struct pdm_client *client)
 {
 	struct pdm_dimmer_priv *dimmer_priv;
-	struct device_node *np;
-	unsigned int level_count;
-	unsigned int *level_map;
-	unsigned int default_level;
 	struct pwm_device *pwmdev;
 	struct pwm_state pwmstate;
+	struct device_node *np;
+	unsigned int default_level;
+	unsigned int level_count;
+	unsigned int *level_map;
 	int status;
 
 	if (!client) {
@@ -158,14 +159,13 @@ static int pdm_dimmer_pwm_setup(struct pdm_client *client)
 	if (status) {
 		OSA_WARN("No default-state property found, using defaults as off\n");
 		default_level = 0;
-	}
-	else if (default_level > PDM_DIMMER_MAX_LEVEL_VALUE) {
+	} else if (default_level > PDM_DIMMER_MAX_LEVEL_VALUE) {
 		OSA_WARN("Invalid default-level (0~255): %u\n", default_level);
 		OSA_WARN("Set default-level to 0\n");
 		default_level = 0;
 	}
 
-	level_count  = of_property_count_elems_of_size(np, "level-map", sizeof(u32));
+	level_count = of_property_count_elems_of_size(np, "level-map", sizeof(u32));
 	if (level_count == 0) {
 		OSA_ERROR("Failed to get max level\n");
 		return -EINVAL;
@@ -188,43 +188,30 @@ static int pdm_dimmer_pwm_setup(struct pdm_client *client)
 	pwmdev = pwm_get(client->pdmdev->dev.parent, NULL);
 	if (IS_ERR(pwmdev)) {
 		OSA_ERROR("Failed to get PWM\n");
-		status =  PTR_ERR(pwmdev);
+		status = PTR_ERR(pwmdev);
 		goto err_level_map_free;
 	}
 	client->hardware.pwm.pwmdev = pwmdev;
 
-	memset(&pwmstate, 0, sizeof(pwmstate));
 	pwm_init_state(pwmdev, &pwmstate);
-	dimmer_priv->origin_level = 0;
-	if (default_level) {
-		pwmstate.enabled = true;
-		pwm_set_relative_duty_cycle(&pwmstate, default_level, level_count);
-	}
-	else {
-		pwmstate.enabled = false;
-	}
 
-	status = pwm_apply_might_sleep(pwmdev, &pwmstate);
+	status = pdm_dimmer_pwm_set_level(client, default_level);
 	if (status) {
-		OSA_ERROR("Failed to apply PWM state: %d\n", status);
-		goto err_pwm_put;
+		OSA_WARN("Failed to set default level: %d\n", status);
 	}
 
 	OSA_DEBUG("PWM DIMMER Setup: %s\n", dev_name(&client->dev));
 	return 0;
 
-err_pwm_put:
-	pwm_put(pwmdev);
-
 err_level_map_free:
 	kfree(level_map);
+	dimmer_priv->level_map = NULL;
 	return status;
 }
 
 static void pdm_dimmer_pwm_cleanup(struct pdm_client *client)
 {
 	struct pdm_dimmer_priv *dimmer_priv;
-	struct pwm_state pwmstate;
 	struct pwm_device *pwmdev;
 
 	if (!client || IS_ERR_OR_NULL(client->hardware.pwm.pwmdev)) {
@@ -234,22 +221,12 @@ static void pdm_dimmer_pwm_cleanup(struct pdm_client *client)
 
 	dimmer_priv = pdm_client_get_private_data(client);
 	if (dimmer_priv) {
-		memset(&pwmstate, 0, sizeof(pwmstate));
-		if (dimmer_priv->origin_level) {
-			pwmstate.enabled = true;
-			pwm_set_relative_duty_cycle(&pwmstate,
-						dimmer_priv->origin_level,
-						dimmer_priv->max_level);
-		}
-		else {
-			pwmstate.enabled = false;
-		}
-
-		pwm_apply_might_sleep(pwmdev, &pwmstate);
+		pdm_dimmer_pwm_set_level(client, 0);
 	}
 
 	pwm_put(pwmdev);
 	kfree(dimmer_priv->level_map);
+	dimmer_priv->level_map = NULL;
 }
 
 /**
