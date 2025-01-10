@@ -145,12 +145,12 @@ static int pdm_dimmer_pwm_setup(struct pdm_client *client)
 
 	status = of_property_read_u32(np, "default-level", &default_level);
 	if (status) {
-		OSA_INFO("No default-state property found, using defaults as off\n");
+		OSA_WARN("No default-state property found, using defaults as off\n");
 		default_level = 0;
 	}
 	else if (default_level > PDM_DIMMER_MAX_LEVEL_VALUE) {
 		OSA_WARN("Invalid default-level (0~255): %u\n", default_level);
-		OSA_INFO("Set default-level to 0\n");
+		OSA_WARN("Set default-level to 0\n");
 		default_level = 0;
 	}
 
