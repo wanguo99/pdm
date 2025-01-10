@@ -7,12 +7,22 @@
 
 static bool pdm_switch_gpio_level_to_state(struct gpio_desc *gpiod, int level)
 {
-	return gpiod_is_active_low(gpiod) ? 1 : 0;
+	if (gpiod_is_active_low(gpiod)) {
+		return level ? 1 : 0;
+	}
+	else {
+		return level ? 0 : 1;
+	}
 }
 
 static bool pdm_switch_gpio_state_to_level(struct gpio_desc *gpiod, int state)
 {
-	return gpiod_is_active_low(gpiod) ? 1 : 0;
+	if (gpiod_is_active_low(gpiod)) {
+		return state ? 1 : 0;
+	}
+	else {
+		return state ? 0 : 1;
+	}
 }
 
 /**
