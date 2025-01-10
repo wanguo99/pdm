@@ -33,7 +33,6 @@ enum pdm_switch_command {
  * operation functions.
  */
 struct pdm_switch_priv {
-	bool origin_state;
 	int (*set_state)(struct pdm_client *client, int state);
 	int (*get_state)(struct pdm_client *client, int *state);
 };

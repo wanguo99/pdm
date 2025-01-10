@@ -83,8 +83,9 @@ static int pdm_switch_gpio_setup(struct pdm_client *client)
 	struct pdm_switch_priv *switch_priv;
 	struct device_node *np;
 	struct gpio_desc *gpiod;
-	const char *default_state;
-	int origin_level;
+	const char *default_state_str;
+	int default_state;
+	int gpio_level;
 	int status;
 
 	if (!client) {
@@ -107,10 +108,12 @@ static int pdm_switch_gpio_setup(struct pdm_client *client)
 		return -EINVAL;
 	}
 
-	status = of_property_read_string(np, "default-state", &default_state);
-	if (status) {
-		OSA_INFO("No default-state property found, using defaults as off\n");
-		default_state = "off";
+	status = of_property_read_string(np, "default-state", &default_state_str);
+	if (!status && !strcmp(default_state_str, "on")) {
+		default_state = 1;
+	}
+	else {
+		default_state = 0;
 	}
 
 	gpiod = gpiod_get_index(client->pdmdev->dev.parent, NULL, 0, GPIOD_OUT_LOW);
@@ -119,8 +122,8 @@ static int pdm_switch_gpio_setup(struct pdm_client *client)
 		return PTR_ERR(gpiod);
 	}
 
-	origin_level = gpiod_get_value_cansleep(gpiod);
-	switch_priv->origin_state = pdm_switch_gpio_level_to_state(gpiod, origin_level);
+	gpio_level = pdm_switch_gpio_state_to_level(gpiod, default_state);
+	gpiod_set_value_cansleep(gpiod, gpio_level);
 
 	client->hardware.gpio.gpiod = gpiod;
 
@@ -130,25 +133,15 @@ static int pdm_switch_gpio_setup(struct pdm_client *client)
 
 static void pdm_switch_gpio_cleanup(struct pdm_client *client)
 {
-	struct pdm_switch_priv *switch_priv;
 	struct gpio_desc *gpiod;
-	int origin_level;
 
 	if (!client && IS_ERR_OR_NULL(client->hardware.gpio.gpiod)) {
 		return;
 	}
 
-	switch_priv = pdm_client_get_private_data(client);
-	if (!switch_priv) {
-		OSA_ERROR("Get PDM Client DevData Failed\n");
-		return;
-	}
 	gpiod = client->hardware.gpio.gpiod;
-
-	origin_level = pdm_switch_gpio_state_to_level(gpiod, switch_priv->origin_state);
-	gpiod_set_value_cansleep(gpiod, origin_level);
+	gpiod_set_value_cansleep(gpiod, pdm_switch_gpio_state_to_level(gpiod, 0));
 	gpiod_put(client->hardware.gpio.gpiod);
-
 	OSA_DEBUG("GPIO SWITCH Cleanup: %s\n", dev_name(&client->dev));
 }
 

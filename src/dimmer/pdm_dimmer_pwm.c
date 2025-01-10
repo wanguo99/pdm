@@ -161,8 +161,6 @@ static int pdm_dimmer_pwm_setup(struct pdm_client *client)
 	}
 	dimmer_priv->max_level = level_count - 1;
 
-	OSA_VAR_UINT32(dimmer_priv->max_level);
-
 	level_map = kmalloc(level_count * sizeof(u32), GFP_KERNEL);
 	if (!level_map) {
 		OSA_ERROR("Failed to allocate memory for level map\n");
