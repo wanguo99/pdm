@@ -12,7 +12,7 @@ static struct pdm_adapter *dimmer_adapter = NULL;
  * @param level (0-255).
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_dimmer_set_level(struct pdm_client *client, int level)
+static int pdm_dimmer_set_level(struct pdm_client *client, unsigned int level)
 {
 	struct pdm_dimmer_priv *dimmer_priv;
 	int status = 0;
@@ -22,8 +22,8 @@ static int pdm_dimmer_set_level(struct pdm_client *client, int level)
 		return -EINVAL;
 	}
 
-	if (level < 0 || level > 255) {
-		OSA_ERROR("Invalid level: %d\n", level);
+	if (level > PDM_DIMMER_MAX_LEVEL_VALUE) {
+		OSA_ERROR("Invalid level: %u\n", level);
 		return -EINVAL;
 	}
 
@@ -54,7 +54,7 @@ static int pdm_dimmer_set_level(struct pdm_client *client, int level)
  * @param level Pointer to store the current level.
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_dimmer_get_level(struct pdm_client *client, int *level)
+static int pdm_dimmer_get_level(struct pdm_client *client, unsigned int *level)
 {
 	struct pdm_dimmer_priv *dimmer_priv;
 	int status = 0;
@@ -81,7 +81,7 @@ static int pdm_dimmer_get_level(struct pdm_client *client, int *level)
 		return status;
 	}
 
-	OSA_INFO("Current level is %d\n", *level);
+	OSA_INFO("Current level is %u\n", *level);
 
 	return 0;
 }
@@ -97,6 +97,7 @@ static int pdm_dimmer_get_level(struct pdm_client *client, int *level)
 static long pdm_dimmer_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
 	struct pdm_client *client = filp->private_data;
+	unsigned int level;
 	int status = 0;
 
 	if (!client) {
@@ -107,24 +108,22 @@ static long pdm_dimmer_ioctl(struct file *filp, unsigned int cmd, unsigned long 
 	switch (cmd) {
 		case PDM_DIMMER_CMD_SET_LEVEL:
 		{
-			int level;
 			if (copy_from_user(&level, (void __user *)arg, sizeof(level))) {
 				OSA_ERROR("Failed to copy data from user space\n");
 				return -EFAULT;
 			}
-			OSA_INFO("PDM_DIMMER: Set %s's level to %d\n", dev_name(&client->dev), level);
+			OSA_INFO("PDM_DIMMER: Set %s's level to %u\n", dev_name(&client->dev), level);
 			status = pdm_dimmer_set_level(client, level);
 			break;
 		}
 		case PDM_DIMMER_CMD_GET_LEVEL:
 		{
-			int level;
 			status = pdm_dimmer_get_level(client, &level);
 			if (status) {
 				OSA_ERROR("Failed to get DIMMER level, status: %d\n", status);
 				return status;
 			}
-			OSA_INFO("PDM_DIMMER: Current level is %d\n", level);
+			OSA_INFO("PDM_DIMMER: Current level is %u\n", level);
 			if (copy_to_user((void __user *)arg, &level, sizeof(level))) {
 				OSA_ERROR("Failed to copy data to user space\n");
 				return -EFAULT;
@@ -191,8 +190,8 @@ static ssize_t pdm_dimmer_write(struct file *filp, const char __user *buf, size_
 	struct pdm_client *client = filp->private_data;
 	char kernel_buf[64];
 	ssize_t bytes_read;
+	unsigned int level;
 	int cmd;
-	int param;
 
 	if (!client || count >= sizeof(kernel_buf)) {
 		OSA_ERROR("Invalid client or input too long.\n");
@@ -214,16 +213,12 @@ static ssize_t pdm_dimmer_write(struct file *filp, const char __user *buf, size_
 	{
 		case PDM_DIMMER_CMD_SET_LEVEL:
 		{
-			if (sscanf(kernel_buf, "%d", &cmd) != 1) {
-				OSA_ERROR("Command %d should not have parameters.\n", cmd);
-				return -EINVAL;
-			}
-			param = 0;
-			if (sscanf(kernel_buf, "%d %d", &cmd, &param) != 2) {
+			if (sscanf(kernel_buf, "%d %u", &cmd, &level) != 2) {
 				OSA_ERROR("Command %d requires one parameter.\n", cmd);
 				return -EINVAL;
 			}
-			if (pdm_dimmer_set_level(client, param)) {
+
+			if (pdm_dimmer_set_level(client, level)) {
 				OSA_ERROR("pdm_dimmer_set_level failed\n");
 				return -EINVAL;
 			}
@@ -231,13 +226,12 @@ static ssize_t pdm_dimmer_write(struct file *filp, const char __user *buf, size_
 		}
 		case PDM_DIMMER_CMD_GET_LEVEL:
 		{
-			int level;
 			if (pdm_dimmer_get_level(client, &level)) {
 				OSA_ERROR("pdm_dimmer_get_level failed\n");
 				return -EINVAL;
 			}
 			char buffer[32];
-			snprintf(buffer, sizeof(buffer), "%d\n", level);
+			snprintf(buffer, sizeof(buffer), "%u\n", level);
 			bytes_read = simple_read_from_buffer((void __user *)buf, strlen(buffer), ppos, buffer, strlen(buffer));
 			return bytes_read;
 		}

@@ -24,6 +24,8 @@ enum pdm_dimmer_command {
 	PDM_DIMMER_CMD_INVALID		= 0xFF
 };
 
+#define PDM_DIMMER_MAX_LEVEL_VALUE	(0xFF)
+
 /**
  * @struct pdm_dimmer_priv
  * @brief PDM DIMMER Device Private Data Structure
@@ -32,9 +34,11 @@ enum pdm_dimmer_command {
  * operation functions.
  */
 struct pdm_dimmer_priv {
-	bool origin_level;
-	int (*set_level)(struct pdm_client *client, int level);
-	int (*get_level)(struct pdm_client *client, int *level);
+	unsigned int origin_level;
+	unsigned int max_level;
+	unsigned int *level_map;
+	int (*set_level)(struct pdm_client *client, unsigned int level);
+	int (*get_level)(struct pdm_client *client, unsigned int *level);
 };
 
 /**

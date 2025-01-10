@@ -119,23 +119,40 @@
 /*
  * Macros to print variable names and values.
  */
-#define OSA_VAR_INT(var) \
-	OSA_INFO(#var " = %d\n", var)
-#define OSA_VAR_UINT(var) \
-	OSA_INFO(#var " = %u\n", var)
-#define OSA_VAR_LONG(var) \
-	OSA_INFO(#var " = %ld\n", var)
-#define OSA_VAR_ULONG(var) \
-	OSA_INFO(#var " = %lu\n", var)
+
+#define OSA_VAR_PTR(var) \
+	OSA_INFO(#var " = %p\n", (void *)var)
+#define OSA_VAR_STRING(var) \
+	OSA_INFO(#var " = %s\n", var)
+#define OSA_VAR_CHAR(var) \
+	OSA_INFO(#var " = %c\n", var)
+#define OSA_VAR_UCHAR_NUMERIC(var) \
+	OSA_INFO(#var " = %hhu\n", var)
 #define OSA_VAR_FLOAT(var) \
 	OSA_INFO(#var " = %f\n", var)
 #define OSA_VAR_DOUBLE(var) \
 	OSA_INFO(#var " = %lf\n", var)
-#define OSA_VAR_CHAR(var) \
-	OSA_INFO(#var " = %c\n", var)
-#define OSA_VAR_STRING(var) \
-	OSA_INFO(#var " = %s\n", var)
-#define OSA_VAR_PTR(var) \
-	OSA_INFO(#var " = %p\n", var)
+#define OSA_VAR_LONG(var) \
+	OSA_INFO(#var " = %ld\n", var)
+#define OSA_VAR_ULONG(var) \
+	OSA_INFO(#var " = %lu\n", var)
+
+#define OSA_VAR_INT8(var) \
+	OSA_INFO(#var " = %hhd\n", var)
+#define OSA_VAR_UINT8(var) \
+	OSA_INFO(#var " = %hhu\n", var)
+#define OSA_VAR_INT16(var) \
+	OSA_INFO(#var " = %hd\n", var)
+#define OSA_VAR_UINT16(var) \
+	OSA_INFO(#var " = %hu\n", var)
+#define OSA_VAR_INT32(var) \
+	OSA_INFO(#var " = %d\n", var)
+#define OSA_VAR_UINT32(var) \
+	OSA_INFO(#var " = %u\n", var)
+#define OSA_VAR_INT64(var) \
+	OSA_INFO(#var " = %lld\n", var)
+#define OSA_VAR_UINT64(var) \
+	OSA_INFO(#var " = %llu\n", var)
+
 
 #endif /* _OSA_LOG_H_ */
