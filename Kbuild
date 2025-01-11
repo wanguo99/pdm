@@ -27,3 +27,6 @@ $(MODULE_NAME)-objs += src/dimmer/pdm_dimmer.o \
 
 $(MODULE_NAME)-objs += src/nvmem/pdm_nvmem.o \
 	src/nvmem/pdm_nvmem_spi.o
+
+$(MODULE_NAME)-objs += src/sensor/pdm_sensor.o \
+	src/sensor/pdm_sensor_ap3216c.o
