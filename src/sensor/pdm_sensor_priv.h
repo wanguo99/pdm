@@ -19,8 +19,8 @@
 
 enum pdm_sensor_command {
 	PDM_SENSOR_CMD_NULL	= 0x00,
-	PDM_SENSOR_CMD_READ_REG	= 0x01,
-	PDM_SENSOR_CMD_WRITE_REG	= 0x02,
+	PDM_SENSOR_CMD_READ	= 0x01,
+	PDM_SENSOR_CMD_WRITE	= 0x02,
 	PDM_SENSOR_CMD_INVALID	= 0xFF
 };
 
@@ -32,8 +32,8 @@ enum pdm_sensor_command {
  * operation functions.
  */
 struct pdm_sensor_priv {
-	int (*read_reg)(struct pdm_client *client, unsigned int offset, void *val, size_t bytes);
-	int (*write_reg)(struct pdm_client *client, unsigned int offset, void *val, size_t bytes);
+	int (*read)(struct pdm_client *client, unsigned int type, unsigned int *val);
+	int (*write)(struct pdm_client *client, unsigned int type, unsigned int val);
 };
 
 /**

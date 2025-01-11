@@ -32,6 +32,13 @@ static struct pdm_component pdm_adapter_drivers[] = {
 		.init = pdm_nvmem_driver_init,
 		.exit = pdm_nvmem_driver_exit,
 	},
+	{
+		.name = "SENSOR Adapter",
+		.enable = true,
+		.ignore_failures = true,
+		.init = pdm_sensor_driver_init,
+		.exit = pdm_sensor_driver_exit,
+	},
 	{ }
 };
 

@@ -12,7 +12,7 @@ static struct pdm_adapter *sensor_adapter = NULL;
  * @param state State value (0 or 1).
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_sensor_read_reg(struct pdm_client *client, unsigned int offset, void *val, size_t bytes)
+static int pdm_sensor_read_reg(struct pdm_client *client, unsigned int type, unsigned int *val)
 {
 	struct pdm_sensor_priv *sensor_priv;
 	int status = 0;
@@ -28,12 +28,12 @@ static int pdm_sensor_read_reg(struct pdm_client *client, unsigned int offset, v
 		return -ENOMEM;
 	}
 
-	if (!sensor_priv->read_reg) {
+	if (!sensor_priv->read) {
 		OSA_ERROR("read_reg not supported\n");
 		return -ENOTSUPP;
 	}
 
-	status = sensor_priv->read_reg(client, offset, val, bytes);
+	status = sensor_priv->read(client, type, val);
 	if (status) {
 		OSA_ERROR("PDM SENSOR read_reg failed, status: %d\n", status);
 		return status;
@@ -49,7 +49,7 @@ static int pdm_sensor_read_reg(struct pdm_client *client, unsigned int offset, v
  * @param state Pointer to store the current state.
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_sensor_write_reg(struct pdm_client *client, unsigned int offset, void *val, size_t bytes)
+static int pdm_sensor_write_reg(struct pdm_client *client, unsigned int type, unsigned int val)
 {
 	struct pdm_sensor_priv *sensor_priv;
 	int status = 0;
@@ -65,12 +65,12 @@ static int pdm_sensor_write_reg(struct pdm_client *client, unsigned int offset, 
 		return -ENOMEM;
 	}
 
-	if (!sensor_priv->write_reg) {
+	if (!sensor_priv->write) {
 		OSA_ERROR("write_reg not supported\n");
 		return -ENOTSUPP;
 	}
 
-	status = sensor_priv->write_reg(client, offset, val, bytes);
+	status = sensor_priv->write(client, type, val);
 	if (status) {
 		OSA_ERROR("PDM SENSOR write_reg failed, status: %d\n", status);
 		return status;
@@ -98,7 +98,7 @@ static long pdm_sensor_ioctl(struct file *filp, unsigned int cmd, unsigned long 
 	}
 
 	switch (cmd) {
-		case PDM_SENSOR_CMD_WRITE_REG:
+		case PDM_SENSOR_CMD_WRITE:
 		{
 			int level;
 			if (copy_from_user(&level, (void __user *)arg, sizeof(level))) {
@@ -106,13 +106,13 @@ static long pdm_sensor_ioctl(struct file *filp, unsigned int cmd, unsigned long 
 				return -EFAULT;
 			}
 			OSA_INFO("PDM_DIMMER: Set %s's level to %d\n", dev_name(&client->dev), level);
-			status = pdm_sensor_write_reg(client, 0, 0, 0);
+			status = pdm_sensor_write_reg(client, 0, 0);
 			break;
 		}
-		case PDM_SENSOR_CMD_READ_REG:
+		case PDM_SENSOR_CMD_READ:
 		{
 			int level;
-			status = pdm_sensor_read_reg(client, 0, &level, 0);
+			status = pdm_sensor_read_reg(client, 0, &level);
 			if (status) {
 				OSA_ERROR("Failed to get DIMMER level, status: %d\n", status);
 				return status;
@@ -153,8 +153,8 @@ static ssize_t pdm_sensor_read(struct file *filp, char __user *buf, size_t count
 {
 	const char help_info[] =
 		"Available commands:\n"
-		" > 1		- Read SENSOR Reg\n"
-		" > 2		- Write SENSOR Reg\n";
+		" > 1		- Read SENSOR\n"
+		" > 2		- Write SENSOR\n";
 	size_t len = strlen(help_info);
 
 	if (*ppos >= len)
@@ -185,8 +185,8 @@ static ssize_t pdm_sensor_write(struct file *filp, const char __user *buf, size_
 	char kernel_buf[64];
 	ssize_t bytes_read;
 	char buffer[32];
-	unsigned int offset = 0;
-	unsigned char value = 0x0;
+	unsigned int type = 0;
+	unsigned int value = 0x0;
 	int cmd;
 
 	if (!client || count >= sizeof(kernel_buf)) {
@@ -207,27 +207,27 @@ static ssize_t pdm_sensor_write(struct file *filp, const char __user *buf, size_
 
 	switch (cmd)
 	{
-		case PDM_SENSOR_CMD_WRITE_REG:
+		case PDM_SENSOR_CMD_WRITE:
 		{
-			if (sscanf(kernel_buf, "%d 0x%x 0x%hhx", &cmd, &offset, &value) != 3) {
+			if (sscanf(kernel_buf, "%d 0x%x 0x%x", &cmd, &type, &value) != 3) {
 				OSA_ERROR("Command %d requires one parameter.\n", cmd);
 				return -EINVAL;
 			}
 
-			if (pdm_sensor_write_reg(client, offset, &value, 1)) {
+			if (pdm_sensor_write_reg(client, type, value)) {
 				OSA_ERROR("pdm_sensor_set_state failed\n");
 				return -EINVAL;
 			}
 			break;
 		}
-		case PDM_SENSOR_CMD_READ_REG:
+		case PDM_SENSOR_CMD_READ:
 		{
-			if (sscanf(kernel_buf, "%d 0x%x", &cmd, &offset) != 2) {
+			if (sscanf(kernel_buf, "%d 0x%x", &cmd, &type) != 2) {
 				OSA_ERROR("Command %d should not have parameters.\n", cmd);
 				return -EINVAL;
 			}
 
-			if (pdm_sensor_read_reg(client, offset, &value, 1)) {
+			if (pdm_sensor_read_reg(client, type, &value)) {
 				OSA_ERROR("pdm_sensor_get_state failed\n");
 				return -EINVAL;
 			}
