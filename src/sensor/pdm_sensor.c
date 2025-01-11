@@ -194,6 +194,12 @@ static ssize_t pdm_sensor_write(struct file *filp, const char __user *buf, size_
 		return -EINVAL;
 	}
 
+	pdm_sensor_read_reg(client, 0x01, &value);
+	pdm_sensor_read_reg(client, 0x02, &value);
+	pdm_sensor_read_reg(client, 0x03, &value);
+
+	return count;
+
 	if ((bytes_read = copy_from_user(kernel_buf, buf, count)) != 0) {
 		OSA_ERROR("Failed to copy data from user space: %zd\n", bytes_read);
 		return -EFAULT;

@@ -216,6 +216,7 @@ static int pdm_sensor_ap3216c_setup(struct pdm_client *client)
 		return -EINVAL;
 	}
 
+	client->hardware.i2c.client = to_i2c_client(client->pdmdev->dev.parent);
 
 	OSA_DEBUG("ap3216c SENSOR Setup: %s\n", dev_name(&client->dev));
 	return 0;
