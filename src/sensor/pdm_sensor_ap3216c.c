@@ -3,15 +3,7 @@
 
 #include "pdm.h"
 #include "pdm_sensor_priv.h"
-
-/* 定义数据类型 */
-enum AP3216C_DATA_TYPE {
-	AP3216C_DATA_TYPE_NULL		= 0x00, /* 无效数据 */
-	AP3216C_DATA_TYPE_IR		= 0x01, /* IR 数据 */
-	AP3216C_DATA_TYPE_ALS		= 0x02, /* ALS 数据 */
-	AP3216C_DATA_TYPE_PS		= 0x03, /* PS 数据 */
-	AP3216C_DATA_TYPE_INVALID	= 0xFF, /* 无效数据 */
-};
+#include "pdm_sensor_ioctl.h"
 
 #define AP3216C_SYSTEMCONG	0x00	/* 配置寄存器 */
 #define AP3216C_INTSTATUS	0x01	/* 中断状态寄存器 */
@@ -24,16 +16,16 @@ enum AP3216C_DATA_TYPE {
  * @brief Data type and register mapping structure.
  */
 struct ap3216c_data_type_info {
-	enum AP3216C_DATA_TYPE type;
+	enum pdm_sensor_type type;
 	unsigned char low_reg;
 	unsigned char high_reg;
 	bool special_case; // Indicates if the data needs special handling (e.g., masking)
 };
 
 static const struct ap3216c_data_type_info ap3216c_data_types[] = {
-	{ AP3216C_DATA_TYPE_IR,  0x0A, 0x0B, true }, // IR
-	{ AP3216C_DATA_TYPE_ALS, 0x0C, 0x0D, false }, // ALS
-	{ AP3216C_DATA_TYPE_PS,  0x0E, 0x0F, true }, // PS
+	{ PDM_SENSOR_TYPE_IR,  0x0A, 0x0B, true }, // IR
+	{ PDM_SENSOR_TYPE_ALS, 0x0C, 0x0D, false }, // ALS
+	{ PDM_SENSOR_TYPE_PS,  0x0E, 0x0F, true }, // PS
 };
 
 /**
