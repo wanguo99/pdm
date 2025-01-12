@@ -1,175 +1,128 @@
 #include <linux/i2c.h>
+#include <linux/delay.h>
 
 #include "pdm.h"
 #include "pdm_sensor_priv.h"
 
+/* 定义数据类型 */
 enum AP3216C_DATA_TYPE {
-	AP3216C_DATA_TYPE_NULL		= 0x00,	/* 无效数据 */
-	AP3216C_DATA_TYPE_IR		= 0x01,	/* IR 数据 */
-	AP3216C_DATA_TYPE_ALS		= 0x02,	/* ALS 数据 */
-	AP3216C_DATA_TYPE_PS		= 0X03,	/* PS 数据 */
-	AP3216C_DATA_TYPE_INVALID	= 0xFF,	/* 无效数据 */
+	AP3216C_DATA_TYPE_NULL		= 0x00, /* 无效数据 */
+	AP3216C_DATA_TYPE_IR		= 0x01, /* IR 数据 */
+	AP3216C_DATA_TYPE_ALS		= 0x02, /* ALS 数据 */
+	AP3216C_DATA_TYPE_PS		= 0x03, /* PS 数据 */
+	AP3216C_DATA_TYPE_INVALID	= 0xFF, /* 无效数据 */
 };
 
-/* AP3316C 寄存器 */
 #define AP3216C_SYSTEMCONG	0x00	/* 配置寄存器 */
-#define AP3216C_INTSTATUS	0X01	/* 中断状态寄存器 */
-#define AP3216C_INTCLEAR	0X02	/* 中断清除寄存器 */
-#define AP3216C_IRDATALOW	0x0A	/* IR 数据低字节 */
-#define AP3216C_IRDATAHIGH	0x0B	/* IR 数据高字节 */
-#define AP3216C_ALSDATALOW	0x0C	/* ALS 数据低字节 */
-#define AP3216C_ALSDATAHIGH	0X0D	/* ALS 数据高字节 */
-#define AP3216C_PSDATALOW	0X0E	/* PS 数据低字节 */
-#define AP3216C_PSDATAHIGH	0X0F	/* PS 数据高字节 */
+#define AP3216C_INTSTATUS	0x01	/* 中断状态寄存器 */
+#define AP3216C_INTCLEAR	0x02	/* 中断清除寄存器 */
 
-#define AP3216C_READ_MSG_COUNT	0X02	/* 读寄存器长度 */
+#define AP3216C_I2C_READ_MSG_COUNT	(2)	/* 读寄存器长度 */
+#define AP3216C_RESET_DELAY_MS		(50)	/* 复位延迟时间(ms) */
 
+/**
+ * @brief Data type and register mapping structure.
+ */
+struct ap3216c_data_type_info {
+	enum AP3216C_DATA_TYPE type;
+	unsigned char low_reg;
+	unsigned char high_reg;
+	bool special_case; // Indicates if the data needs special handling (e.g., masking)
+};
+
+static const struct ap3216c_data_type_info ap3216c_data_types[] = {
+	{ AP3216C_DATA_TYPE_IR,  0x0A, 0x0B, true }, // IR
+	{ AP3216C_DATA_TYPE_ALS, 0x0C, 0x0D, false }, // ALS
+	{ AP3216C_DATA_TYPE_PS,  0x0E, 0x0F, true }, // PS
+};
+
+/**
+ * @brief Reads a single register from the AP3216C sensor.
+ */
 static int pdm_sensor_ap3216c_read_reg(struct pdm_client *client, unsigned char reg, unsigned char *val, size_t len)
 {
-	struct i2c_client *i2cdev;
-	struct i2c_msg msgs[AP3216C_READ_MSG_COUNT];
-	int status;
-
-	if (!client || !client->hardware.i2c.client) {
-		OSA_ERROR("Invalid client\n");
-		return -EINVAL;
-	}
-	i2cdev = client->hardware.i2c.client;
-
-	msgs[0].addr = i2cdev->addr;
-	msgs[0].flags = 0;
-	msgs[0].buf = &reg;
-	msgs[0].len = sizeof(reg);
-
-	msgs[1].addr = i2cdev->addr;
-	msgs[1].flags = I2C_M_RD;
-	msgs[1].buf = val;
-	msgs[1].len = len;
-
-	status = i2c_transfer(i2cdev->adapter, msgs, AP3216C_READ_MSG_COUNT);
-	if (AP3216C_READ_MSG_COUNT != status) {
-		OSA_ERROR("i2c rd failed=%d reg=%06x len=%d\n", status, reg, len);
-		return -EREMOTEIO;
-	}
-
-	return 0;
+	struct i2c_msg msgs[AP3216C_I2C_READ_MSG_COUNT] = {
+		{ .addr = client->hardware.i2c.client->addr, .flags = 0, .buf = &reg, .len = sizeof(reg) },
+		{ .addr = client->hardware.i2c.client->addr, .flags = I2C_M_RD, .buf = val, .len = len }
+	};
+	return (AP3216C_I2C_READ_MSG_COUNT == i2c_transfer(client->hardware.i2c.client->adapter, msgs, AP3216C_I2C_READ_MSG_COUNT)) ? 0 : -EREMOTEIO;
 }
 
-static int pdm_sensor_ap3216c_read_ir(struct pdm_client *client, unsigned short *val)
+/**
+ * @brief Writes a single byte to a specified register of the AP3216C sensor.
+ */
+static int pdm_sensor_ap3216c_write_reg(struct pdm_client *client, unsigned char reg, unsigned char val)
 {
-	unsigned char data_low;
-	unsigned char data_high;
-	int status;
-
-	status = pdm_sensor_ap3216c_read_reg(client, AP3216C_IRDATALOW, &data_low, sizeof(data_low));
-	if (status) {
-		OSA_ERROR("read reg ir low_data failed, status: %d\n", status);
-		return status;
-	}
-
-	status = pdm_sensor_ap3216c_read_reg(client, AP3216C_IRDATAHIGH, &data_high, sizeof(data_high));
-	if (status) {
-		OSA_ERROR("read reg ir high_data failed, status: %d\n", status);
-		return status;
-	}
-
-	if(data_low & 0X80) {
-		*val = 0;
-	} else {
-		*val = ((unsigned short)data_high << 2) | (data_low & 0X03);
-	}
-
-	OSA_INFO("IR: 0x%x\n", *val);
-	return 0;
+	unsigned char buf[] = { reg, val };
+	struct i2c_msg msg = { .addr = client->hardware.i2c.client->addr, .flags = 0, .buf = buf, .len = sizeof(buf) };
+	return (1 == i2c_transfer(client->hardware.i2c.client->adapter, &msg, 1)) ? 0 : -EREMOTEIO;
 }
 
-static int pdm_sensor_ap3216c_read_als(struct pdm_client *client, unsigned short *val)
+/**
+ * @brief Enables the AP3216C sensor by writing configuration values and ensuring reset delay.
+ */
+static int pdm_sensor_ap3216c_enable(struct pdm_client *client)
 {
-	unsigned char data_low;
-	unsigned char data_high;
 	int status;
 
-	status = pdm_sensor_ap3216c_read_reg(client, AP3216C_ALSDATALOW, &data_low, sizeof(data_low));
+	status = pdm_sensor_ap3216c_write_reg(client, AP3216C_SYSTEMCONG, 0x04);
 	if (status) {
-		OSA_ERROR("read reg ir low_data failed, status: %d\n", status);
+		OSA_ERROR("Failed to write reset value to SYSTEMCONG register: %d\n", status);
+		return status;
+	}
+	mdelay(AP3216C_RESET_DELAY_MS); // Ensure reset delay
+
+	status = pdm_sensor_ap3216c_write_reg(client, AP3216C_SYSTEMCONG, 0x03);
+	if (status) {
+		OSA_ERROR("Failed to write enable value to SYSTEMCONG register: %d\n", status);
 		return status;
 	}
 
-	status = pdm_sensor_ap3216c_read_reg(client, AP3216C_ALSDATAHIGH, &data_high, sizeof(data_high));
-	if (status) {
-		OSA_ERROR("read reg ir high_data failed, status: %d\n", status);
-		return status;
-	}
-
-	*val = ((unsigned short)data_high << 8) | data_low ;
-
-	OSA_INFO("ALS: 0x%x\n", *val);
-
+	OSA_DEBUG("AP3216C SENSOR Enabled.\n");
 	return 0;
 }
 
-static int pdm_sensor_ap3216c_read_ps(struct pdm_client *client, unsigned short *val)
-{
-	unsigned char data_low;
-	unsigned char data_high;
-	int status;
-
-	status = pdm_sensor_ap3216c_read_reg(client, AP3216C_PSDATALOW, &data_low, sizeof(data_low));
-	if (status) {
-		OSA_ERROR("read reg ir low_data failed, status: %d\n", status);
-		return status;
-	}
-
-	status = pdm_sensor_ap3216c_read_reg(client, AP3216C_PSDATAHIGH, &data_high, sizeof(data_high));
-	if (status) {
-		OSA_ERROR("read reg ir high_data failed, status: %d\n", status);
-		return status;
-	}
-
-	if(data_low & 0X40) {
-		*val = 0;
-	} else {
-		*val = ((unsigned short)(data_high & 0x3F) << 4) | (data_low & 0X0F);
-	}
-
-	OSA_INFO("PS: 0x%x\n", *val);
-
-	return 0;
-}
-
+/**
+ * @brief Reads data from the AP3216C sensor based on the specified type info.
+ */
 static int pdm_sensor_ap3216c_read(struct pdm_client *client, unsigned int type, unsigned int *val)
 {
-	int status;
+	const struct ap3216c_data_type_info *info = NULL;
+	int status = -EINVAL;
 	unsigned short value;
+	unsigned char data_low, data_high;
 
-	if (type < AP3216C_DATA_TYPE_IR || type > AP3216C_DATA_TYPE_PS) {
+	for (size_t i = 0; i < ARRAY_SIZE(ap3216c_data_types); ++i) {
+		if (ap3216c_data_types[i].type == type) {
+			info = &ap3216c_data_types[i];
+			break;
+		}
+	}
+
+	if (!info) {
 		OSA_ERROR("Invalid data type\n");
 		return -EINVAL;
 	}
 
-	switch (type) {
-		case AP3216C_DATA_TYPE_IR: {
-			status = pdm_sensor_ap3216c_read_ir(client, &value);
-			break;
-		}
-		case AP3216C_DATA_TYPE_ALS: {
-			status = pdm_sensor_ap3216c_read_als(client, &value);
-			break;
-		}
-		case AP3216C_DATA_TYPE_PS: {
-			status = pdm_sensor_ap3216c_read_ps(client, &value);
-			break;
-		}
-		default: {
-			OSA_ERROR("Invalid data type\n");
-			status = -EINVAL;
-			break;
-		}
+	status = pdm_sensor_ap3216c_read_reg(client, info->low_reg, &data_low, sizeof(data_low));
+	if (status) {
+		OSA_ERROR("read reg low_data failed, status: %d\n", status);
+		return status;
 	}
 
+	status = pdm_sensor_ap3216c_read_reg(client, info->high_reg, &data_high, sizeof(data_high));
 	if (status) {
-		OSA_ERROR("Read reg failed, type: %d, status: %d\n", type, status);
+		OSA_ERROR("read reg high_data failed, status: %d\n", status);
 		return status;
+	}
+
+	if (info->special_case && ((data_low & 0x80) || (data_low & 0x40))) {
+		value = 0;
+	} else {
+		value = ((unsigned short)data_high << 8) | data_low;
+		if (info->special_case) {
+			value &= 0x3FF;
+		}
 	}
 
 	*val = value;
@@ -178,59 +131,35 @@ static int pdm_sensor_ap3216c_read(struct pdm_client *client, unsigned int type,
 	return 0;
 }
 
-static int pdm_sensor_ap3216c_write(struct pdm_client *client, unsigned int type, unsigned int val)
-{
-	OSA_INFO("\n");
-	return 0;
-}
-
 /**
- * @brief Initializes SPI settings for a PDM device.
- *
- * This function initializes the SPI settings for the specified PDM device and sets up the operation functions.
- *
- * @param client Pointer to the PDM client structure.
- * @return Returns 0 on success; negative error code on failure.
+ * @brief Initializes the AP3216C sensor settings.
  */
 static int pdm_sensor_ap3216c_setup(struct pdm_client *client)
 {
-	struct pdm_sensor_priv *sensor_priv;
-	struct device_node *np;
+	struct pdm_sensor_priv *sensor_priv = pdm_client_get_private_data(client);
+	const struct device_node *np = pdm_client_get_of_node(client);
+	int status;
 
-	if (!client) {
-		OSA_ERROR("Invalid client\n");
+	if (!client || !sensor_priv || !np) {
+		OSA_ERROR("Invalid parameters\n");
 		return -EINVAL;
 	}
 
-	sensor_priv = pdm_client_get_private_data(client);
-	if (!sensor_priv) {
-		OSA_ERROR("Get PDM Client DevData Failed\n");
-		return -ENOMEM;
-	}
 	sensor_priv->read = pdm_sensor_ap3216c_read;
-	sensor_priv->write = pdm_sensor_ap3216c_write;
-
-	np = pdm_client_get_of_node(client);
-	if (!np) {
-		OSA_ERROR("No DT node found\n");
-		return -EINVAL;
-	}
-
 	client->hardware.i2c.client = to_i2c_client(client->pdmdev->dev.parent);
 
-	OSA_DEBUG("ap3216c SENSOR Setup: %s\n", dev_name(&client->dev));
+	status = pdm_sensor_ap3216c_enable(client);
+	if (status) {
+		OSA_ERROR("Failed to enable AP3216C sensor: %d\n", status);
+		return status;
+	}
+
+	OSA_DEBUG("PDM SENSOR Setup: %s\n", dev_name(&client->dev));
+
 	return 0;
 }
 
-static void pdm_sensor_ap3216c_cleanup(struct pdm_client *client)
-{
-	return;
-}
-
-/**
- * @brief Match data structure for initializing SPI type SENSOR devices.
- */
 const struct pdm_client_match_data pdm_sensor_ap3216c_match_data = {
 	.setup = pdm_sensor_ap3216c_setup,
-	.cleanup = pdm_sensor_ap3216c_cleanup,
+	.cleanup = NULL,
 };

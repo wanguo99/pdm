@@ -12,7 +12,7 @@ static struct pdm_adapter *sensor_adapter = NULL;
  * @param state State value (0 or 1).
  * @return Returns 0 on success; negative error code on failure.
  */
-static int pdm_sensor_read_reg(struct pdm_client *client, unsigned int type, unsigned int *val)
+static int pdm_sensor_read_data(struct pdm_client *client, unsigned int type, unsigned int *val)
 {
 	struct pdm_sensor_priv *sensor_priv;
 	int status = 0;
@@ -43,43 +43,6 @@ static int pdm_sensor_read_reg(struct pdm_client *client, unsigned int type, uns
 }
 
 /**
- * @brief Gets the current state of a specified PDM SENSOR device.
- *
- * @param client Pointer to the PDM client structure.
- * @param state Pointer to store the current state.
- * @return Returns 0 on success; negative error code on failure.
- */
-static int pdm_sensor_write_reg(struct pdm_client *client, unsigned int type, unsigned int val)
-{
-	struct pdm_sensor_priv *sensor_priv;
-	int status = 0;
-
-	if (!client) {
-		OSA_ERROR("Invalid argument\n");
-		return -EINVAL;
-	}
-
-	sensor_priv = pdm_client_get_private_data(client);
-	if (!sensor_priv) {
-		OSA_ERROR("Get PDM Client Device Data Failed\n");
-		return -ENOMEM;
-	}
-
-	if (!sensor_priv->write) {
-		OSA_ERROR("write_reg not supported\n");
-		return -ENOTSUPP;
-	}
-
-	status = sensor_priv->write(client, type, val);
-	if (status) {
-		OSA_ERROR("PDM SENSOR write_reg failed, status: %d\n", status);
-		return status;
-	}
-
-	return 0;
-}
-
-/**
  * @brief Handles IOCTL commands from user space.
  *
  * @param file File descriptor.
@@ -91,6 +54,8 @@ static long pdm_sensor_ioctl(struct file *filp, unsigned int cmd, unsigned long 
 {
 	struct pdm_client *client = filp->private_data;
 	int status = 0;
+	struct pdm_sensor_ioctl_data __user *user_data = (struct pdm_sensor_ioctl_data __user *)arg;
+	struct pdm_sensor_ioctl_data data;
 
 	if (!client) {
 		OSA_ERROR("Invalid client\n");
@@ -98,47 +63,42 @@ static long pdm_sensor_ioctl(struct file *filp, unsigned int cmd, unsigned long 
 	}
 
 	switch (cmd) {
-		case PDM_SENSOR_CMD_WRITE:
-		{
-			int level;
-			if (copy_from_user(&level, (void __user *)arg, sizeof(level))) {
-				OSA_ERROR("Failed to copy data from user space\n");
-				return -EFAULT;
-			}
-			OSA_INFO("PDM_DIMMER: Set %s's level to %d\n", dev_name(&client->dev), level);
-			status = pdm_sensor_write_reg(client, 0, 0);
-			break;
+	case PDM_SENSOR_READ_REG:
+	{
+		// Copy the data structure from user space to kernel space
+		if (copy_from_user(&data, user_data, sizeof(data))) {
+			OSA_ERROR("Failed to copy data from user space\n");
+			return -EFAULT;
 		}
-		case PDM_SENSOR_CMD_READ:
-		{
-			int level;
-			status = pdm_sensor_read_reg(client, 0, &level);
-			if (status) {
-				OSA_ERROR("Failed to get DIMMER level, status: %d\n", status);
-				return status;
-			}
-			OSA_INFO("PDM_DIMMER: Current level is %d\n", level);
-			if (copy_to_user((void __user *)arg, &level, sizeof(level))) {
-				OSA_ERROR("Failed to copy data to user space\n");
-				return -EFAULT;
-			}
-			break;
+
+		// Perform the read operation
+		status = pdm_sensor_read_data(client, data.type, &data.value);
+		if (status) {
+			OSA_ERROR("Failed to read sensor register: %d\n", status);
+			return status;
 		}
-		default:
-		{
-			OSA_ERROR("Unknown ioctl command\n");
-			return -ENOTTY;
+
+		// Copy the result back to user space
+		if (copy_to_user(user_data, &data, sizeof(data))) {
+			OSA_ERROR("Failed to copy data to user space\n");
+			return -EFAULT;
 		}
+		break;
+	}
+	default:
+	{
+		OSA_ERROR("Unknown ioctl command: 0x%x\n", cmd);
+		return -ENOTTY;
+	}
 	}
 
 	if (status) {
-		OSA_ERROR("pdm_sensor_ioctl error\n");
+		OSA_ERROR("pdm_sensor_ioctl error: %d\n", status);
 		return status;
 	}
 
 	return 0;
 }
-
 
 /**
  * @brief Reads information about available commands or SENSOR state/brightness.
@@ -153,14 +113,12 @@ static ssize_t pdm_sensor_read(struct file *filp, char __user *buf, size_t count
 {
 	const char help_info[] =
 		"Available commands:\n"
-		" > 1		- Read SENSOR\n"
-		" > 2		- Write SENSOR\n";
+		" > echo 1 type > /dev/pdm_sensor - Read SENSOR\n";
 	size_t len = strlen(help_info);
 
 	if (*ppos >= len)
 		return 0;
 
-	// 使用min_t宏指定类型为size_t
 	size_t remaining = min_t(size_t, count, len - *ppos);
 
 	if (copy_to_user(buf, help_info + *ppos, remaining))
@@ -171,7 +129,7 @@ static ssize_t pdm_sensor_read(struct file *filp, char __user *buf, size_t count
 }
 
 /**
- * @brief Writes commands to change SENSOR state or brightness.
+ * @brief Writes commands to change DIMMER level.
  *
  * @param filp File pointer.
  * @param buf User buffer containing command data.
@@ -184,9 +142,8 @@ static ssize_t pdm_sensor_write(struct file *filp, const char __user *buf, size_
 	struct pdm_client *client = filp->private_data;
 	char kernel_buf[64];
 	ssize_t bytes_read;
-	char buffer[32];
-	unsigned int type = 0;
-	unsigned int value = 0x0;
+	unsigned int type;
+	unsigned int value;
 	int cmd;
 
 	if (!client || count >= sizeof(kernel_buf)) {
@@ -194,55 +151,27 @@ static ssize_t pdm_sensor_write(struct file *filp, const char __user *buf, size_
 		return -EINVAL;
 	}
 
-	pdm_sensor_read_reg(client, 0x01, &value);
-	pdm_sensor_read_reg(client, 0x02, &value);
-	pdm_sensor_read_reg(client, 0x03, &value);
-
-	return count;
-
 	if ((bytes_read = copy_from_user(kernel_buf, buf, count)) != 0) {
 		OSA_ERROR("Failed to copy data from user space: %zd\n", bytes_read);
 		return -EFAULT;
 	}
 
 	kernel_buf[count] = '\0';
-	if (sscanf(kernel_buf, "%d", &cmd) != 1) {
-		OSA_ERROR("Invalid command format: %s\n", kernel_buf);
+	if (sscanf(kernel_buf, "%d %u", &cmd, &type) != 2) {
+		OSA_ERROR("Command %d requires one parameter.\n", cmd);
 		return -EINVAL;
 	}
 
-	switch (cmd)
-	{
-		case PDM_SENSOR_CMD_WRITE:
-		{
-			if (sscanf(kernel_buf, "%d 0x%x 0x%x", &cmd, &type, &value) != 3) {
-				OSA_ERROR("Command %d requires one parameter.\n", cmd);
-				return -EINVAL;
-			}
-
-			if (pdm_sensor_write_reg(client, type, value)) {
-				OSA_ERROR("pdm_sensor_set_state failed\n");
+	switch (cmd) {
+		case PDM_SENSOR_CMD_READ: {
+			value = 0;
+			if (pdm_sensor_read_data(client, type, &value)) {
+				OSA_ERROR("pdm_dimmer_set_level failed\n");
 				return -EINVAL;
 			}
 			break;
 		}
-		case PDM_SENSOR_CMD_READ:
-		{
-			if (sscanf(kernel_buf, "%d 0x%x", &cmd, &type) != 2) {
-				OSA_ERROR("Command %d should not have parameters.\n", cmd);
-				return -EINVAL;
-			}
-
-			if (pdm_sensor_read_reg(client, type, &value)) {
-				OSA_ERROR("pdm_sensor_get_state failed\n");
-				return -EINVAL;
-			}
-			snprintf(buffer, sizeof(buffer), "%d\n", value);
-			bytes_read = simple_read_from_buffer((void __user *)buf, strlen(buffer), ppos, buffer, strlen(buffer));
-			return bytes_read;
-		}
-		default:
-		{
+		default: {
 			OSA_ERROR("Unknown command: %d\n", cmd);
 			return -EINVAL;
 		}
@@ -250,6 +179,7 @@ static ssize_t pdm_sensor_write(struct file *filp, const char __user *buf, size_
 
 	return count;
 }
+
 
 /**
  * @brief Probes the SENSOR PDM device.
