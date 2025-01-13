@@ -170,6 +170,23 @@ static ssize_t pdm_switch_read(struct file *filp, char __user *buf, size_t count
 	return remaining;
 }
 
+
+static void pdm_switch_write_help(void)
+{
+    OSA_print("PDM Switch Module Test Unit\n");
+    OSA_print("Usage: pdm_test_switch [-h] [-s <state>] [-g]\n");
+    OSA_print("\n");
+    OSA_print("Options:\n");
+    OSA_print("  -h, --help      Show this help message and exit.\n");
+    OSA_print("  -s <state>      Set the switch state to the specified integer value.\n");
+    OSA_print("                  Example: -s 1 (to set state to 1)\n");
+    OSA_print("  -g              Get the current switch state.\n");
+    OSA_print("\n");
+    OSA_print("Examples:\n");
+    OSA_print("  pdm_test_switch -s 1   # Set the switch state to 1\n");
+    OSA_print("  pdm_test_switch -g     # Get the current switch state\n");
+}
+
 /**
  * @brief Writes commands to change SWITCH state.
  *
@@ -179,13 +196,14 @@ static ssize_t pdm_switch_read(struct file *filp, char __user *buf, size_t count
  * @param ppos Offset in the file.
  * @return Returns number of bytes written or negative error code on failure.
  */
-static ssize_t pdm_switch_write(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
+static ssize_t pdm_switch_write(struct file *filp, const char __user *buf,
+size_t count, loff_t *ppos)
 {
 	struct pdm_client *client = filp->private_data;
 	char kernel_buf[64];
 	ssize_t bytes_read;
-	int cmd;
-	int param;
+	char cmd[4];
+	int state;
 
 	if (!client || count >= sizeof(kernel_buf)) {
 		OSA_ERROR("Invalid client or input too long.\n");
@@ -198,52 +216,42 @@ static ssize_t pdm_switch_write(struct file *filp, const char __user *buf, size_
 	}
 
 	kernel_buf[count] = '\0';
-	if (sscanf(kernel_buf, "%d", &cmd) != 1) {
+
+	if (sscanf(kernel_buf, "%2s", cmd) != 1) {
 		OSA_ERROR("Invalid command format: %s\n", kernel_buf);
 		return -EINVAL;
 	}
 
-
-	switch (cmd)
-	{
-		case PDM_SWITCH_CMD_SET_STATE:
-		{
-			if (sscanf(kernel_buf, "%d %d", &cmd, &param) != 2) {
-				OSA_ERROR("Command %d requires one parameter.\n", cmd);
-				return -EINVAL;
-			}
-			if (param != 0 && param != 1) {
-				OSA_ERROR("Invalid state: %d\n", param);
-				return -EINVAL;
-			}
-			if (pdm_switch_set_state(client, param)) {
-				OSA_ERROR("pdm_switch_set_state failed\n");
-				return -EINVAL;
-			}
-			break;
-		}
-		case PDM_SWITCH_CMD_GET_STATE:
-		{
-			if (sscanf(kernel_buf, "%d", &cmd) != 1) {
-				OSA_ERROR("Command %d should not have parameters.\n", cmd);
-				return -EINVAL;
-			}
-			param = 0;
-			int state;
-			if (pdm_switch_get_state(client, &state)) {
-				OSA_ERROR("pdm_switch_get_state failed\n");
-				return -EINVAL;
-			}
-			char buffer[32];
-			snprintf(buffer, sizeof(buffer), "%d\n", state);
-			bytes_read = simple_read_from_buffer((void __user *)buf, strlen(buffer), ppos, buffer, strlen(buffer));
-			return bytes_read;
-		}
-		default:
-		{
-			OSA_ERROR("Unknown command: %d\n", cmd);
+	if (!strcmp(cmd, "-s")) {
+		if (sscanf(kernel_buf, "%2s %d", cmd, &state) != 2) {
+			OSA_ERROR("Command %s requires one parameter.\n", cmd);
 			return -EINVAL;
 		}
+		if (state != 0 && state != 1) {
+			OSA_ERROR("Invalid state: %d\n", state);
+			return -EINVAL;
+		}
+		if (pdm_switch_set_state(client, state)) {
+			OSA_ERROR("pdm_switch_set_state failed\n");
+			return -EINVAL;
+		}
+		return count;
+	}
+	else if (!strcmp(cmd, "-g")) {
+		if (sscanf(kernel_buf, "%2s", cmd) != 1) {
+			OSA_ERROR("Command %s should not have parameters.\n", cmd);
+			return -EINVAL;
+		}
+		if (pdm_switch_get_state(client, &state)) {
+			OSA_ERROR("pdm_switch_get_state failed\n");
+			return -EINVAL;
+		}
+		OSA_INFO("Current state is %s\n", state ? "ON" : "OFF");
+		return count;
+	}
+	else {
+		pdm_switch_write_help();
+		return count;
 	}
 
 	return count;
