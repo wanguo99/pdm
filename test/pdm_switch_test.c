@@ -72,6 +72,10 @@ static int pdm_test_switch_main(int argc, char *argv[])
 			goto close_fd;
 		}
 		state = atoi(argv[2]);
+		if (state != 0 && state != 1) {
+			printf("Invalid state: %d\n", state);
+			return -1;
+		}
 		status = pdm_test_switch_set_state(fd, state);
 		if (status) {
 			printf("get_state failed\n");

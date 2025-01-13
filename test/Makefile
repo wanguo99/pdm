@@ -41,7 +41,7 @@ CFLAGS += -I../include/uapi
 LDFLAGS =
 
 # Default target
-all: $(TARGET)
+all: clean $(TARGET)
 
 # Rule to create object directory
 $(OBJDIR):
