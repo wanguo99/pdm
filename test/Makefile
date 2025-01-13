@@ -20,10 +20,10 @@ INSTALL_DIR = $(DESTDIR)/_install
 # Source files (relative to SRCDIR)
 SRC = \
     $(SRCDIR)/pdm_test.c \
-    $(SRCDIR)/pdm_test_dimmer.c \
-    $(SRCDIR)/pdm_test_nvmem.c \
-    $(SRCDIR)/pdm_test_sensor.c \
-    $(SRCDIR)/pdm_test_switch.c
+    $(SRCDIR)/pdm_dimmer_test.c \
+    $(SRCDIR)/pdm_nvmem_test.c \
+    $(SRCDIR)/pdm_sensor_test.c \
+    $(SRCDIR)/pdm_switch_test.c
 
 # Object files (relative to OBJDIR)
 OBJS = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SRC))
