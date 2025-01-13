@@ -31,13 +31,17 @@ PRIVATE_CFLAGS += -DDEBUG_OSA_LOG_ENABLE=$(DEBUG_OSA_LOG_ENABLE) \
 
 export PRIVATE_CFLAGS MODULE_NAME
 
-all: modules
+all: modules test
 
 modules:
 	$(MAKE) -j$(nproc) -C $(KERNELDIR) M=$(CURDIR) modules
 
 clean:
 	$(MAKE) -C $(KERNELDIR) M=$(CURDIR) clean
+	$(MAKE) -C $(CURDIR)/test clean
+
+test:
+	$(MAKE) -C $(CURDIR)/test
 
 install: modules
 	@mkdir -p $(HEADER_INSTALL_DIR) $(MODULE_INSTALL_DIR) $(SYMBOL_INSTALL_DIR)
@@ -49,4 +53,4 @@ uninstall:
 	@echo "Uninstalling modules from $(DESTDIR)"
 	@rm -rf $(DESTDIR)
 
-.PHONY: all modules clean install uninstall
+.PHONY: all modules clean install uninstall test

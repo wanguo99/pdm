@@ -167,7 +167,6 @@ static ssize_t pdm_dimmer_read(struct file *filp, char __user *buf, size_t count
 	if (*ppos >= len)
 		return 0;
 
-	// 使用min_t宏指定类型为size_t
 	size_t remaining = min_t(size_t, count, len - *ppos);
 
 	if (copy_to_user(buf, help_info + *ppos, remaining))
