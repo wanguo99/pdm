@@ -34,7 +34,8 @@ SRC = \
     $(SRCDIR)/nvmem/pdm_nvmem.c \
     $(SRCDIR)/nvmem/pdm_nvmem_spi.c \
     $(SRCDIR)/sensor/pdm_sensor.c \
-    $(SRCDIR)/sensor/pdm_sensor_ap3216c.c
+    $(SRCDIR)/sensor/pdm_sensor_ap3216c.c \
+    $(SRCDIR)/sensor/pdm_sensor_icm20608.c
 
 # Add objects to the module's object list
 $(MODULE_NAME)-objs := $(SRC:.c=.o)

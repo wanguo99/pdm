@@ -38,5 +38,6 @@ struct pdm_sensor_priv {
  * @brief Match data structure for initializing PWM type DIMMER devices.
  */
 extern const struct pdm_client_match_data pdm_sensor_ap3216c_match_data;
+extern const struct pdm_client_match_data pdm_sensor_icm20608_match_data;
 
 #endif /* _PDM_SENSOR_PRIV_H_ */
