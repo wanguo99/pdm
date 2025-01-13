@@ -43,6 +43,9 @@ clean:
 test:
 	$(MAKE) -C $(CURDIR)/test
 
+test-clean:
+	$(MAKE) -C $(CURDIR)/test clean
+
 install: modules
 	@mkdir -p $(HEADER_INSTALL_DIR) $(MODULE_INSTALL_DIR) $(SYMBOL_INSTALL_DIR)
 	@cp -a $(CURDIR)/include/* $(HEADER_INSTALL_DIR)
@@ -53,4 +56,4 @@ uninstall:
 	@echo "Uninstalling modules from $(DESTDIR)"
 	@rm -rf $(DESTDIR)
 
-.PHONY: all modules clean install uninstall test
+.PHONY: all modules clean install uninstall test test-clean
