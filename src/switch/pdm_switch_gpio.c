@@ -48,7 +48,7 @@ static int pdm_switch_gpio_set_state(struct pdm_client *client, int state)
 	gpio_level = pdm_switch_gpio_state_to_level(gpiod, state);
 	gpiod_set_value_cansleep(gpiod, gpio_level);
 
-	OSA_INFO("GPIO PDM switch: Set %s state to %d\n", dev_name(&client->dev), state);
+	OSA_DEBUG("GPIO PDM switch: Set %s state to %d\n", dev_name(&client->dev), state);
 	return 0;
 }
 
@@ -66,7 +66,7 @@ static int pdm_switch_gpio_get_state(struct pdm_client *client, int *state)
 	gpio_level = gpiod_get_value_cansleep(gpiod);
 	*state = pdm_switch_gpio_level_to_state(gpiod, gpio_level);
 
-	OSA_INFO("GPIO PDM switch: Get %s state: %d\n", dev_name(&client->dev), *state);
+	OSA_DEBUG("GPIO PDM switch: Get %s state: %d\n", dev_name(&client->dev), *state);
 	return 0;
 }
 

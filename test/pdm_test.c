@@ -79,19 +79,13 @@ static int pdm_test_dispatch_command(int argc, char *argv[])
 	return unit->main_func(argc, argv);
 }
 
-static void pdm_test_print_title()
-{
-	pdm_test_clear_screen();
-	printf("\n====== PDM Test ======\n");
-}
-
 int main(int argc, char *argv[])
 {
 	if (argc < 1) {
 		return -1;
 	}
 
-	pdm_test_print_title();
+	printf("\n====== PDM Test ======\n");
 
 	if (!strncmp(argv[0], "./", 2)) {
 		argv[0] += 2;

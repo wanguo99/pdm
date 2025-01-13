@@ -77,7 +77,7 @@ static int pdm_switch_get_state(struct pdm_client *client, int *state)
 		return status;
 	}
 
-	OSA_INFO("Current state is %s\n", *state ? "ON" : "OFF");
+	OSA_DEBUG("Current state is %s\n", *state ? "ON" : "OFF");
 	return 0;
 }
 
@@ -107,7 +107,6 @@ static long pdm_switch_ioctl(struct file *filp, unsigned int cmd, unsigned long 
 				OSA_ERROR("Failed to copy data from user space\n");
 				return -EFAULT;
 			}
-			OSA_INFO("PDM_SWITCH: Set %s's state to %d\n", dev_name(&client->dev), state);
 			status = pdm_switch_set_state(client, state);
 			break;
 		}
@@ -119,7 +118,6 @@ static long pdm_switch_ioctl(struct file *filp, unsigned int cmd, unsigned long 
 				OSA_ERROR("Failed to get SWITCH state, status: %d\n", status);
 				return status;
 			}
-			OSA_INFO("PDM_SWITCH: Current state is %d\n", state);
 			if (copy_to_user((void __user *)arg, &state, sizeof(state))) {
 				OSA_ERROR("Failed to copy data to user space\n");
 				return -EFAULT;

@@ -34,6 +34,9 @@ TARGET = pdm_test
 # CFLAGS: compiler flags
 CFLAGS += -Wall -Wextra -I$(INCDIR)
 
+# header files
+CFLAGS += -I../include/uapi
+
 # LDFLAGS: linker flags
 LDFLAGS =
 
