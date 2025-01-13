@@ -6,11 +6,19 @@
 
 static int pdm_test_switch_main(int argc, char *argv[])
 {
+	int index = 0;
+
 	(void)argc;
 	(void)argv;
 
 	printf("pdm_test_switch_main\n");
 
+	for (index = 0; index < argc; index++)
+	{
+		printf("argv[%d]: %s\n", index, argv[index]);
+	}
+
+	printf("\n");
 	return 0;
 }
 
