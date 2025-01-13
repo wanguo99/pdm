@@ -46,14 +46,13 @@ test:
 test-clean:
 	$(MAKE) -C $(CURDIR)/test clean
 
-install: modules
-	@mkdir -p $(HEADER_INSTALL_DIR) $(MODULE_INSTALL_DIR) $(SYMBOL_INSTALL_DIR)
-	@cp -a $(CURDIR)/include/* $(HEADER_INSTALL_DIR)
-	@cp -a $(CURDIR)/$(MODULE_NAME).ko $(MODULE_INSTALL_DIR)
-	@cp -a $(CURDIR)/Module.symvers $(SYMBOL_INSTALL_DIR)
+install:
+	@cp -a $(CURDIR)/pdm.ko $(DESTDIR)/
+	@cp -a $(CURDIR)/test/pdm_test $(DESTDIR)/
 
 uninstall:
 	@echo "Uninstalling modules from $(DESTDIR)"
-	@rm -rf $(DESTDIR)
+	@rm -rf $(DESTDIR)/pdm.ko
+	@rm -rf $(DESTDIR)/pdm_test
 
 .PHONY: all modules clean install uninstall test test-clean

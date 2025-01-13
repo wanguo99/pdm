@@ -41,6 +41,7 @@
 **/*.su
 **/*.idb
 **/*.pdb
+test/pdm_test
 
 # Kernel Module Compile Results
 **/*.mod*
@@ -51,5 +52,3 @@
 **/Mkfile.old
 **/dkms.conf
 
-# for build test
-nk.sh
