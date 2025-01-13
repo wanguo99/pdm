@@ -9,6 +9,8 @@ INCDIR := ${src}/include
 
 # Compiler flags for the module
 CFLAGS_MODULE += ${PRIVATE_CFLAGS}
+
+# Header File Path
 CFLAGS_MODULE += \
     -I$(INCDIR) \
     -I$(INCDIR)/osa \
@@ -16,17 +18,23 @@ CFLAGS_MODULE += \
     -I$(INCDIR)/private \
     -I$(INCDIR)/uapi
 
-# Source files (relative to SRCDIR)
+# PDM Core Source Files
 SRC = \
     $(SRCDIR)/core/pdm_core.c \
     $(SRCDIR)/core/pdm_component.c \
     $(SRCDIR)/core/pdm_bus.c \
     $(SRCDIR)/core/pdm_device.c \
     $(SRCDIR)/core/pdm_adapter.c \
-    $(SRCDIR)/core/pdm_client.c \
+    $(SRCDIR)/core/pdm_client.c
+
+# PDM Device Driver Source Files
+SRC += \
     $(SRCDIR)/device/pdm_device_i2c.c \
     $(SRCDIR)/device/pdm_device_platform.c \
     $(SRCDIR)/device/pdm_device_spi.c \
+
+# PDM Adapter Driver Source Files
+SRC += \
     $(SRCDIR)/switch/pdm_switch.c \
     $(SRCDIR)/switch/pdm_switch_gpio.c \
     $(SRCDIR)/dimmer/pdm_dimmer.c \
@@ -37,5 +45,4 @@ SRC = \
     $(SRCDIR)/sensor/pdm_sensor_ap3216c.c \
     $(SRCDIR)/sensor/pdm_sensor_icm20608.c
 
-# Add objects to the module's object list
 $(MODULE_NAME)-objs := $(SRC:.c=.o)
