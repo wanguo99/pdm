@@ -1,13 +1,13 @@
 #ifndef _PDM_TEST_H_
 #define _PDM_TEST_H_
 
+typedef int (*command_func_t)(int argc, char *argv[]);
 
-struct command_t{
-    const char *name;
-    int (*func)(int argc, char *argv[]);
+struct pdm_test_command_t{
+	const char *name;
+	command_func_t func;
 };
 
-
-int cmd_help(int argc, char *argv[]);
+int pdm_test_show_help(int argc, char *argv[]);
 
 #endif /* _PDM_TEST_H_ */
