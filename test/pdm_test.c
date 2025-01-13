@@ -6,6 +6,7 @@
 
 static struct pdm_test_unit *pdm_test_units[] = {
     &pdm_test_unit_show_help,
+    &pdm_test_unit_switch,
     NULL
 };
 
@@ -27,6 +28,11 @@ const char *name)
     return NULL;
 }
 
+static void pdm_test_show_help_comment(void)
+{
+	printf("show this message.\n");
+}
+
 static int pdm_test_show_help(int argc, char *argv[])
 {
     struct pdm_test_unit **units = pdm_test_units;
@@ -37,21 +43,21 @@ static int pdm_test_show_help(int argc, char *argv[])
     printf("\n### Available commands:\n");
 
     while (*units != NULL) {
-        printf("------------------\n");
+        printf("\n------------------\n");
         printf(" - %s:\n", (*units)->name);
-        printf("   %s\n", (*units)->comment);
+        (*units)->comment_func();
         units++;
     }
 
-    printf("### \n\n");
+    printf("\n### \n\n");
 
     return 0;
 }
 
 struct pdm_test_unit pdm_test_unit_show_help = {
     .name = "show_help",
-    .comment = "show this message.",
-    .func = pdm_test_show_help
+    .comment_func = pdm_test_show_help_comment,
+    .main_func = pdm_test_show_help
 };
 
 static int pdm_test_dispatch_command(int argc, char *argv[])
@@ -70,7 +76,7 @@ static int pdm_test_dispatch_command(int argc, char *argv[])
     }
 
     printf("[CMD]: %s\n", unit->name);
-    return unit->func(argc, argv);
+    return unit->main_func(argc, argv);
 }
 
 static void pdm_test_print_title()
