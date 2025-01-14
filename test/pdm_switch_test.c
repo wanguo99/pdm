@@ -8,7 +8,7 @@
 #include "pdm_test.h"
 #include "pdm_switch_ioctl.h"
 
-#define PDM_SWITCH_TEST_CDEV_FILE	"/dev/pdm_client/pdm_switch.0"
+#define PDM_SWITCH_TEST_CDEV_FILE_PREFIX	"/dev/pdm_client/pdm_switch."
 
 static int pdm_test_switch_set_state(int fd, int state)
 {
@@ -48,54 +48,82 @@ static void pdm_test_switch_comment(void)
     printf("  pdm_test_switch -g     # Get the current switch state\n");
 }
 
+static int pdm_test_switch_open_device(int index)
+{
+	char cdev_file[256];
+	int fd;
+
+	snprintf(cdev_file, sizeof(cdev_file), "%s%d", PDM_SWITCH_TEST_CDEV_FILE_PREFIX, index);
+	printf("cdev_file: %s\n", cdev_file);
+
+	fd = open(cdev_file, O_RDWR);
+	if (fd < 0) {
+		perror("Failed to open device.\n");
+		return -1;
+	}
+	return fd;
+}
+
+static void pdm_test_switch_close_device(int fd)
+{
+	close(fd);
+}
+
 static int pdm_test_switch_main(int argc, char *argv[])
 {
-	int fd;
-	int status;
+	int status = 0;
 	int state;
+	int index;
+	int fd = -1;
 
-	(void)argc;
-	(void)argv;
-
-	printf("pdm_test_switch_main\n");
-
-	fd = open(PDM_SWITCH_TEST_CDEV_FILE, O_RDWR);
-	if (fd < 0) {
-		perror("Failed to open device file");
+	if (argc < 2) {
+		pdm_test_switch_comment();
 		return -1;
 	}
 
-	if (!strcmp(argv[1], "-s")) {
-		if (argc != 3) {
-			fprintf(stderr, "Usage: %s -s <state>\n", argv[0]);
-			status = -1;
-			goto close_fd;
-		}
-		state = atoi(argv[2]);
+	if (!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help")) {
+		pdm_test_switch_comment();
+		return 0;
+	}
+
+	if (argc == 4 && !strcmp(argv[1], "-s")) {
+		index = atoi(argv[2]);
+		state = atoi(argv[3]);
 		if (state != 0 && state != 1) {
 			printf("Invalid state: %d\n", state);
 			return -1;
 		}
-		status = pdm_test_switch_set_state(fd, state);
-		if (status) {
-			printf("get_state failed\n");
-			goto close_fd;
+		fd = pdm_test_switch_open_device(index);
+			if (fd < 0) {
+			return -1;
 		}
+		status = pdm_test_switch_set_state(fd, state);
 	}
-	else if (!strcmp(argv[1], "-g")) {
+	else if (argc == 3 && !strcmp(argv[1], "-g")) {
+		index = atoi(argv[2]);
+		fd = pdm_test_switch_open_device(index);
+		if (fd < 0) {
+			return -1;
+		}
 		status = pdm_test_switch_get_state(fd, &state);
 		if (!status) {
 			printf("Current state is %s\n", state ? "ON" : "OFF");
+		} else {
+			printf("get_state failed\n");
 		}
 	}
 	else {
 		pdm_test_switch_comment();
+		status = -1;
 	}
 
-close_fd:
-	close(fd);
+	if (fd >= 0) {
+		pdm_test_switch_close_device(fd);
+	}
+
 	return status;
 }
+
 
 struct pdm_test_unit pdm_test_unit_switch = {
 	.name = "switch_test",
