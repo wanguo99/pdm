@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MQTT Event Publisher</title>
+    <!-- 引入 Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 2rem;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 600px;
+        }
+        #log {
+            height: 300px;
+            overflow-y: scroll;
+            border: 1px solid #ddd;
+            padding: 1rem;
+            margin-top: 1rem;
+            background-color: white;
+            white-space: pre-wrap; /* 确保文本自动换行 */
+            word-wrap: break-word; /* 长单词或URL将断开并换行 */
+        }
+        .btn-primary {
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center">MQTT Event Publisher</h1>
+        <div class="form-group">
+            <label for="topicInput">Topic:</label>
+            <input type="text" class="form-control" id="topicInput" placeholder="Enter topic" value="mqtt_topic">
+        </div>
+        <div class="form-group">
+            <label for="payloadInput">Payload:</label>
+            <textarea class="form-control" id="payloadInput" rows="3" placeholder="Enter payload">event_payload</textarea>
+        </div>
+        <button id="publishEventBtn" class="btn btn-primary btn-block">Publish MQTT Event</button>
+        <pre id="log"></pre>
+    </div>
+
+    <!-- 引入 jQuery 和 Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script type="text/javascript">
+        const wsUri = "ws://10.10.0.201:8080";
+        const logElement = document.getElementById('log');
+
+        function log(message) {
+            const now = new Date().toISOString();
+            logElement.innerHTML += `[${now}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        let websocket;
+
+        function connectWebSocket() {
+            websocket = new WebSocket(wsUri);
+
+            websocket.onopen = function(event) {
+                log("Connected to WebSocket server.");
+            };
+
+            websocket.onmessage = function(event) {
+                log(`Message from server: ${event.data}`);
+            };
+
+            websocket.onerror = function(event) {
+                log(`WebSocket error observed: ${event}`);
+                alert("WebSocket error: Check the console for more details.");
+            };
+
+            websocket.onclose = function(event) {
+                log(`WebSocket closed. Code: ${event.code}, Reason: ${event.reason}`);
+                if (event.wasClean === false) {
+                    alert("WebSocket connection unexpectedly closed. Please check your network settings.");
+                }
+            };
+        }
+
+        document.getElementById('publishEventBtn').addEventListener('click', function() {
+            if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+                log("WebSocket is not open. Attempting to reconnect...");
+                connectWebSocket();
+                return;
+            }
+
+            const topic = document.getElementById('topicInput').value.trim();
+            const payload = document.getElementById('payloadInput').value.trim();
+
+            if (topic && payload) {
+                try {
+                    const message = JSON.stringify({
+                        type: 'publish_mqtt_event',
+                        topic: topic,
+                        payload: payload
+                    });
+                    websocket.send(message);
+                    log(`Sent message: ${message}`);
+                } catch (error) {
+                    log(`Failed to send message: ${error.message}`);
+                    alert("Failed to publish MQTT event. Check the console for more details.");
+                }
+            } else {
+                log("Please enter both topic and payload.");
+                alert("Please enter both topic and payload.");
+            }
+        });
+
+        // 页面加载时尝试建立连接
+        window.onload = function() {
+            log("Attempting to connect to WebSocket server...");
+            connectWebSocket();
+        };
+    </script>
+</body>
+</html>
