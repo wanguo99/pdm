@@ -11,3 +11,8 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 # 添加子目录
 add_subdirectory(lib)
+
+add_custom_target(distclean
+    COMMAND /bin/sh -c "rm -rf ${CMAKE_BINARY_DIR}/*"
+    COMMENT "Removing all files in the build directory using shell command"
+)
