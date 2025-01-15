@@ -23,6 +23,7 @@ target_include_directories(libpdm PUBLIC
 
 # 包含必要的私有头文件路径（使用相对路径）
 target_include_directories(libpdm PRIVATE
+	${PROJECT_SOURCE_DIR}/drv/include/uapi
     ${CMAKE_CURRENT_SOURCE_DIR}/include/private
 )
 

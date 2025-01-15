@@ -46,6 +46,7 @@ set(CMAKE_SKIP_INSTALL_RPATH FALSE)
 set(CMAKE_SKIP_RPATH FALSE)
 
 # 添加子目录
+add_subdirectory(drv)
 add_subdirectory(lib)
 add_subdirectory(app/pdm_test)
 add_subdirectory(app/websocket_server)
