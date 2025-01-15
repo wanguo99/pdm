@@ -1,7 +1,7 @@
 # lib/CMakeLists.txt
 cmake_minimum_required(VERSION 3.10)
 
-# 添加共享库目标，并指定库名为 libpdm.so
+# 添加共享库目标，并指定库名为 pdm
 add_library(pdm SHARED
     src/lib_pdm_dimmer.c
     src/lib_pdm_nvmem.c
@@ -9,31 +9,28 @@ add_library(pdm SHARED
     src/lib_pdm_switch.c
 )
 
-# 设置输出库文件名为 libpdm.so
+# 设置输出库文件名为 pdm 并指定输出目录
 set_target_properties(pdm PROPERTIES
     OUTPUT_NAME "pdm"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
 )
 
-# 包含必要的公共头文件路径
+# 包含必要的公共头文件路径（使用相对路径）
 target_include_directories(pdm PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/api
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/api>
+    $<INSTALL_INTERFACE:include>
 )
 
-# 包含必要的私有头文件路径
+# 包含必要的私有头文件路径（使用相对路径）
 target_include_directories(pdm PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include/private
 )
 
-# 导出库目标，使其在整个项目中可见
-install(TARGETS pdm EXPORT pdmTargets
+# 安装规则
+install(TARGETS pdm
     LIBRARY DESTINATION lib
-    INCLUDES DESTINATION include
 )
 
-# 创建配置文件
-install(EXPORT pdmTargets
-    FILE pdmConfig.cmake
-    NAMESPACE PDM::
-    DESTINATION lib/cmake/pdm
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/api/
+    DESTINATION include
 )
