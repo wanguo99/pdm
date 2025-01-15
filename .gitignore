@@ -41,7 +41,6 @@
 **/*.su
 **/*.idb
 **/*.pdb
-test/pdm_test
 
 # Kernel Module Compile Results
 **/*.mod*
@@ -52,3 +51,5 @@ test/pdm_test
 **/Mkfile.old
 **/dkms.conf
 
+# cmake cache
+build
