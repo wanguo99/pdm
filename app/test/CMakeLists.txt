@@ -18,9 +18,7 @@ target_include_directories(pdm_test PRIVATE
 )
 
 # 链接到必要的库（假设 pdm 是一个已经定义的目标）
-target_link_libraries(pdm_test PRIVATE
-    pdm
-)
+target_link_libraries(pdm_test PRIVATE libpdm)
 
 # 安装规则
 install(TARGETS pdm_test
