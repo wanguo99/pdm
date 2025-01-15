@@ -61,12 +61,7 @@
         <h1>MQTT Event Publisher</h1>
         <div class="form-group">
             <label for="topicSelect">Topic:</label>
-            <select id="topicSelect">
-                <option value="mqtt_topic_switch">switch</option>
-                <option value="mqtt_topic_dimmer">dimmer</option>
-                <option value="mqtt_topic_sensor">sensor</option>
-                <option value="mqtt_topic_nvmem">nvmem</option>
-            </select>
+            <select id="topicSelect"></select> <!-- 移除了固定的选项 -->
         </div>
         <div class="form-group">
             <label for="payloadInput">Payload:</label>
@@ -79,6 +74,7 @@
     <script type="text/javascript">
         const wsUri = "ws://10.10.0.201:8080";
         const logElement = document.getElementById('log');
+        const topicSelect = document.getElementById('topicSelect');
 
         function log(message) {
             const now = new Date().toISOString();
@@ -93,24 +89,51 @@
 
             websocket.onopen = function(event) {
                 log("Connected to WebSocket server.");
+                requestTopics(); // 成功连接后请求主题列表
             };
 
             websocket.onmessage = function(event) {
-                log(`Message from server: ${event.data}`);
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'topics') {
+                        populateTopics(data.topics); // 收到主题列表后填充选择框
+                    } else {
+                        log(`Message from server: ${event.data}`);
+                    }
+                } catch (e) {
+                    log(`Message from server: ${event.data}`); // 如果不是JSON格式，则直接记录信息
+                }
             };
 
             websocket.onerror = function(event) {
-                // Removed alert call
                 log(`WebSocket error observed: ${event}`);
             };
 
             websocket.onclose = function(event) {
                 log(`WebSocket closed. Code: ${event.code}, Reason: ${event.reason}`);
                 if (event.wasClean === false) {
-                    // Removed alert call
                     log("WebSocket connection unexpectedly closed. Please check your network settings.");
                 }
             };
+        }
+
+        function requestTopics() {
+            const message = JSON.stringify({type: 'request_topics'});
+            websocket.send(message);
+            log("Requested topics list from server.");
+        }
+
+        function populateTopics(topics) {
+            // 清空现有选项
+            topicSelect.innerHTML = '';
+            // 添加每个主题作为一个新的 <option> 元素
+            topics.forEach(topic => {
+                const option = document.createElement('option');
+                option.value = topic;
+                option.textContent = topic;
+                topicSelect.appendChild(option);
+            });
+            log(`Received and populated topics list.`);
         }
 
         document.getElementById('publishEventBtn').addEventListener('click', function() {
@@ -120,7 +143,7 @@
                 return;
             }
 
-            const topic = document.getElementById('topicSelect').value.trim();
+            const topic = topicSelect.value.trim();
             const payload = document.getElementById('payloadInput').value.trim();
 
             if (topic && payload) {
@@ -134,15 +157,12 @@
                     log(`Sent message: ${message}`);
                 } catch (error) {
                     log(`Failed to send message: ${error.message}`);
-                    // Removed alert call
                 }
             } else {
                 log("Please select a topic and enter a payload.");
-                // Removed alert call
             }
         });
 
-        // 页面加载时尝试建立连接
         window.onload = function() {
             log("Attempting to connect to WebSocket server...");
             connectWebSocket();
