@@ -4,6 +4,7 @@
 #include <string.h>
 #include <signal.h>
 #include <cjson/cJSON.h>
+#include <pthread.h>
 
 // 宏定义
 #define WEB_SOCKET_PORT 8080
@@ -15,6 +16,14 @@
 static struct mosquitto *mosq = NULL;
 static volatile int g_exit_flag = 0;
 
+// 全局变量用于管理 WebSocket 客户端列表
+static pthread_mutex_t clients_mutex = PTHREAD_MUTEX_INITIALIZER;
+static struct lws **clients = NULL;
+static size_t clients_count = 0;
+
+// 前向声明函数以避免隐式声明警告
+void broadcast_to_all_websockets(const char *message);
+
 // 处理SIGINT信号以便优雅地关闭程序
 void sigint_handler(int sig) {
     g_exit_flag = 1;
@@ -23,6 +32,29 @@ void sigint_handler(int sig) {
 // MQTT连接回调函数
 void on_mqtt_connect(struct mosquitto *m, void *obj, int result) {
     printf("Connected to MQTT broker with code %d\n", result);
+    if (result == MOSQ_ERR_SUCCESS) {
+        // 订阅所有主题（或根据需要订阅特定主题）
+        mosquitto_subscribe(mosq, NULL, "#", 0);
+    }
+}
+
+// MQTT消息接收回调函数
+void on_mqtt_message(struct mosquitto *m, void *obj, const struct mosquitto_message *message) {
+    // 处理接收到的消息并广播给 WebSocket 客户端
+    printf("Received message on topic %s: %.*s\n", message->topic, message->payloadlen, (char *)message->payload);
+
+    cJSON *response = cJSON_CreateObject();
+    cJSON_AddStringToObject(response, "type", "mqtt_message");
+    cJSON_AddStringToObject(response, "topic", message->topic);
+    cJSON_AddStringToObject(response, "payload", (char *)message->payload);
+
+    char *json_str = cJSON_PrintUnformatted(response);
+    cJSON_Delete(response);
+
+    if (json_str) {
+        broadcast_to_all_websockets(json_str);
+        free(json_str);
+    }
 }
 
 // 初始化 MQTT 客户端
@@ -34,11 +66,20 @@ void mqtt_init() {
         exit(1);
     }
 
-    // 设置MQTT连接回调函数
+    // 设置MQTT连接和消息回调函数
     mosquitto_connect_callback_set(mosq, on_mqtt_connect);
+    mosquitto_message_callback_set(mosq, on_mqtt_message);
 
     if (mosquitto_connect(mosq, MQTT_BROKER_HOST, MQTT_BROKER_PORT, MQTT_KEEPALIVE_INTERVAL)) {
         fprintf(stderr, "Unable to connect to MQTT broker.\n");
+        mosquitto_lib_cleanup();
+        exit(1);
+    }
+
+    // 启动后台线程处理网络事件
+    if (mosquitto_loop_start(mosq)) {
+        fprintf(stderr, "Failed to start MQTT loop.\n");
+        mosquitto_destroy(mosq);
         mosquitto_lib_cleanup();
         exit(1);
     }
@@ -51,14 +92,13 @@ void mqtt_publish_message(const char *message, const char *topic) {
     }
 }
 
-// 定义事件类型枚举
+// 将事件字符串映射到枚举值的函数
 typedef enum {
     EVENT_PUBLISH_MQTT_EVENT,
     EVENT_REQUEST_TOPICS,
     EVENT_INVALID
 } EventType;
 
-// 将事件字符串映射到枚举值的函数
 EventType event_type_from_string(const char *type_str) {
     if (strcmp(type_str, "publish_mqtt_event") == 0)
         return EVENT_PUBLISH_MQTT_EVENT;
@@ -80,11 +120,15 @@ void handle_publish_mqtt_event(cJSON *root, struct lws *wsi) {
 
         // 回复客户端
         const char reply[] = "MQTT event published!";
-        lws_write(wsi, (unsigned char *)reply, strlen(reply), LWS_WRITE_TEXT);
+        if (lws_write(wsi, (unsigned char *)reply, strlen(reply), LWS_WRITE_TEXT) < 0) {
+            perror("Failed to send response");
+        }
     } else {
         // 处理无效的topic或payload情况
         const char reply[] = "Invalid topic or payload.";
-        lws_write(wsi, (unsigned char *)reply, strlen(reply), LWS_WRITE_TEXT);
+        if (lws_write(wsi, (unsigned char *)reply, strlen(reply), LWS_WRITE_TEXT) < 0) {
+            perror("Failed to send response");
+        }
     }
 }
 
@@ -105,8 +149,12 @@ void handle_request_topics(struct lws *wsi) {
 
     // 将JSON对象转换为字符串并发送给客户端
     char *json_str = cJSON_PrintUnformatted(response);
-    lws_write(wsi, (unsigned char *)json_str, strlen(json_str), LWS_WRITE_TEXT);
-    free(json_str); // 释放由 cJSON_PrintUnformatted 分配的内存
+    if (json_str) {
+        if (lws_write(wsi, (unsigned char *)json_str, strlen(json_str), LWS_WRITE_TEXT) < 0) {
+            perror("Failed to send response");
+        }
+        free(json_str); // 释放由 cJSON_PrintUnformatted 分配的内存
+    }
 
     // 清理 JSON 对象
     cJSON_Delete(response);
@@ -116,7 +164,40 @@ void handle_request_topics(struct lws *wsi) {
 void handle_invalid_request(struct lws *wsi) {
     // 处理其他类型的消息或错误情况
     const char reply[] = "Unknown request type.";
-    lws_write(wsi, (unsigned char *)reply, strlen(reply), LWS_WRITE_TEXT);
+    if (lws_write(wsi, (unsigned char *)reply, strlen(reply), LWS_WRITE_TEXT) < 0) {
+        perror("Failed to send response");
+    }
+}
+
+// WebSocket 广播机制
+void add_client(struct lws *wsi) {
+    pthread_mutex_lock(&clients_mutex);
+    clients = realloc(clients, sizeof(struct lws *) * (clients_count + 1));
+    clients[clients_count++] = wsi;
+    pthread_mutex_unlock(&clients_mutex);
+}
+
+void remove_client(struct lws *wsi) {
+    pthread_mutex_lock(&clients_mutex);
+    for (size_t i = 0; i < clients_count; ++i) {
+        if (clients[i] == wsi) {
+            memmove(&clients[i], &clients[i + 1], (clients_count - i - 1) * sizeof(struct lws *));
+            clients_count--;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&clients_mutex);
+}
+
+// 广播消息给所有 WebSocket 客户端
+void broadcast_to_all_websockets(const char *message) {
+    pthread_mutex_lock(&clients_mutex);
+    for (size_t i = 0; i < clients_count; ++i) {
+        if (lws_write(clients[i], (unsigned char *)message, strlen(message), LWS_WRITE_TEXT) < 0) {
+            perror("Failed to broadcast message");
+        }
+    }
+    pthread_mutex_unlock(&clients_mutex);
 }
 
 // WebSocket 回调函数
@@ -124,6 +205,9 @@ static int callback_websocket(struct lws *wsi,
                               enum lws_callback_reasons reason,
                               void *user, void *in, size_t len) {
     switch (reason) {
+        case LWS_CALLBACK_ESTABLISHED:
+            add_client(wsi);
+            break;
         case LWS_CALLBACK_RECEIVE:
             {
                 char buffer[LWS_PRE + BUFFER_SIZE]; // 使用宏定义的缓冲区大小
@@ -136,7 +220,9 @@ static int callback_websocket(struct lws *wsi,
                 cJSON *root = cJSON_Parse(buffer + LWS_PRE);
                 if (!root) {
                     const char reply[] = "Invalid JSON.";
-                    lws_write(wsi, (unsigned char *)reply, strlen(reply), LWS_WRITE_TEXT);
+                    if (lws_write(wsi, (unsigned char *)reply, strlen(reply), LWS_WRITE_TEXT) < 0) {
+                        perror("Failed to send response");
+                    }
                     break;
                 }
 
@@ -164,7 +250,9 @@ static int callback_websocket(struct lws *wsi,
                 cJSON_Delete(root);
             }
             break;
-
+        case LWS_CALLBACK_CLOSED:
+            remove_client(wsi);
+            break;
         default:
             break;
     }
@@ -211,6 +299,7 @@ int main() {
     // 断开 MQTT 连接
     if (mosq) {
         mosquitto_disconnect(mosq);
+        mosquitto_loop_stop(mosq, true); // 强制停止后台线程
         mosquitto_destroy(mosq);
     }
     mosquitto_lib_cleanup();
