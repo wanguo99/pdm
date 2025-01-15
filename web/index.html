@@ -100,14 +100,15 @@
             };
 
             websocket.onerror = function(event) {
+                // Removed alert call
                 log(`WebSocket error observed: ${event}`);
-                alert("WebSocket error: Check the console for more details.");
             };
 
             websocket.onclose = function(event) {
                 log(`WebSocket closed. Code: ${event.code}, Reason: ${event.reason}`);
                 if (event.wasClean === false) {
-                    alert("WebSocket connection unexpectedly closed. Please check your network settings.");
+                    // Removed alert call
+                    log("WebSocket connection unexpectedly closed. Please check your network settings.");
                 }
             };
         }
@@ -133,11 +134,11 @@
                     log(`Sent message: ${message}`);
                 } catch (error) {
                     log(`Failed to send message: ${error.message}`);
-                    alert("Failed to publish MQTT event. Check the console for more details.");
+                    // Removed alert call
                 }
             } else {
                 log("Please select a topic and enter a payload.");
-                alert("Please select a topic and enter a payload.");
+                // Removed alert call
             }
         });
 
