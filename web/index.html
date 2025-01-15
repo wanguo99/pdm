@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MQTT Event Publisher</title>
-    <!-- 引入 Bootstrap CSS -->
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
             padding: 2rem;
@@ -13,6 +11,38 @@
         }
         .container {
             max-width: 600px;
+            margin: auto;
+        }
+        h1 {
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        select, textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 0.5rem;
+            margin-top: 1rem;
+            background-color: #007bff;
+            border: none;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 0.25rem;
+        }
+        button:hover {
+            background-color: #0056b3;
         }
         #log {
             height: 300px;
@@ -24,29 +54,28 @@
             white-space: pre-wrap; /* 确保文本自动换行 */
             word-wrap: break-word; /* 长单词或URL将断开并换行 */
         }
-        .btn-primary {
-            margin-top: 1rem;
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 class="text-center">MQTT Event Publisher</h1>
+        <h1>MQTT Event Publisher</h1>
         <div class="form-group">
-            <label for="topicInput">Topic:</label>
-            <input type="text" class="form-control" id="topicInput" placeholder="Enter topic" value="mqtt_topic">
+            <label for="topicSelect">Topic:</label>
+            <select id="topicSelect">
+                <option value="mqtt_topic_switch">switch</option>
+                <option value="mqtt_topic_dimmer">dimmer</option>
+                <option value="mqtt_topic_sensor">sensor</option>
+                <option value="mqtt_topic_nvmem">nvmem</option>
+            </select>
         </div>
         <div class="form-group">
             <label for="payloadInput">Payload:</label>
-            <textarea class="form-control" id="payloadInput" rows="3" placeholder="Enter payload">event_payload</textarea>
+            <textarea id="payloadInput" rows="3" placeholder="Enter payload"></textarea>
         </div>
-        <button id="publishEventBtn" class="btn btn-primary btn-block">Publish MQTT Event</button>
+        <button id="publishEventBtn">Publish MQTT Event</button>
         <pre id="log"></pre>
     </div>
 
-    <!-- 引入 jQuery 和 Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
     <script type="text/javascript">
         const wsUri = "ws://10.10.0.201:8080";
         const logElement = document.getElementById('log');
@@ -90,7 +119,7 @@
                 return;
             }
 
-            const topic = document.getElementById('topicInput').value.trim();
+            const topic = document.getElementById('topicSelect').value.trim();
             const payload = document.getElementById('payloadInput').value.trim();
 
             if (topic && payload) {
@@ -107,8 +136,8 @@
                     alert("Failed to publish MQTT event. Check the console for more details.");
                 }
             } else {
-                log("Please enter both topic and payload.");
-                alert("Please enter both topic and payload.");
+                log("Please select a topic and enter a payload.");
+                alert("Please select a topic and enter a payload.");
             }
         });
 
