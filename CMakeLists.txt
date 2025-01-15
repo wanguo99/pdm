@@ -47,7 +47,8 @@ set(CMAKE_SKIP_RPATH FALSE)
 
 # 添加子目录
 add_subdirectory(lib)
-add_subdirectory(app/test)
+add_subdirectory(app/pdm_test)
+add_subdirectory(app/websocket_server)
 
 # 自定义清理目标
 add_custom_target(distclean
