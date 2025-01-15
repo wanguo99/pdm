@@ -17,8 +17,13 @@ target_include_directories(pdm_test PRIVATE
     ${PROJECT_SOURCE_DIR}/lib/include/api  # 只包含公共 API
 )
 
-# 链接到必要的库（假设 pdm 是一个已经定义的目标）
+# 链接到 libpdm 库
 target_link_libraries(pdm_test PRIVATE libpdm)
+
+# 设置 pdm_test 的 RPATH
+set_target_properties(pdm_test PROPERTIES
+    INSTALL_RPATH "$ORIGIN/../lib"  # 使用相对路径
+)
 
 # 安装规则
 install(TARGETS pdm_test
