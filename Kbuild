@@ -1,4 +1,6 @@
 # Module name
+include $(src)/config.mk
+
 obj-m := $(MODULE_NAME).o
 
 # Source files directory
