@@ -9,22 +9,18 @@ LIBRARY_PATH := $(ROOT_PATH)/library
 DRIVERS_PATH := $(ROOT_PATH)/drivers
 
 # 默认目标：构建所有模块
-all: app library drivers
-	@echo "make all"
+all:  drivers library app
 
 # 单独构建 app 模块
 app:
-	@echo "make app"
 	$(MAKE) -C $(APP_PATH)
 
 # 单独构建 library 模块
 library:
-	@echo "make library"
 	$(MAKE) -C $(LIBRARY_PATH)
 
 # 单独构建 driver 模块
 drivers:
-	@echo "make drivers"
 	$(MAKE) -C $(DRIVERS_PATH)
 
 # 清理目标（所有模块）
