@@ -1,10 +1,11 @@
 # config.mk
 
 # 工程根目录
-ROOT_PATH := $(realpath .)
+ROOT_PATH := $(PWD)
 
 # 安装路径
 DESTDIR ?= _install
+DESTDIR = $(PWD)/$(DESTDIR)
 
 # 内核目录（交叉编译时可以设置为特定目录）
 KDIR ?= /lib/modules/$(shell uname -r)/build
@@ -35,4 +36,6 @@ RANLIB := $(CROSS_COMPILE)ranlib
 
 # 编译选项（可以根据需要添加）
 CFLAGS := -Wall -O2 -g
+
+INSTALL ?= /usr/bin/install
 

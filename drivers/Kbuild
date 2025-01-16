@@ -1,7 +1,7 @@
 # drivers/Kbuild
 
 # 引入配置文件
-include $(src)/../config.mk
+include $(PWD)/config.mk
 
 # 定义模块名称
 obj-m := $(MODULE_NAME).o

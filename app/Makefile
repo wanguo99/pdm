@@ -1,12 +1,12 @@
 # app/Makefile
 
 # 引入配置文件
-include $(realpath config.mk)
+include $(PWD)/config.mk
 
 # 配置应用程序
 APP_NAME := pdm_test
 APP_SRC := pdm_test.c
-LIBRARY_DIR := $(ROOT_PATH)/library
+LIBRARY_DIR := $(PWD)/library
 
 # 编译目标
 $(APP_NAME): $(APP_SRC)

@@ -1,11 +1,13 @@
 # library/Makefile
 
-# 引入配置文件
-include $(realpath config.mk)
+include $(PWD)/config.mk
 
 # 配置库
 LIBRARY_NAME := libpdm.so
 LIBRARY_SRC := libpdm.c
+
+# 默认目标
+all: $(LIBRARY_NAME)
 
 # 编译共享库
 $(LIBRARY_NAME): $(LIBRARY_SRC)
