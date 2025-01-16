@@ -1,4 +1,4 @@
-# app/Makefile
+# test/Makefile
 
 # 引入配置文件
 include $(PWD)/config.mk

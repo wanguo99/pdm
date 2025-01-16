@@ -4,34 +4,34 @@
 include $(realpath config.mk)
 
 # 确保子目录路径正确
-APP_PATH := $(PWD)/app
-LIBRARY_PATH := $(PWD)/library
 DRIVERS_PATH := $(PWD)/drivers
+LIBRARY_PATH := $(PWD)/library
+TEST_PATH := $(PWD)/test
 
 # 默认目标：构建所有模块
-all:  drivers library app
-
-# 单独构建 app 模块
-app:
-	$(MAKE) -C $(APP_PATH)
-
-# 单独构建 library 模块
-library:
-	$(MAKE) -C $(LIBRARY_PATH)
+all:  drivers library test
 
 # 单独构建 driver 模块
 drivers:
 	$(MAKE) -C $(DRIVERS_PATH)
 
+# 单独构建 library 模块
+library:
+	$(MAKE) -C $(LIBRARY_PATH)
+
+# 单独构建 test 模块
+test:
+	$(MAKE) -C $(TEST_PATH)
+
 # 清理目标（所有模块）
 clean:
-	$(MAKE) -C $(APP_PATH) clean
+	$(MAKE) -C $(TEST_PATH) clean
 	$(MAKE) -C $(LIBRARY_PATH) clean
 	$(MAKE) -C $(DRIVERS_PATH) clean
 
-# 单独清理 app 模块
-clean-app:
-	$(MAKE) -C $(APP_PATH) clean
+# 单独清理 test 模块
+clean-test:
+	$(MAKE) -C $(TEST_PATH) clean
 
 # 单独清理 library 模块
 clean-library:
@@ -43,13 +43,13 @@ clean-drivers:
 
 # 安装目标（所有模块）
 install:
-	$(MAKE) -C $(APP_PATH) install DESTDIR=$(DESTDIR)
+	$(MAKE) -C $(TEST_PATH) install DESTDIR=$(DESTDIR)
 	$(MAKE) -C $(LIBRARY_PATH) install DESTDIR=$(DESTDIR)
 	$(MAKE) -C $(DRIVERS_PATH) install DESTDIR=$(DESTDIR)
 
-# 单独安装 app 模块
-install-app:
-	$(MAKE) -C $(APP_PATH) install DESTDIR=$(DESTDIR)
+# 单独安装 test 模块
+install-test:
+	$(MAKE) -C $(TEST_PATH) install DESTDIR=$(DESTDIR)
 
 # 单独安装 library 模块
 install-library:
@@ -61,14 +61,14 @@ install-drivers:
 
 # 卸载目标（所有模块）
 uninstall:
-	$(MAKE) -C $(APP_PATH) uninstall DESTDIR=$(DESTDIR)
+	$(MAKE) -C $(TEST_PATH) uninstall DESTDIR=$(DESTDIR)
 	$(MAKE) -C $(LIBRARY_PATH) uninstall DESTDIR=$(DESTDIR)
 	$(MAKE) -C $(DRIVERS_PATH) uninstall DESTDIR=$(DESTDIR)
 	@rm -rf $(DESTDIR)
 
-# 单独卸载 app 模块
-uninstall-app:
-	$(MAKE) -C $(APP_PATH) uninstall DESTDIR=$(DESTDIR)
+# 单独卸载 test 模块
+uninstall-test:
+	$(MAKE) -C $(TEST_PATH) uninstall DESTDIR=$(DESTDIR)
 
 # 单独卸载 library 模块
 uninstall-library:
@@ -90,5 +90,5 @@ info:
 	@printf "Installation Path: %-40s\n" "$(DESTDIR)"
 	@echo "======================================================"
 
-.PHONY: all app library drivers clean clean-app clean-library clean-drivers install install-app install-library install-drivers uninstall uninstall-app uninstall-library uninstall-drivers info
+.PHONY: all test library drivers clean clean-test clean-library clean-drivers install install-test install-library install-drivers uninstall uninstall-test uninstall-library uninstall-drivers info
 
