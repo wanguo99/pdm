@@ -1,26 +1,26 @@
 # drivers/Makefile
 
-# ���������ļ�
+# 引入配置文件
 include $(realpath config.mk)
 include ../config.mk
 
-# �����ں�ģ��
+# 构建内核模块
 $(MODULE_NAME):
-	make -j $(nproc) -C $(KDIR) M=$(PWD) modules
+	make -j $(nproc) -C $(KDIR) M=$(CURDIR) modules
 
-# ��װ�ں�ģ�飬ʹ���ں˵� modules_install Ŀ��
+# 安装内核模块，使用内核的 modules_install 目标
 install: $(MODULE_NAME)
-	$(MAKE) -C $(KDIR) M=$(PWD) INSTALL_MOD_PATH=$(INSTALL_MOD_PATH) modules_install
+	$(MAKE) -C $(KDIR) M=$(CURDIR) INSTALL_MOD_PATH=$(INSTALL_MOD_PATH) modules_install
 
-# ж���ں�ģ��
+# 卸载内核模块
 uninstall:
 	rm -f $(INSTALL_MOD_PATH)/$(MODULE_NAME)
 
-# ����ģ��
+# 清理模块
 clean:
-	make -C $(KDIR) M=$(PWD) clean
+	make -C $(KDIR) M=$(CURDIR) clean
 
-# ��ӡ�汾�͹���ʱ����Ϣ
+# 打印版本和构建时间信息
 info:
 	@echo "Module Version: $(MODULE_VERSIONS)"
 	@echo "Module Build Time: $(MODULE_BUILD_TIME)"

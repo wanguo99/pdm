@@ -95,22 +95,26 @@ static void pdm_bus_proc_fs_exit(void)
  */
 static void pdm_show_module_init_info(void)
 {
+#if 0
 	OSA_print("\n");
 	OSA_INFO("\t========== Module Loading ==========\n");
 	OSA_INFO("\t| NAME   : %s\n", PDM_MODULE_NAME);
 	OSA_INFO("\t| BUILD  : %s\n", PDM_MODULE_BUILD_TIME);
 	OSA_INFO("\t| VERSION: %s\n", PDM_MODULE_VERSIONS);
 	OSA_INFO("\t------------------------------------\n");
+#endif
 }
 
 static void pdm_show_module_exit_info(void)
 {
+#if 0
 	OSA_print("\n");
 	OSA_INFO("\t========== Module Removed ==========\n");
 	OSA_INFO("\t| NAME   : %s\n", PDM_MODULE_NAME);
 	OSA_INFO("\t| BUILD  : %s\n", PDM_MODULE_BUILD_TIME);
 	OSA_INFO("\t| VERSION: %s\n", PDM_MODULE_VERSIONS);
 	OSA_INFO("\t------------------------------------\n");
+#endif
 }
 
 /**
