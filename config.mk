@@ -16,9 +16,6 @@ MODULE_BUILD_TIME := "$(shell date +'%Y-%m-%d %H:%M:%S')"
 # 内核版本
 KERNEL_VERSION := $(shell $(MAKE) -s -C $(KDIR) kernelversion)
 
-# 安装内核模块的路径
-INSTALL_MOD_PATH ?= $(DESTDIR)/lib/modules/$(KERNEL_VERSION)
-
 # 交叉编译工具链前缀
 CROSS_COMPILE ?= 
 

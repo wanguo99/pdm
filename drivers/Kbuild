@@ -16,52 +16,51 @@ INCDIR := ${src}/include
 CFLAGS_MODULE += ${PRIVATE_CFLAGS}
 
 # 包含头文件路径
-CFLAGS_MODULE += \
-    -I$(INCDIR) \
-    -I$(INCDIR)/osa \
-    -I$(INCDIR)/core \
-    -I$(INCDIR)/private \
-    -I$(INCDIR)/uapi
+CFLAGS_MODULE += -I$(INCDIR) \
+				-I$(INCDIR)/osa \
+				-I$(INCDIR)/core \
+				-I$(INCDIR)/private \
+				-I$(INCDIR)/uapi
 
 # 各子模块的源文件列表
 pdm-core-y := src/core/pdm_adapter.o \
-                src/core/pdm_bus.o\
-                src/core/pdm_client.o \
-                src/core/pdm_component.o \
-                src/core/pdm_core.o \
-                src/core/pdm_device.o
+			src/core/pdm_bus.o\
+			src/core/pdm_client.o \
+			src/core/pdm_component.o \
+			src/core/pdm_core.o \
+			src/core/pdm_device.o
 
 pdm-device-y := src/device/pdm_device_i2c.o \
-                src/device/pdm_device_platform.o \
-                src/device/pdm_device_spi.o
+			src/device/pdm_device_platform.o \
+			src/device/pdm_device_spi.o
 
 pdm-dimmer-y := src/dimmer/pdm_dimmer.o \
-                src/dimmer/pdm_dimmer_pwm.o
+			src/dimmer/pdm_dimmer_pwm.o
 
 pdm-nvmem-y := src/nvmem/pdm_nvmem.o \
-                src/nvmem/pdm_nvmem_spi.o
+			src/nvmem/pdm_nvmem_spi.o
 
 pdm-sensor-y := src/sensor/pdm_sensor_ap3216c.o \
-                src/sensor/pdm_sensor.o \
-                src/sensor/pdm_sensor_icm20608.o
+			src/sensor/pdm_sensor.o \
+			src/sensor/pdm_sensor_icm20608.o
 
 pdm-switch-y := src/switch/pdm_switch.o \
-                src/switch/pdm_switch_gpio.o
+			src/switch/pdm_switch_gpio.o
 
 
 # 将所有子模块的 .o 文件合并到最终的 obj-y 中
 $(MODULE_NAME)-objs := $(pdm-core-y) \
-                    $(pdm-device-y) \
-                    $(pdm-dimmer-y) \
-                    $(pdm-nvmem-y) \
-                    $(pdm-sensor-y) \
-                    $(pdm-switch-y)
+					$(pdm-device-y) \
+					$(pdm-dimmer-y) \
+					$(pdm-nvmem-y) \
+					$(pdm-sensor-y) \
+					$(pdm-switch-y)
 
 
 # 通过 Git 版本信息传递给内核模块
 #EXTRA_CFLAGS := -DMODULE_VERSIONS="\"${MODULE_VERSIONS}\"" \
-#                  -DMODULE_BUILD_TIME="\"${MODULE_BUILD_TIME}\""
+#				-DMODULE_BUILD_TIME="\"${MODULE_BUILD_TIME}\""
 
 EXTRA_CFLAGS += -DDEBUG_OSA_LOG_ENABLE=1 \
-    -DDEBUG_OSA_LOG_WITH_FILE_LINE=1 \
-    -DDEBUG_OSA_LOG_WITH_FUNCTION=1
+	-DDEBUG_OSA_LOG_WITH_FILE_LINE=1 \
+	-DDEBUG_OSA_LOG_WITH_FUNCTION=1
