@@ -29,14 +29,14 @@ $(APP_NAME): $(APP_SRC)
 # 安装目标
 install: $(APP_NAME)
 	@echo "Installing application and headers..."
-	$(INSTALL) -d $(DESTDIR)/usr/local/bin
-	$(INSTALL) $(APP_NAME) $(DESTDIR)/usr/local/bin/
+	@$(INSTALL) -d $(DESTDIR)/usr/local/bin
+	@$(INSTALL) $(APP_NAME) $(DESTDIR)/usr/local/bin/
 
 # 卸载目标
 uninstall:
 	@echo "Uninstalling application and headers..."
-	rm -f $(DESTDIR)/usr/local/bin/$(APP_NAME)
-	rm -rf $(DESTDIR)/usr/local/include/pdm_test
+	@rm -f $(DESTDIR)/usr/local/bin/$(APP_NAME)
+	@rm -rf $(DESTDIR)/usr/local/include/pdm_test
 
 # 清理目标
 clean:
