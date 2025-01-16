@@ -4,13 +4,6 @@
 include $(realpath config.mk)
 include ../config.mk
 
-# 打印版本和构建时间信息
-info:
-	@echo "Module Version: $(MODULE_VERSIONS)"
-	@echo "Module Build Time: $(MODULE_BUILD_TIME)"
-	@echo "Kernel Version: $(KERNEL_VERSION)"
-	@echo "Kernel Directory: $(KDIR)"
-
 # 构建内核模块
 $(MODULE_NAME):
 	make -j $(nproc) -C $(KDIR) M=$(PWD) modules
@@ -26,6 +19,13 @@ uninstall:
 # 清理模块
 clean:
 	make -C $(KDIR) M=$(PWD) clean
+
+# 打印版本和构建时间信息
+info:
+	@echo "Module Version: $(MODULE_VERSIONS)"
+	@echo "Module Build Time: $(MODULE_BUILD_TIME)"
+	@echo "Kernel Version: $(KERNEL_VERSION)"
+	@echo "Kernel Directory: $(KDIR)"
 
 .PHONY: clean install uninstall info
 
