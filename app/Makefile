@@ -6,20 +6,23 @@ include $(PWD)/config.mk
 # 配置应用程序
 APP_NAME := pdm_test
 APP_SRC := pdm_test.c
-LIBRARY_DIR := $(PWD)/library
+
+INSTALL_PATH := $(DESTDIR)/usr/local
+
+LDFLAGS := -L$(PWD)/library -lpdm
 
 # 编译目标
 $(APP_NAME): $(APP_SRC)
-	$(CC) $(CFLAGS) -o $@ $^ -L$(LIBRARY_DIR) -lpdm
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ 
 
 # 安装目标
 install:
-	$(INSTALL) -d $(DESTDIR)/bin
-	$(INSTALL) $(APP_NAME) $(DESTDIR)/bin/
+	$(INSTALL) -d $(INSTALL_PATH)/bin
+	$(INSTALL) $(APP_NAME) $(INSTALL_PATH)/bin/
 
 # 卸载目标
 uninstall:
-	rm -f $(DESTDIR)/bin/$(APP_NAME)
+	rm -f $(INSTALL_PATH)/bin/$(APP_NAME)
 
 # 清理目标
 clean:

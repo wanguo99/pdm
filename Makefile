@@ -64,6 +64,7 @@ uninstall:
 	$(MAKE) -C $(APP_PATH) uninstall DESTDIR=$(DESTDIR)
 	$(MAKE) -C $(LIBRARY_PATH) uninstall DESTDIR=$(DESTDIR)
 	$(MAKE) -C $(DRIVERS_PATH) uninstall DESTDIR=$(DESTDIR)
+	@rm -rf $(DESTDIR)
 
 # 单独卸载 app 模块
 uninstall-app:

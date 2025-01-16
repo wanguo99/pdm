@@ -6,8 +6,8 @@ include $(PWD)/config.mk
 LIBRARY_NAME := libpdm.so
 LIBRARY_SRC := libpdm.c
 
-# 默认目标
-all: $(LIBRARY_NAME)
+INSTALL_PATH := $(DESTDIR)/usr/local
+
 
 # 编译共享库
 $(LIBRARY_NAME): $(LIBRARY_SRC)
@@ -15,12 +15,12 @@ $(LIBRARY_NAME): $(LIBRARY_SRC)
 
 # 安装目标
 install:
-	$(INSTALL) -d $(DESTDIR)/lib
-	$(INSTALL) $(LIBRARY_NAME) $(DESTDIR)/lib/
+	$(INSTALL) -d $(INSTALL_PATH)/lib
+	$(INSTALL) $(LIBRARY_NAME) $(INSTALL_PATH)/lib/
 
 # 卸载目标
 uninstall:
-	rm -f $(DESTDIR)/lib/$(LIBRARY_NAME)
+	rm -f $(INSTALL_PATH)/lib/$(LIBRARY_NAME)
 
 # 清理目标
 clean:

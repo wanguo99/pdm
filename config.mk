@@ -5,7 +5,6 @@ ROOT_PATH := $(PWD)
 
 # 安装路径
 DESTDIR ?= _install
-DESTDIR = $(PWD)/$(DESTDIR)
 
 # 内核目录（交叉编译时可以设置为特定目录）
 KDIR ?= /lib/modules/$(shell uname -r)/build
