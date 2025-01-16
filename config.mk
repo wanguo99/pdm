@@ -1,23 +1,38 @@
-# module info
+# config.mk
+
+# 工程根目录
+ROOT_PATH := $(realpath .)
+
+# 安装路径
+DESTDIR ?= _install
+
+# 内核目录（交叉编译时可以设置为特定目录）
+KDIR ?= /lib/modules/$(shell uname -r)/build
+
+# 模块名称
 MODULE_NAME := pdm
-MODULE_VERSIONS := $(shell git describe --tags --always --dirty --long 2>/dev/null || echo unknown)
-MODULE_BUILD_TIME := $(shell date +'%Y-%m-%d %H:%M:%S')
 
-# kernel info
-KERNELDIR ?= /lib/modules/$(shell uname -r)/build
-KERNEL_VERSION := $(shell $(MAKE) -C $(KERNELDIR) kernelversion)
+# 模块版本和构建时间
+MODULE_VERSIONS := "$(shell git describe --tags --always --dirty --long 2>/dev/null || echo unknown)"
+MODULE_BUILD_TIME := "$(shell date +'%Y-%m-%d %H:%M:%S')"
 
-# install configuration
-DESTDIR ?= $(CURDIR)/_install
-HEADER_INSTALL_DIR := $(DESTDIR)/include/$(MODULE_NAME)
-MODULE_INSTALL_DIR := $(DESTDIR)/lib/modules/$(KERNEL_VERSION)
-SYMBOL_INSTALL_DIR := $(DESTDIR)/lib/modules/$(KERNEL_VERSION)/symvers/$(MODULE_NAME)
+# 内核版本
+KERNEL_VERSION := $(shell $(MAKE) -s -C $(KDIR) kernelversion)
 
-# module info micro defination
-PRIVATE_CFLAGS += -DMODULE_VERSIONS="\"${MODULE_VERSIONS}\"" \
-                  -DMODULE_BUILD_TIME="\"${MODULE_BUILD_TIME}\""
+# 安装内核模块的路径
+INSTALL_MOD_PATH ?= $(DESTDIR)/lib/modules/$(KERNEL_VERSION)
 
-# log configuration micro defination
-PRIVATE_CFLAGS += -DDEBUG_OSA_LOG_ENABLE=1 \
-    -DDEBUG_OSA_LOG_WITH_FILE_LINE=1 \
-    -DDEBUG_OSA_LOG_WITH_FUNCTION=0
+# 交叉编译工具链前缀
+CROSS_COMPILE ?= 
+
+# 构建工具链
+CC := $(CROSS_COMPILE)gcc
+CXX := $(CROSS_COMPILE)g++
+LD := $(CROSS_COMPILE)ld
+AR := $(CROSS_COMPILE)ar
+AS := $(CROSS_COMPILE)as
+RANLIB := $(CROSS_COMPILE)ranlib
+
+# 编译选项（可以根据需要添加）
+CFLAGS := -Wall -O2 -g
+

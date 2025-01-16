@@ -1,0 +1,58 @@
+# drivers/Kbuild
+
+# 引入配置文件
+include $(src)/config.mk
+
+# 定义模块名称
+obj-m := $(MODULE_NAME).o
+
+# 源文件目录
+SRCDIR := src
+
+# 包含头文件目录
+INCDIR := ${src}/include
+
+# 编译模块时的额外编译选项
+CFLAGS_MODULE += ${PRIVATE_CFLAGS}
+
+# 包含头文件路径
+CFLAGS_MODULE += \
+    -I$(INCDIR) \
+    -I$(INCDIR)/osa \
+    -I$(INCDIR)/core \
+    -I$(INCDIR)/private \
+    -I$(INCDIR)/uapi
+
+# 各子模块的源文件列表
+pdm-core-y := src/core/pdm_adapter.o src/core/pdm_bus.o src/core/pdm_client.o \
+              src/core/pdm_component.o src/core/pdm_core.o src/core/pdm_device.o
+
+pdm-device-y := src/device/pdm_device_i2c.o src/device/pdm_device_platform.o \
+                src/device/pdm_device_spi.o
+
+pdm-dimmer-y := src/dimmer/pdm_dimmer.o src/dimmer/pdm_dimmer_pwm.o
+
+pdm-nvmem-y := src/nvmem/pdm_nvmem.o src/nvmem/pdm_nvmem_spi.o
+
+pdm-sensor-y := src/sensor/pdm_sensor_ap3216c.o src/sensor/pdm_sensor.o \
+                src/sensor/pdm_sensor_icm20608.o
+
+pdm-switch-y := src/switch/pdm_switch.o src/switch/pdm_switch_gpio.o
+
+# 将所有子模块的 .o 文件合并到最终的 obj-y 中
+$(MODULE_NAME)-y := $(pdm-core-y) $(pdm-device-y) $(pdm-dimmer-y) $(pdm-nvmem-y) $(pdm-sensor-y) $(pdm-switch-y)
+
+# 最终模块的目标对象文件
+obj-y := $(MODULE_NAME)-y
+
+# module info micro defination
+PRIVATE_CFLAGS += -DMODULE_VERSIONS="\"${MODULE_VERSIONS}\"" \
+                  -DMODULE_BUILD_TIME="\"${MODULE_BUILD_TIME}\""
+
+
+# 通过 Git 版本信息传递给内核模块
+EXTRA_CFLAGS := -DMODULE_VERSIONS="\"$(MODULE_VERSIONS)\""
+EXTRA_CFLAGS += -DMODULE_BUILD_TIME="\"$(MODULE_BUILD_TIME)\""
+
+# 将模块对象传递给内核构建系统
+$(obj-y): $(pdm-core-y) $(pdm-device-y) $(pdm-dimmer-y) $(pdm-nvmem-y) $(pdm-sensor-y) $(pdm-switch-y)

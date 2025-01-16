@@ -1,0 +1,26 @@
+# library/Makefile
+
+# 引入配置文件
+include $(realpath config.mk)
+
+# 配置库
+LIBRARY_NAME := libpdm.so
+LIBRARY_SRC := libpdm.c
+
+# 编译共享库
+$(LIBRARY_NAME): $(LIBRARY_SRC)
+	$(CC) -fPIC -shared $(CFLAGS) -o $@ $^
+
+# 安装目标
+install:
+	$(INSTALL) -d $(DESTDIR)/lib
+	$(INSTALL) $(LIBRARY_NAME) $(DESTDIR)/lib/
+
+# 卸载目标
+uninstall:
+	rm -f $(DESTDIR)/lib/$(LIBRARY_NAME)
+
+# 清理目标
+clean:
+	rm -f $(LIBRARY_NAME)
+
