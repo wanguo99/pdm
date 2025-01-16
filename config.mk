@@ -1,8 +1,5 @@
 # config.mk
 
-# 工程根目录
-ROOT_PATH := $(PWD)
-
 # 安装路径
 DESTDIR ?= _install
 

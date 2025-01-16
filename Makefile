@@ -4,9 +4,9 @@
 include $(realpath config.mk)
 
 # 确保子目录路径正确
-APP_PATH := $(ROOT_PATH)/app
-LIBRARY_PATH := $(ROOT_PATH)/library
-DRIVERS_PATH := $(ROOT_PATH)/drivers
+APP_PATH := $(PWD)/app
+LIBRARY_PATH := $(PWD)/library
+DRIVERS_PATH := $(PWD)/drivers
 
 # 默认目标：构建所有模块
 all:  drivers library app
