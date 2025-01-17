@@ -4,20 +4,20 @@
 include $(realpath config.mk)
 
 # 确保子目录路径正确
-DRIVERS_PATH := $(PWD)/drivers
-LIBRARY_PATH := $(PWD)/library
+MODULES_PATH := $(PWD)/modules
+LIBS_PATH := $(PWD)/libs
 TEST_PATH := $(PWD)/test
 
 # 默认目标：构建所有模块
-all:  drivers library test
+all:  modules libs test
 
 # 单独构建 driver 模块
-drivers:
-	$(MAKE) -C $(DRIVERS_PATH)
+modules:
+	$(MAKE) -C $(MODULES_PATH)
 
-# 单独构建 library 模块
-library:
-	$(MAKE) -C $(LIBRARY_PATH)
+# 单独构建 libs 模块
+libs:
+	$(MAKE) -C $(LIBS_PATH)
 
 # 单独构建 test 模块
 test:
@@ -26,57 +26,57 @@ test:
 # 清理目标（所有模块）
 clean:
 	$(MAKE) -C $(TEST_PATH) clean
-	$(MAKE) -C $(LIBRARY_PATH) clean
-	$(MAKE) -C $(DRIVERS_PATH) clean
+	$(MAKE) -C $(LIBS_PATH) clean
+	$(MAKE) -C $(MODULES_PATH) clean
 
 # 单独清理 test 模块
 clean-test:
 	$(MAKE) -C $(TEST_PATH) clean
 
-# 单独清理 library 模块
-clean-library:
-	$(MAKE) -C $(LIBRARY_PATH) clean
+# 单独清理 libs 模块
+clean-libs:
+	$(MAKE) -C $(LIBS_PATH) clean
 
 # 单独清理 driver 模块
-clean-drivers:
-	$(MAKE) -C $(DRIVERS_PATH) clean
+clean-modules:
+	$(MAKE) -C $(MODULES_PATH) clean
 
 # 安装目标（所有模块）
 install:
 	$(MAKE) -C $(TEST_PATH) install DESTDIR=$(DESTDIR)
-	$(MAKE) -C $(LIBRARY_PATH) install DESTDIR=$(DESTDIR)
-	$(MAKE) -C $(DRIVERS_PATH) install DESTDIR=$(DESTDIR)
+	$(MAKE) -C $(LIBS_PATH) install DESTDIR=$(DESTDIR)
+	$(MAKE) -C $(MODULES_PATH) install DESTDIR=$(DESTDIR)
 
 # 单独安装 test 模块
 install-test:
 	$(MAKE) -C $(TEST_PATH) install DESTDIR=$(DESTDIR)
 
-# 单独安装 library 模块
-install-library:
-	$(MAKE) -C $(LIBRARY_PATH) install DESTDIR=$(DESTDIR)
+# 单独安装 libs 模块
+install-libs:
+	$(MAKE) -C $(LIBS_PATH) install DESTDIR=$(DESTDIR)
 
 # 单独安装 driver 模块
-install-drivers:
-	$(MAKE) -C $(DRIVERS_PATH) install DESTDIR=$(DESTDIR)
+install-modules:
+	$(MAKE) -C $(MODULES_PATH) install DESTDIR=$(DESTDIR)
 
 # 卸载目标（所有模块）
 uninstall:
 	$(MAKE) -C $(TEST_PATH) uninstall DESTDIR=$(DESTDIR)
-	$(MAKE) -C $(LIBRARY_PATH) uninstall DESTDIR=$(DESTDIR)
-	$(MAKE) -C $(DRIVERS_PATH) uninstall DESTDIR=$(DESTDIR)
+	$(MAKE) -C $(LIBS_PATH) uninstall DESTDIR=$(DESTDIR)
+	$(MAKE) -C $(MODULES_PATH) uninstall DESTDIR=$(DESTDIR)
 	@rm -rf $(DESTDIR)
 
 # 单独卸载 test 模块
 uninstall-test:
 	$(MAKE) -C $(TEST_PATH) uninstall DESTDIR=$(DESTDIR)
 
-# 单独卸载 library 模块
-uninstall-library:
-	$(MAKE) -C $(LIBRARY_PATH) uninstall DESTDIR=$(DESTDIR)
+# 单独卸载 libs 模块
+uninstall-libs:
+	$(MAKE) -C $(LIBS_PATH) uninstall DESTDIR=$(DESTDIR)
 
 # 单独卸载 driver 模块
-uninstall-drivers:
-	$(MAKE) -C $(DRIVERS_PATH) uninstall DESTDIR=$(DESTDIR)
+uninstall-modules:
+	$(MAKE) -C $(MODULES_PATH) uninstall DESTDIR=$(DESTDIR)
 
 # 显示版本、构建时间和内核信息
 info:
@@ -90,5 +90,5 @@ info:
 	@printf "Installation Path: %-40s\n" "$(DESTDIR)"
 	@echo "======================================================"
 
-.PHONY: all test library drivers clean clean-test clean-library clean-drivers install install-test install-library install-drivers uninstall uninstall-test uninstall-library uninstall-drivers info
+.PHONY: all test libs modules clean clean-test clean-libs clean-modules install install-test install-libs install-modules uninstall uninstall-test uninstall-libs uninstall-modules info
 

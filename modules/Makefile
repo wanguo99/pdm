@@ -10,8 +10,8 @@ $(MODULE_NAME):
 # 安装内核模块，使用内核的 modules_install 目标
 install: $(MODULE_NAME)
 	$(MAKE) -C $(KDIR) M=$(CURDIR) INSTALL_MOD_PATH=$(DESTDIR) modules_install
-	@$(INSTALL) -d $(DESTDIR)/usr/include/
-	@cp -rf $(CURDIR)/include/uapi $(DESTDIR)/usr/include/$(MODULE_NAME)
+	@$(INSTALL) -d $(DESTDIR)/usr/local/include/
+	@cp -rf $(CURDIR)/include/uapi $(DESTDIR)/usr/local/include/$(MODULE_NAME)
 
 # 卸载内核模块
 uninstall:

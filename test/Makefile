@@ -13,10 +13,10 @@ APP_SRC := src/pdm_test.c \
 
 # 头文件目录
 APP_INCLUDE_DIR := include
-LIBAPI_INCLUDE_DIR := $(PWD)/library/include/api
+LIBAPI_INCLUDE_DIR := $(PWD)/libs/include/api
 
 # 链接库路径和库
-LDFLAGS := -L$(PWD)/library -lpdm
+LDFLAGS := -L$(PWD)/libs -lpdm
 
 # CFLAGS 添加头文件目录
 CFLAGS += -I$(APP_INCLUDE_DIR) \
