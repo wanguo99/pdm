@@ -3,13 +3,13 @@ include $(CURDIR)/config.mk
 all: modules
 
 modules:
-	$(MAKE) -j$(nproc) -C $(KERNELDIR) M=$(CURDIR) modules
+	$(MAKE) -j$(nproc) -C $(KDIR) M=$(PWD) modules
 
 clean:
-	$(MAKE) -C $(KERNELDIR) M=$(CURDIR) clean
+	$(MAKE) -C $(KDIR) M=$(PWD) clean
 
 install:
-	@cp -a $(CURDIR)/pdm.ko $(DESTDIR)/
+	$(MAKE) -j$(nproc) -C $(KDIR) M=$(PWD) INSTALL_MOD_PATH=$(DESTDIR) modules_install 
 
 uninstall:
 	@echo "Uninstalling modules from $(DESTDIR)"
