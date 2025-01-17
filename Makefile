@@ -1,18 +1,12 @@
 include $(CURDIR)/config.mk
 
-all: modules test
+all: modules
 
 modules:
 	$(MAKE) -j$(nproc) -C $(KERNELDIR) M=$(CURDIR) modules
 
 clean:
 	$(MAKE) -C $(KERNELDIR) M=$(CURDIR) clean
-	$(MAKE) -C $(CURDIR)/test clean
-
-test:
-	$(MAKE) -C $(CURDIR)/test
-
-test-clean:
 	$(MAKE) -C $(CURDIR)/test clean
 
 install:
