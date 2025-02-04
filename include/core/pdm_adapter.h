@@ -47,6 +47,8 @@ struct pdm_adapter {
 	struct idr client_idr;			/**< IDR for allocating unique IDs to clients */
 	struct mutex idr_mutex_lock;		/**< Mutex to protect the IDR */
 	struct device dev;			/**< Kernel device structure */
+	struct cdev cdev;			/**< Character device structure for device operations */
+	struct file_operations fops;		/**< File operations structure, defining operations for this device */
 	struct rw_semaphore rwlock;		/**< Read-write semaphore for sysfs attribute access */
 };
 

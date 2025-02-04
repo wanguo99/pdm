@@ -180,6 +180,7 @@ static int __init pdm_init(void)
 	};
 
 	pdm_show_module_init_info();
+
 	INIT_LIST_HEAD(&pdm_core_component_list);
 	status = pdm_component_register(&params);
 	if (status < 0) {

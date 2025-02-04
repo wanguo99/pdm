@@ -1,3 +1,5 @@
+#include <linux/compat.h>
+
 #include "pdm.h"
 #include "pdm_component.h"
 #include "pdm_adapter_priv.h"
@@ -273,6 +275,96 @@ static int pdm_adapter_is_exist(const char *name)
 	return 0;
 }
 
+
+static int pdm_adapter_fops_default_open(struct inode *inode, struct file *filp)
+{
+	struct pdm_adapter *adapter = container_of(inode->i_cdev, struct pdm_adapter, cdev);
+
+	if (!adapter) {
+		OSA_ERROR("Invalid adapter\n");
+		return -EINVAL;
+	}
+
+	filp->private_data = adapter;
+	return 0;
+}
+
+static int pdm_adapter_fops_default_release(struct inode *inode, struct file *filp)
+{
+	return 0;
+}
+
+static ssize_t pdm_adapter_fops_default_read(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
+{
+	return 0;
+}
+
+static ssize_t pdm_adapter_fops_default_write(struct file *filp, const char __user *buf, size_t count, loff_t *ppos)
+{
+	return count;
+}
+
+static long pdm_adapter_fops_default_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+{
+	OSA_INFO("This adapter does not support ioctl operations\n");
+	return -ENOTSUPP;
+}
+
+static long pdm_adapter_fops_default_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+{
+	OSA_INFO("pdm_adapter_fops_default_compat_ioctl for %s\n", dev_name(filp->private_data));
+
+	if (_IOC_DIR(cmd) & (_IOC_READ | _IOC_WRITE)) {
+		arg = (unsigned long)compat_ptr(arg);
+	}
+
+	return filp->f_op->unlocked_ioctl(filp, cmd, arg);
+}
+
+static atomic_t pdm_adapter_minor = ATOMIC_INIT(0);
+
+static int pdm_adapter_device_register(struct pdm_adapter *adapter, const char *name)
+{
+	int status;
+	unsigned int minor_base;
+
+	if (!adapter || !name) {
+		OSA_ERROR("Invalid input parameter\n");
+		return -EINVAL;
+	}
+
+	minor_base = atomic_inc_return(&pdm_adapter_minor) - 1;
+	adapter->dev.devt = MKDEV(pdm_adapter_major, minor_base);
+
+	status = dev_set_name(&adapter->dev, name);
+	if (status) {
+		OSA_ERROR("Failed to set adapter name, error:%d\n", status);
+		return status;
+	}
+
+	adapter->fops.open = pdm_adapter_fops_default_open;
+	adapter->fops.release = pdm_adapter_fops_default_release;
+	adapter->fops.read = pdm_adapter_fops_default_read;
+	adapter->fops.write = pdm_adapter_fops_default_write;
+	adapter->fops.unlocked_ioctl = pdm_adapter_fops_default_ioctl;
+	adapter->fops.compat_ioctl = pdm_adapter_fops_default_compat_ioctl;
+	cdev_init(&adapter->cdev, &adapter->fops);
+
+	status = cdev_device_add(&adapter->cdev, &adapter->dev);
+	if (status < 0) {
+		OSA_ERROR("Failed to add char device for %s, error: %d\n", dev_name(&adapter->dev), status);
+		return status;
+	}
+
+	OSA_INFO("PDM Adapter Deivce Registered: %s\n", name);
+	return 0;
+}
+
+static void pdm_adapter_device_unregister(struct pdm_adapter *adapter)
+{
+	cdev_device_del(&adapter->cdev, &adapter->dev);
+}
+
 /**
  * @brief Registers a PDM Adapter.
  *
@@ -294,10 +386,9 @@ int pdm_adapter_register(struct pdm_adapter *adapter, const char *name)
 		return -EEXIST;
 	}
 
-	dev_set_name(&adapter->dev, "%s", name);
-	status = device_add(&adapter->dev);
+	status = pdm_adapter_device_register(adapter, name);
 	if (status) {
-		OSA_ERROR("Failed to add device: %s, error: %d\n", dev_name(&adapter->dev), status);
+		OSA_ERROR("Failed to register device, error: %d\n", status);
 		goto err_device_put;
 	}
 
@@ -342,7 +433,8 @@ void pdm_adapter_unregister(struct pdm_adapter *adapter)
 	list_del(&adapter->entry);
 	mutex_unlock(&pdm_adapter_list_mutex_lock);
 
-	device_unregister(&adapter->dev);
+	pdm_adapter_device_unregister(adapter);
+
 	adapter = NULL;
 }
 
