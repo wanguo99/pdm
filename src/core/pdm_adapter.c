@@ -109,9 +109,9 @@ int pdm_adapter_id_alloc(struct pdm_adapter *adapter, struct pdm_client *client)
 		OSA_DEBUG("Cannot get index from dts\n");
 	}
 
-	mutex_lock(&adapter->ida_mutex_lock);
-	id = ida_alloc_range(&adapter->client_ida, index, PDM_CLIENT_MINORS, GFP_KERNEL);
-	mutex_unlock(&adapter->ida_mutex_lock);
+	mutex_lock(&adapter->idr_mutex_lock);
+	id = idr_alloc(&adapter->client_idr, client, index, PDM_CLIENT_MINORS, GFP_KERNEL);
+	mutex_unlock(&adapter->idr_mutex_lock);
 
 	if (id < 0) {
 		if (id == -ENOSPC) {
@@ -139,9 +139,9 @@ void pdm_adapter_id_free(struct pdm_adapter *adapter, struct pdm_client *client)
 		return;
 	}
 
-	mutex_lock(&adapter->ida_mutex_lock);
-	ida_free(&adapter->client_ida, client->index);
-	mutex_unlock(&adapter->ida_mutex_lock);
+	mutex_lock(&adapter->idr_mutex_lock);
+	idr_remove(&adapter->client_idr, client->index);
+	mutex_unlock(&adapter->idr_mutex_lock);
 }
 
 /**
@@ -301,8 +301,8 @@ int pdm_adapter_register(struct pdm_adapter *adapter, const char *name)
 		goto err_device_put;
 	}
 
-	mutex_init(&adapter->ida_mutex_lock);
-	ida_init(&adapter->client_ida);
+	mutex_init(&adapter->idr_mutex_lock);
+	idr_init(&adapter->client_idr);
 
 	mutex_lock(&pdm_adapter_list_mutex_lock);
 	list_add_tail(&adapter->entry, &pdm_adapter_list);
@@ -334,9 +334,9 @@ void pdm_adapter_unregister(struct pdm_adapter *adapter)
 
 	OSA_DEBUG("PDM Adapter Unregistered: %s\n", dev_name(&adapter->dev));
 
-	mutex_lock(&adapter->ida_mutex_lock);
-	ida_destroy(&adapter->client_ida);
-	mutex_unlock(&adapter->ida_mutex_lock);
+	mutex_lock(&adapter->idr_mutex_lock);
+	idr_destroy(&adapter->client_idr);
+	mutex_unlock(&adapter->idr_mutex_lock);
 
 	mutex_lock(&pdm_adapter_list_mutex_lock);
 	list_del(&adapter->entry);
