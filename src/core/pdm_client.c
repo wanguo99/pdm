@@ -224,28 +224,6 @@ void pdm_client_cleanup(struct pdm_client *client)
 	}
 }
 
-/**
- * @brief Initializes the PDM Client module.
- *
- * This function initializes the PDM Client module by registering necessary drivers and setting initial states.
- *
- * @return 0 on success, negative error code on failure.
- */
-int pdm_client_init(void)
-{
-	return 0;
-}
-
-/**
- * @brief Cleans up the PDM Client module.
- *
- * This function unregisters the PDM Client module, including unregistering drivers and cleaning up all resources.
- */
-void pdm_client_exit(void)
-{
-	return;
-}
-
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("<guohaoprc@163.com>");
 MODULE_DESCRIPTION("PDM Client Module");

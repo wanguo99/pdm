@@ -147,13 +147,6 @@ static struct pdm_component pdm_core_components[] = {
 		.exit = pdm_device_exit,
 	},
 	{
-		.name = "PDM Client",
-		.enable = true,
-		.ignore_failures = false,
-		.init = pdm_client_init,
-		.exit = pdm_client_exit,
-	},
-	{
 		.name = "PDM Adapter",
 		.enable = true,
 		.ignore_failures = false,

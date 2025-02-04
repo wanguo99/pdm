@@ -356,7 +356,6 @@ static int pdm_adapter_device_register(struct pdm_adapter *adapter, const char *
 		return status;
 	}
 
-	OSA_INFO("PDM Adapter Deivce Registered: %s\n", name);
 	return 0;
 }
 
@@ -399,7 +398,7 @@ int pdm_adapter_register(struct pdm_adapter *adapter, const char *name)
 	list_add_tail(&adapter->entry, &pdm_adapter_list);
 	mutex_unlock(&pdm_adapter_list_mutex_lock);
 
-	OSA_DEBUG("PDM Adapter Registered: %s\n", dev_name(&adapter->dev));
+	OSA_INFO("PDM Adapter Registered: %s\n", dev_name(&adapter->dev));
 	return 0;
 
 err_device_put:
