@@ -288,10 +288,6 @@ static int pdm_switch_device_probe(struct pdm_device *pdmdev)
 		return status;
 	}
 
-	client->fops.read = pdm_switch_read;
-	client->fops.write = pdm_switch_write;
-	client->fops.unlocked_ioctl = pdm_switch_ioctl;
-
 	return 0;
 }
 
@@ -362,6 +358,10 @@ int pdm_switch_driver_init(void)
 		OSA_ERROR("Failed to register SWITCH PDM Driver, status=%d\n", status);
 		goto err_adapter_unregister;
 	}
+
+	switch_adapter->fops.read = pdm_switch_read;
+	switch_adapter->fops.write = pdm_switch_write;
+	switch_adapter->fops.unlocked_ioctl = pdm_switch_ioctl;
 
 	return 0;
 

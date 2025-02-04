@@ -112,7 +112,7 @@ static long pdm_dimmer_ioctl(struct file *filp, unsigned int cmd, unsigned long 
 				OSA_ERROR("Failed to copy data from user space\n");
 				return -EFAULT;
 			}
-			OSA_INFO("PDM_DIMMER: Set %s's level to %u\n", dev_name(&client->dev), level);
+			OSA_INFO("PDM_DIMMER: Set %s-%d level to %u\n", dev_name(&client->adapter->dev), client->index, level);
 			status = pdm_dimmer_set_level(client, level);
 			break;
 		}
@@ -277,10 +277,6 @@ static int pdm_dimmer_device_probe(struct pdm_device *pdmdev)
 		return status;
 	}
 
-	client->fops.read = pdm_dimmer_read;
-	client->fops.write = pdm_dimmer_write;
-	client->fops.unlocked_ioctl = pdm_dimmer_ioctl;
-
 	return 0;
 }
 
@@ -351,6 +347,10 @@ int pdm_dimmer_driver_init(void)
 		OSA_ERROR("Failed to register DIMMER PDM Driver, status=%d\n", status);
 		goto err_adapter_unregister;
 	}
+
+	dimmer_adapter->fops.read = pdm_dimmer_read;
+	dimmer_adapter->fops.write = pdm_dimmer_write;
+	dimmer_adapter->fops.unlocked_ioctl = pdm_dimmer_ioctl;
 
 	return 0;
 

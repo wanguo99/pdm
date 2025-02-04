@@ -146,7 +146,7 @@ static int pdm_sensor_ap3216c_setup(struct pdm_client *client)
 		return status;
 	}
 
-	OSA_DEBUG("PDM SENSOR Setup: %s\n", dev_name(&client->dev));
+	OSA_DEBUG("PDM SENSOR Setup: %s-%d\n", dev_name(&client->adapter->dev), client->index);
 
 	return 0;
 }

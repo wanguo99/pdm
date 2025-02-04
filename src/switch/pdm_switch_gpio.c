@@ -48,7 +48,7 @@ static int pdm_switch_gpio_set_state(struct pdm_client *client, int state)
 	gpio_level = pdm_switch_gpio_state_to_level(gpiod, state);
 	gpiod_set_value_cansleep(gpiod, gpio_level);
 
-	OSA_DEBUG("GPIO PDM switch: Set %s state to %d\n", dev_name(&client->dev), state);
+	OSA_DEBUG("GPIO PDM switch: Set %s-%d state to %d\n", dev_name(&client->adapter->dev), client->index, state);
 	return 0;
 }
 
@@ -66,7 +66,7 @@ static int pdm_switch_gpio_get_state(struct pdm_client *client, int *state)
 	gpio_level = gpiod_get_value_cansleep(gpiod);
 	*state = pdm_switch_gpio_level_to_state(gpiod, gpio_level);
 
-	OSA_DEBUG("GPIO PDM switch: Get %s state: %d\n", dev_name(&client->dev), *state);
+	OSA_DEBUG("GPIO PDM switch: Get %s-%d state: %d\n", dev_name(&client->adapter->dev), client->index, *state);
 	return 0;
 }
 
@@ -127,7 +127,7 @@ static int pdm_switch_gpio_setup(struct pdm_client *client)
 
 	client->hardware.gpio.gpiod = gpiod;
 
-	OSA_DEBUG("GPIO SWITCH Setup: %s\n", dev_name(&client->dev));
+	OSA_DEBUG("GPIO SWITCH Setup: %s-%d\n", dev_name(&client->adapter->dev), client->index);
 	return 0;
 }
 
@@ -142,7 +142,7 @@ static void pdm_switch_gpio_cleanup(struct pdm_client *client)
 	gpiod = client->hardware.gpio.gpiod;
 	gpiod_set_value_cansleep(gpiod, pdm_switch_gpio_state_to_level(gpiod, 0));
 	gpiod_put(client->hardware.gpio.gpiod);
-	OSA_DEBUG("GPIO SWITCH Cleanup: %s\n", dev_name(&client->dev));
+	OSA_DEBUG("GPIO SWITCH Cleanup: %s-%d\n", dev_name(&client->adapter->dev), client->index);
 }
 
 

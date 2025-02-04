@@ -105,7 +105,7 @@ static long pdm_nvmem_ioctl(struct file *filp, unsigned int cmd, unsigned long a
 				OSA_ERROR("Failed to copy data from user space\n");
 				return -EFAULT;
 			}
-			OSA_INFO("PDM_DIMMER: Set %s's level to %d\n", dev_name(&client->dev), level);
+			OSA_INFO("PDM_DIMMER: Set %s-%d level to %d\n", dev_name(&client->adapter->dev), client->index, level);
 			status = pdm_nvmem_write_reg(client, 0, 0, 0);
 			break;
 		}
@@ -276,10 +276,6 @@ static int pdm_nvmem_device_probe(struct pdm_device *pdmdev)
 		return status;
 	}
 
-	client->fops.read = pdm_nvmem_read;
-	client->fops.write = pdm_nvmem_write;
-	client->fops.unlocked_ioctl = pdm_nvmem_ioctl;
-
 	return 0;
 }
 
@@ -350,6 +346,10 @@ int pdm_nvmem_driver_init(void)
 		OSA_ERROR("Failed to register NVMEM PDM Driver, status=%d\n", status);
 		goto err_adapter_unregister;
 	}
+
+	nvmem_adapter->fops.read = pdm_nvmem_read;
+	nvmem_adapter->fops.write = pdm_nvmem_write;
+	nvmem_adapter->fops.unlocked_ioctl = pdm_nvmem_ioctl;
 
 	return 0;
 

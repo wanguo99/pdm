@@ -140,7 +140,7 @@ static int pdm_sensor_icm20608_setup(struct pdm_client *client)
 		return status;
 	}
 
-	OSA_DEBUG("PDM SENSOR Setup: %s\n", dev_name(&client->dev));
+	OSA_DEBUG("PDM SENSOR Setup: %s-%d\n", dev_name(&client->adapter->dev), client->index);
 
 	return 0;
 }

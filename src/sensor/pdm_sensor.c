@@ -212,10 +212,6 @@ static int pdm_sensor_device_probe(struct pdm_device *pdmdev)
 		return status;
 	}
 
-	client->fops.read = pdm_sensor_read;
-	client->fops.write = pdm_sensor_write;
-	client->fops.unlocked_ioctl = pdm_sensor_ioctl;
-
 	return 0;
 }
 
@@ -286,6 +282,10 @@ int pdm_sensor_driver_init(void)
 		OSA_ERROR("Failed to register SENSOR PDM Driver, status=%d\n", status);
 		goto err_adapter_unregister;
 	}
+
+	sensor_adapter->fops.read = pdm_sensor_read;
+	sensor_adapter->fops.write = pdm_sensor_write;
+	sensor_adapter->fops.unlocked_ioctl = pdm_sensor_ioctl;
 
 	return 0;
 

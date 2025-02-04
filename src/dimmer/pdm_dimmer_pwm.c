@@ -34,7 +34,7 @@ static int pdm_dimmer_pwm_set_level(struct pdm_client *client, unsigned int leve
 		return -EINVAL;
 	}
 
-	OSA_DEBUG("PWM PDM Dimmer: Set %s level to %u\n", dev_name(&client->dev), level);
+	OSA_DEBUG("PWM PDM Dimmer: Set %s-%d level to %u\n", dev_name(&client->adapter->dev), client->index, level);
 
 	if (!level) {
 		pwm_disable(pwmdev);
@@ -112,7 +112,7 @@ static int pdm_dimmer_pwm_get_level(struct pdm_client *client, unsigned int *lev
 		return status;
 	}
 
-	OSA_INFO("PWM PDM Dimmer: Get %s level: %u\n", dev_name(&client->dev), *level);
+	OSA_INFO("PWM PDM Dimmer: Get %s-%d level: %u\n", dev_name(&client->adapter->dev), client->index, *level);
 	return 0;
 }
 
@@ -200,7 +200,7 @@ static int pdm_dimmer_pwm_setup(struct pdm_client *client)
 		OSA_WARN("Failed to set default level: %d\n", status);
 	}
 
-	OSA_DEBUG("PWM DIMMER Setup: %s\n", dev_name(&client->dev));
+	OSA_DEBUG("PWM DIMMER Setup: %s-%d\n", dev_name(&client->adapter->dev), client->index);
 	return 0;
 
 err_level_map_free:
