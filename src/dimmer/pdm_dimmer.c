@@ -112,7 +112,7 @@ static long pdm_dimmer_ioctl(struct file *filp, unsigned int cmd, unsigned long 
 				OSA_ERROR("Failed to copy data from user space\n");
 				return -EFAULT;
 			}
-			OSA_INFO("PDM_DIMMER: Set %s-%d level to %u\n", dev_name(&client->adapter->dev), client->index, level);
+			OSA_INFO("PDM_DIMMER: Set %s level to %u\n", client->name, level);
 			status = pdm_dimmer_set_level(client, level);
 			break;
 		}

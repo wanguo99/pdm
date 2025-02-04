@@ -94,7 +94,7 @@ static int pdm_nvmem_spi_setup(struct pdm_client *client)
 		}
 	}
 
-	OSA_DEBUG("SPI NVMEM Setup: %s-%d\n", dev_name(&client->adapter->dev), client->index);
+	OSA_DEBUG("SPI NVMEM Setup: %s\n", client->name);
 	return 0;
 }
 

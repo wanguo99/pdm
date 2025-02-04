@@ -95,14 +95,14 @@ int pdm_adapter_id_alloc(struct pdm_adapter *adapter, struct pdm_client *client)
 	int id;
 	int index = 0;
 
-	if (!client || !adapter || !client->dev.parent
-		|| !client->dev.parent->parent
-		|| !client->dev.parent->parent->of_node) {
+	if (!client || !adapter || !client->pdmdev
+		|| !client->pdmdev->dev.parent
+		|| !client->pdmdev->dev.parent->of_node) {
 		OSA_ERROR("Invalid input parameters\n");
 		return -EINVAL;
 	}
 
-	if (!of_property_read_s32(client->dev.parent->parent->of_node, "index", &index)) {
+	if (!of_property_read_s32(client->pdmdev->dev.parent->of_node, "index", &index)) {
 		if (client->force_dts_id && index < 0) {
 			OSA_ERROR("Cannot get valid index from dts, force_dts_id was set\n");
 			return -EINVAL;
@@ -175,7 +175,7 @@ static ssize_t client_list_show(struct device *dev, struct device_attribute *da,
 	offset += status;
 
 	list_for_each_entry(client, &adapter->client_list, entry) {
-		status = sysfs_emit_at(buf, offset, " - %s\n", dev_name(&client->dev));
+		status = sysfs_emit_at(buf, offset, " - %s\n", client->name);
 		if (status < 0) {
 			goto unlock;
 		}

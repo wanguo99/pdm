@@ -7,7 +7,7 @@
  * This is the name used to identify the PDM Client device in the system.
  */
 #define PDM_CLIENT_DEVICE_NAME			"pdm_client"
-
+#define PDM_CLIENT_NAME_MAX_LEN			(32)
 /**
  * @brief Minor count for PDM Client devices.
  *
@@ -90,12 +90,10 @@ union pdm_client_hardware {
  */
 struct pdm_client {
 	int index;				/**< Client ID allocated by the adapter */
+	char name[PDM_CLIENT_NAME_MAX_LEN];	/**< PDM Client name */
 	bool force_dts_id;			/**< Flag indicating whether to force ID from Device Tree Source (DTS) */
 	struct pdm_adapter *adapter;		/**< Pointer to the owning PDM Adapter */
 	struct pdm_device *pdmdev;		/**< Pointer to the PDM Device */
-	struct device dev;			/**< Kernel device structure, holds device-related info */
-	struct cdev cdev;			/**< Character device structure for device operations */
-	struct file_operations fops;		/**< File operations structure, defining operations for this device */
 	struct list_head entry;			/**< List node for linking devices in a linked list */
 	struct regmap *map;			/**< PDM Client regmap handle. */
 	union pdm_client_hardware hardware;	 /**< PDM Client hardware information. */
@@ -112,43 +110,6 @@ struct pdm_client_devres {
 	struct pdm_client *client;			/**< Pointer to the associated pdm_client structure */
 };
 
-/**
- * @brief Converts a device pointer to a pdm_client structure pointer.
- *
- * This macro is used to extract the pdm_client structure from a device pointer.
- *
- * @param d Device pointer.
- * @return Pointer to the corresponding pdm_client structure.
- */
-#define to_pdm_client_dev(d) container_of(d, struct pdm_client, dev)
-
-/**
- * @brief Retrieves the device corresponding to a pdm_client and increases its reference count.
- *
- * This function increases the reference count of the PDM client device and returns
- * a pointer to the device.
- *
- * @param client Pointer to the PDM Client structure.
- * @return Pointer to the device associated with the pdm_client, or NULL if client is NULL.
- */
-static inline struct pdm_client *pdm_client_get_device(struct pdm_client *client)
-{
-	return client ? to_pdm_client_dev(get_device(&client->dev)) : NULL;
-}
-
-/**
- * @brief Decrements the reference count on the device.
- *
- * This function decreases the reference count of the device associated with the PDM client.
- *
- * @param client Pointer to the PDM Client structure.
- */
-static inline void pdm_client_put_device(struct pdm_client *client)
-{
-	if (client) {
-		put_device(&client->dev);  /**< Decreases the reference count on the device */
-	}
-}
 
 /**
  * @brief Retrieves the driver data associated with the device.

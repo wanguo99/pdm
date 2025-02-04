@@ -105,7 +105,7 @@ static long pdm_nvmem_ioctl(struct file *filp, unsigned int cmd, unsigned long a
 				OSA_ERROR("Failed to copy data from user space\n");
 				return -EFAULT;
 			}
-			OSA_INFO("PDM_DIMMER: Set %s-%d level to %d\n", dev_name(&client->adapter->dev), client->index, level);
+			OSA_INFO("PDM_DIMMER: Set %s level to %d\n", client->name, level);
 			status = pdm_nvmem_write_reg(client, 0, 0, 0);
 			break;
 		}

@@ -57,6 +57,7 @@ int devm_pdm_client_register(struct pdm_adapter *adapter, struct pdm_client *cli
 	}
 
 	client->adapter = adapter;
+	snprintf(client->name, PDM_CLIENT_NAME_MAX_LEN, "%s-%d", dev_name(&adapter->dev), client->index);
 
 	mutex_lock(&adapter->client_list_mutex_lock);
 	list_add_tail(&client->entry, &adapter->client_list);
@@ -88,7 +89,7 @@ err_put_adapter:
  */
 static void devm_pdm_client_free(void *data)
 {
-	pdm_client_put_device((struct pdm_client *)data);
+	kfree((struct pdm_client *)data);
 }
 
 /**
@@ -188,7 +189,7 @@ int pdm_client_setup(struct pdm_client *client)
 
 	match_data = pdm_client_get_match_data(client);
 	if (!match_data) {
-		// OSA_DEBUG("Failed to get match data for device: %s\n", dev_name(&client->dev));
+		OSA_DEBUG("Failed to get match data for device: %s\n", client->name);
 		return 0;
 	}
 
