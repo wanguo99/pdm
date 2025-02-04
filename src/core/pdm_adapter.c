@@ -212,9 +212,16 @@ static struct attribute *pdm_adapter_device_attrs[] = {
 };
 ATTRIBUTE_GROUPS(pdm_adapter_device);
 
+
+static char *pdm_adapter_devnode(const struct device *dev, umode_t *mode)
+{
+	return kasprintf(GFP_KERNEL, "pdm_adapter/%s", dev_name(dev));
+}
+
 static struct class pdm_adapter_class = {
 	.name   = "pdm_adapter",
 	.dev_groups = pdm_adapter_device_groups,
+	.devnode = pdm_adapter_devnode,
 };
 
 /**
