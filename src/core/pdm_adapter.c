@@ -75,6 +75,12 @@ static void pdm_adapter_drivers_unregister(void)
 	pdm_component_unregister(&pdm_adapter_driver_list);
 }
 
+
+/**
+ * @brief PDM Adapter major device number.
+ */
+static dev_t pdm_adapter_major;
+
 /**
  * @brief Allocates a unique ID for a PDM Client.
  *
@@ -369,12 +375,25 @@ struct pdm_adapter *pdm_adapter_alloc(unsigned int data_size)
 int pdm_adapter_init(void)
 {
 	int status;
+	dev_t dev;
 
 	status = class_register(&pdm_adapter_class);
 	if (status < 0) {
 		OSA_ERROR("Failed to register PDM Adapter Class, error: %d\n", status);
 		return status;
 	}
+
+	status = alloc_chrdev_region(&dev, 0, PDM_ADAPTER_MINORS, PDM_ADAPTER_DEVICE_NAME);
+	if (status < 0) {
+		OSA_ERROR("Failed to allocate device region for %s, error: %d\n",
+				  PDM_ADAPTER_DEVICE_NAME, status);
+		class_unregister(&pdm_adapter_class);
+		return status;
+	}
+
+	pdm_adapter_major = MAJOR(dev);
+
+	OSA_DEBUG("PDM Adapter Major is %d\n", pdm_adapter_major);
 
 	status = pdm_adapter_drivers_register();
 	if (status < 0) {
@@ -391,6 +410,7 @@ int pdm_adapter_init(void)
 void pdm_adapter_exit(void)
 {
 	pdm_adapter_drivers_unregister();
+	unregister_chrdev_region(MKDEV(pdm_adapter_major, 0), PDM_ADAPTER_MINORS);
 	class_unregister(&pdm_adapter_class);
 }
 

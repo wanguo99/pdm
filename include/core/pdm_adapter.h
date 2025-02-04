@@ -20,6 +20,21 @@
 #define PDM_ADAPTER_CLIENT_IDR_END		(1024)
 
 /**
+ * @brief PDM Adapter device name.
+ *
+ * This is the name used to identify the PDM Adapter device in the system.
+ */
+#define PDM_ADAPTER_DEVICE_NAME			"pdm_adapter"
+
+/**
+ * @brief Minor count for PDM Adapter devices.
+ *
+ * Defines the number of minor devices allowed for PDM Adapter.
+ * MINORMASK is the upper limit minus 1.
+ */
+#define PDM_ADAPTER_MINORS			(MINORMASK + 1)
+
+/**
  * @brief PDM Adapter structure.
  *
  * This structure represents a PDM Adapter, which manages multiple PDM Client devices.
