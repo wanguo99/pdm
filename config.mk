@@ -4,8 +4,8 @@ MODULE_VERSIONS := $(shell git describe --tags --always --dirty --long 2>/dev/nu
 MODULE_BUILD_TIME := $(shell date +'%Y-%m-%d %H:%M:%S')
 
 # kernel info
-KERNELDIR ?= /lib/modules/$(shell uname -r)/build
-KERNEL_VERSION := $(shell $(MAKE) -C $(KERNELDIR) kernelversion)
+KDIR ?= /lib/modules/$(shell uname -r)/build
+KERNEL_VERSION := $(shell $(MAKE) -C $(KDIR) kernelversion)
 
 # install configuration
 DESTDIR ?= $(CURDIR)/_install
