@@ -197,8 +197,8 @@ static int __init pdm_init(void)
  */
 static void __exit pdm_exit(void)
 {
-	pdm_show_module_exit_info();
 	pdm_component_unregister(&pdm_core_component_list);
+	pdm_show_module_exit_info();
 }
 
 module_init(pdm_init);
